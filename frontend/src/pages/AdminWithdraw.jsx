@@ -18,7 +18,7 @@ export default function AdminWithdraw() {
     setChecking(true);
 
     try {
-      const response = await fetch(`http://localhost:5002/api/admin/find-agent?agentId=${encodeURIComponent(agentId)}`, {
+      const response = await fetch(`http://localhost:8080/api/admin/find-agent?agentId=${encodeURIComponent(agentId)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -58,7 +58,7 @@ export default function AdminWithdraw() {
         return;
       }
 
-      const response = await fetch('http://localhost:5002/api/admin/withdraw-from-agent', {
+      const response = await fetch('http://localhost:8080/api/admin/withdraw-from-agent', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

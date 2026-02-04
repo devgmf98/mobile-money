@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://o4gkwsgkw08wogk0oso4goog.127.0.0.1.sslip.io/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://cash-app-api.up.railway.app/api';
 
 const api = axios.create({
   baseURL: API_BASE,

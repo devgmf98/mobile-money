@@ -75,7 +75,7 @@ export default function Withdraw() {
     try {
       // This would call a backend endpoint to check user by phone
       // For now, we'll use a mock - you'll need to create this endpoint
-      const response = await fetch(`http://localhost:5002/api/users/check-balance?phone=${encodeURIComponent(userPhone)}`, {
+      const response = await fetch(`http://localhost:8080/api/users/check-balance?phone=${encodeURIComponent(userPhone)}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

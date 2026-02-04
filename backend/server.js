@@ -49,9 +49,9 @@ const io = new SocketIOServer(httpServer, {
 });
 
 // expose io to controllers via utils/socket.js to avoid circular imports
-setIO(io);
+setIO(io);// Middleware
 
-// Middleware
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -60,12 +60,30 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  allowedHeaders: ['sessionId', 'content-type', 'Authorization'],
+  allowedHeaders: ['sessionId', 'Content-Type', 'Authorization'],
   exposedHeaders: ['sessionId'],
-  origin: allowedOrigins,
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  preflightContinue: false
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// Handle preflight requests for all routes
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  allowedHeaders: ['sessionId', 'Content-Type', 'Authorization'],
+  exposedHeaders: ['sessionId'],
+  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+}));
+
+
 app.use(express.json());
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 

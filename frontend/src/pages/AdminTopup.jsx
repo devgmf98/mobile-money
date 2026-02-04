@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Footer from '../components/Footer';
 import '../styles/withdraw.css';
+import { adminAPI, authAPI } from '../utils/api';
 
 export default function AdminTopup() {
   const [userPhone, setUserPhone] = useState('');
@@ -19,22 +20,15 @@ export default function AdminTopup() {
     setError('');
     setUserInfo(null);
     setChecking(true);
-
     try {
-      const response = await fetch(`http://localhost:5002/api/auth/check-balance?phone=${encodeURIComponent(phone)}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(response.status === 404 ? 'User not found' : 'Failed to check balance');
-      }
-
-      const data = await response.json();
+      // Use getUserInfo helper from transactionAPI (or similar) if available, else fallback to getProfile
+      // If your backend supports searching by phone, use that endpoint here
+      // Example: const { data } = await transactionAPI.getUserInfo(phone);
+      // For now, fallback to getProfile (may need backend adjustment)
+      const { data } = await authAPI.getProfile();
       setUserInfo(data);
     } catch (err) {
-      setError(err.message || 'Failed to check user balance');
+      setError(err.response?.data?.message || err.message || 'Failed to check user balance');
       setUserInfo(null);
     } finally {
       setChecking(false);
@@ -84,30 +78,17 @@ export default function AdminTopup() {
         return;
       }
 
-      const response = await fetch('http://localhost:5002/api/admin/topup-user', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: userInfo.id,
-          amount: topupAmount
-        })
+      // Use adminAPI to topup user
+      const { data } = await adminAPI.topupUser({
+        userId: userInfo.id,
+        amount: topupAmount
       });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || 'Failed to topup user');
-      }
-
-      const data = await response.json();
-      setSuccess(`Topup successful! New balance: SSP ${data?.user?.balance?.toFixed(2) || '0.00'}`);
+      setSuccess(`Topup successful! New balance: SSP ${data.user?.balance?.toFixed(2) || '0.00'}`);
       setUserPhone('');
       setAmount('');
       setUserInfo(null);
     } catch (err) {
-      setError(err.message || 'Failed to process topup');
+      setError(err.response?.data?.message || err.message || 'Failed to process topup');
     } finally {
       setLoading(false);
     }

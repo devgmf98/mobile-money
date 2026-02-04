@@ -57,7 +57,7 @@ export default function UserLayout() {
     fetchNotifications();
 
     // Connect to socket
-    const socket = io('http://localhost:5002');
+    const socket = io('http://localhost:8080');
     socket.emit('join-user', user?.id);
 
     socket.on('new-notification', (data) => {
