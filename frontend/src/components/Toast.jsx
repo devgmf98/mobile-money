@@ -9,7 +9,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
 
   if (!message) return null;
 
-  const bg = type === 'success' ? '#16a34a' : type === 'error' ? '#dc2626' : '#0ea5e9';
+  const bg = type === 'success' ? '#16a34a' : type === 'error' ? '#DC2626' : '#00A86B';
 
   const style = {
     position: 'fixed',
@@ -28,7 +28,7 @@ export default function Toast({ message, type = 'info', duration = 3000, onClose
   return (
     <div style={style} role="status" aria-live="polite">
       <div style={{ fontWeight: 600, marginBottom: 4 }}>{type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Info'}</div>
-      <div style={{ fontSize: 14 }}>{message}</div>
+      <div style={{ fontSize: 12.5 }}>{message}</div>
     </div>
   );
 }

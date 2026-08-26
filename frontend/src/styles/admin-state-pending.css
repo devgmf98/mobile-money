@@ -1,0 +1,216 @@
+/* ==========================================================================
+   Pending Send By State
+   Page-specific pieces only; card, table, badges and buttons come from
+   design-system.css.
+   ========================================================================== */
+
+.pending-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+@keyframes ds-spin { to { transform: rotate(360deg); } }
+.spin { animation: ds-spin 0.9s linear infinite; }
+
+/* ---------- status summary ------------------------------------------------ */
+.pending-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.summary-tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  
+}
+
+.tile-icon {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+
+.tile-icon.tone-warning { background: #FEF3C7; color: #B45309; }
+.tile-icon.tone-success { background: #DCFCE7; color: #16A34A; }
+.tile-icon.tone-muted   { background: #F1F5F9; color: #64748B; }
+
+.tile-value {
+  font-size: 17.5px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+/* ---------- toolbar ------------------------------------------------------- */
+.pending-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 220px;
+}
+
+.search-field svg {
+  position: absolute;
+  left: 12px;
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+.search-field input {
+  width: 100%;
+  padding: 9px 12px 9px 34px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.search-field input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.sort-select {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+/* ---------- table --------------------------------------------------------- */
+.pending-table th.num,
+.pending-table td.num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.pending-table td.strong { font-weight: 700; color: var(--primary-dark); }
+.pending-table td.credit { color: var(--success, #16A34A); font-weight: 600; }
+
+.pending-table .cur {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-right: 2px;
+}
+
+.txn-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  color: var(--primary-dark);
+  white-space: nowrap;
+}
+
+.party {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.party-name { font-weight: 600; color: var(--text); }
+.party-phone { font-size: 11.5px; color: var(--text-light); }
+
+.action-cell { white-space: nowrap; }
+
+.action-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.action-note.is-done { color: var(--success, #16A34A); font-weight: 600; }
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .summary-tile {
+  background: #1E293B;
+  border-color: #14532D;
+}
+[data-theme="dark"] .tile-value { color: #E2E8F0; }
+[data-theme="dark"] .tile-icon.tone-warning { background: #4A2E05; color: #FBBF24; }
+[data-theme="dark"] .tile-icon.tone-success { background: #14532D; color: #4ADE80; }
+[data-theme="dark"] .tile-icon.tone-muted   { background: #0F172A; color: #94A3B8; }
+
+[data-theme="dark"] .search-field input,
+[data-theme="dark"] .sort-select {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .txn-id { background: #0F172A; color: #34C88E; }
+[data-theme="dark"] .party-name { color: #E2E8F0; }
+[data-theme="dark"] .pending-table td.strong { color: #34C88E; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 640px) {
+  .pending-toolbar { flex-direction: column; align-items: stretch; }
+  .sort-select { width: 100%; }
+  .summary-tile { padding: 12px 13px; }
+  .tile-value { font-size: 16.5px; }
+}
+
+/* the sort control is now a custom Select (100% wide by default) — keep it
+   compact in the toolbar row */
+.sort-select-wrap {
+  width: auto;
+  min-width: 172px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .sort-select-wrap { width: 100%; }
+}

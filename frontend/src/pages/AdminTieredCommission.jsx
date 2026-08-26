@@ -3,6 +3,22 @@ import { adminAPI } from '../utils/api';
 import Toast from '../components/Toast';
 import Footer from '../components/Footer';
 import '../styles/withdraw.css';
+import { ArrowRight, Banknote, CircleDollarSign, ClipboardList, Info, Layers, Plus, Save, Send, Trash2, Wallet } from 'lucide-react';
+import '../styles/admin-tiered-commission.css';
+
+// Illustrative figures for the explainer card only - not live settings.
+const HOW_IT_WORKS_TIERS = [
+  { range: '0 - 99', percent: '0%' },
+  { range: '100 - 499', percent: '1%' },
+  { range: '500 - 999', percent: '2%' },
+  { range: '1000 +', percent: '3%' },
+];
+
+const HOW_IT_WORKS_EXAMPLES = [
+  { amount: '50', percent: '0%', range: '0 - 99' },
+  { amount: '150', percent: '1%', range: '100 - 499' },
+  { amount: '600', percent: '2%', range: '500 - 999' },
+];
 
 export default function AdminTieredCommission() {
   const [sendTiers, setSendTiers] = useState([]);
@@ -176,7 +192,7 @@ export default function AdminTieredCommission() {
     <>
     <div className="page-container">
       <div className="page-header">
-        <h1>💰 Tiered Commission Settings</h1>
+        <h1>Tiered Commission Settings</h1>
         <p>Configure commission percentages based on transaction amount ranges (from minimum to maximum SSP)</p>
       </div>
 
@@ -186,164 +202,77 @@ export default function AdminTieredCommission() {
         </div>
       )}
 
-      <div className="card">
-        <div className="card-header">
-          <h3>Send Money Commission Tiers</h3>
-          <p className="text-muted">Set commission percentages for different transaction amount ranges (from X to Y SSP)</p>
+      {/* Send money tiers */}
+      <div className="card tier-card">
+        <div className="card-header tier-head">
+          <div>
+            <h3><Send size={17} /> Send money tiers</h3>
+            <p>Commission taken by the company on transfers, by amount range.</p>
+          </div>
+          <span className="tier-count">{sendTiers.length} tier{sendTiers.length === 1 ? '' : 's'}</span>
         </div>
+
         <div className="card-body">
-            <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
-              <table className="table" style={{ minWidth: '500px' }}>
-                <thead>
-                  <tr>
-                    <th>Minimum Amount (SSP)</th>
-                    <th>Maximum Amount (SSP)</th>
-                    <th>Company Commission (%)</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(sendTiers || []).map((tier, index) => (
-                    <tr key={index}>
-                      <td>
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={tier?.minAmount || 0}
-                          onChange={(e) => handleTierChange(index, 'minAmount', e.target.value, 'send')}
-                          style={{ width: '100%', padding: '8px' }}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          min={tier?.minAmount || 0}
-                          step="1"
-                          value={tier?.maxAmount || 0}
-                          onChange={(e) => handleTierChange(index, 'maxAmount', e.target.value, 'send')}
-                          style={{ width: '100%', padding: '8px' }}
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          value={tier.companyPercent || 0}
-                          onChange={(e) => handleTierChange(index, 'companyPercent', e.target.value, 'send')}
-                          style={{ width: '100%', padding: '8px' }}
-                        />
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="btn btn-delete"
-                          onClick={() => removeTier(index, 'send')}
-                          style={{ padding: '6px 12px', fontSize: '12px' }}
-                        >
-                          Remove
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => addTier('send')}
-                style={{ padding: '8px 16px' }}
-              >
-                + Add Send Money Tier
+          {sendTiers.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon"><Layers size={22} /></span>
+              <h3>No send money tiers</h3>
+              <p>Add a tier to charge commission on transfers within an amount range.</p>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => addTier('send')}>
+                <Plus size={15} /> Add first tier
               </button>
             </div>
-
-            <div style={{ display: 'flex', gap: '12px', marginBottom: '30px' }}>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleSaveSendMoney}
-                disabled={loading || sendTiers.length === 0}
-                style={{ padding: '10px 20px', flex: 1 }}
-              >
-                {loading ? 'Saving...' : '💰 Save Send Money Tiers'}
-              </button>
-            </div>
-
-            <div className="card" style={{ marginTop: '30px', marginBottom: '30px' }}>
-              <div className="card-header">
-                <h3>Withdrawal Commission Tiers</h3>
-                <p className="text-muted">Set commission percentages for withdrawal transaction amount ranges (from X to Y SSP)</p>
-              </div>
-              <div style={{ overflowX: 'auto', marginBottom: '20px' }}>
-                <table className="table" style={{ minWidth: '600px' }}>
+          ) : (
+            <>
+              <div className="table-wrap">
+                <table className="table tier-table">
                   <thead>
                     <tr>
-                      <th>Minimum Amount (SSP)</th>
-                      <th>Maximum Amount (SSP)</th>
-                      <th>Agent Commission (%)</th>
-                      <th>Company Commission (%)</th>
-                      <th>Action</th>
+                      <th>Minimum (SSP)</th>
+                      <th>Maximum (SSP)</th>
+                      <th>Company %</th>
+                      <th className="right">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(withdrawalTiers || []).map((tier, index) => (
+                    {(sendTiers || []).map((tier, index) => (
                       <tr key={index}>
                         <td>
                           <input
-                            type="number"
-                            min="0"
-                            step="1"
+                            type="number" min="0" step="1"
                             value={tier?.minAmount || 0}
-                            onChange={(e) => handleTierChange(index, 'minAmount', e.target.value, 'withdrawal')}
-                            style={{ width: '100%', padding: '8px' }}
+                            onChange={(e) => handleTierChange(index, 'minAmount', e.target.value, 'send')}
+                            aria-label={`Tier ${index + 1} minimum amount`}
                           />
                         </td>
                         <td>
                           <input
-                            type="number"
-                            min={tier?.minAmount || 0}
-                            step="1"
+                            type="number" min={tier?.minAmount || 0} step="1"
                             value={tier?.maxAmount || 0}
-                            onChange={(e) => handleTierChange(index, 'maxAmount', e.target.value, 'withdrawal')}
-                            style={{ width: '100%', padding: '8px' }}
+                            onChange={(e) => handleTierChange(index, 'maxAmount', e.target.value, 'send')}
+                            aria-label={`Tier ${index + 1} maximum amount`}
                           />
                         </td>
                         <td>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value={tier.agentPercent || 0}
-                            onChange={(e) => handleTierChange(index, 'agentPercent', e.target.value, 'withdrawal')}
-                            style={{ width: '100%', padding: '8px' }}
-                          />
+                          <div className="pct-cell">
+                            <input
+                              type="number" min="0" max="100" step="0.01"
+                              value={tier.companyPercent || 0}
+                              onChange={(e) => handleTierChange(index, 'companyPercent', e.target.value, 'send')}
+                              aria-label={`Tier ${index + 1} company commission`}
+                            />
+                            <span>%</span>
+                          </div>
                         </td>
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value={tier.companyPercent || 0}
-                            onChange={(e) => handleTierChange(index, 'companyPercent', e.target.value, 'withdrawal')}
-                            style={{ width: '100%', padding: '8px' }}
-                          />
-                        </td>
-                        <td>
+                        <td className="right">
                           <button
                             type="button"
-                            className="btn btn-delete"
-                            onClick={() => removeTier(index, 'withdrawal')}
-                            style={{ padding: '6px 12px', fontSize: '12px' }}
+                            className="icon-btn is-danger"
+                            onClick={() => removeTier(index, 'send')}
+                            aria-label={`Remove tier ${index + 1}`}
+                            title="Remove tier"
                           >
-                            Remove
+                            <Trash2 size={15} />
                           </button>
                         </td>
                       </tr>
@@ -352,54 +281,178 @@ export default function AdminTieredCommission() {
                 </table>
               </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+              <div className="tier-actions">
+                <button type="button" className="btn btn-outline" onClick={() => addTier('send')}>
+                  <Plus size={15} /> Add tier
+                </button>
                 <button
                   type="button"
-                  className="btn btn-secondary"
-                  onClick={() => addTier('withdrawal')}
-                  style={{ padding: '8px 16px' }}
+                  className="btn btn-primary"
+                  onClick={handleSaveSendMoney}
+                  disabled={loading || sendTiers.length === 0}
                 >
-                  + Add Withdrawal Tier
+                  <Save size={15} /> {loading ? 'Saving…' : 'Save send money tiers'}
                 </button>
               </div>
+            </>
+          )}
+        </div>
+      </div>
 
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '30px' }}>
+      {/* Withdrawal tiers - a sibling card. It was previously nested inside the
+          send-money card body, which rendered a card inside a card. */}
+      <div className="card tier-card">
+        <div className="card-header tier-head">
+          <div>
+            <h3><Banknote size={17} /> Withdrawal tiers</h3>
+            <p>Commission split between the agent and the company on withdrawals.</p>
+          </div>
+          <span className="tier-count">{withdrawalTiers.length} tier{withdrawalTiers.length === 1 ? '' : 's'}</span>
+        </div>
+
+        <div className="card-body">
+          {withdrawalTiers.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon"><Layers size={22} /></span>
+              <h3>No withdrawal tiers</h3>
+              <p>Add a tier to set agent and company commission for a withdrawal range.</p>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => addTier('withdrawal')}>
+                <Plus size={15} /> Add first tier
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="table-wrap">
+                <table className="table tier-table">
+                  <thead>
+                    <tr>
+                      <th>Minimum (SSP)</th>
+                      <th>Maximum (SSP)</th>
+                      <th>Agent %</th>
+                      <th>Company %</th>
+                      <th className="right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(withdrawalTiers || []).map((tier, index) => (
+                      <tr key={index}>
+                        <td>
+                          <input
+                            type="number" min="0" step="1"
+                            value={tier?.minAmount || 0}
+                            onChange={(e) => handleTierChange(index, 'minAmount', e.target.value, 'withdrawal')}
+                            aria-label={`Withdrawal tier ${index + 1} minimum`}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="number" min={tier?.minAmount || 0} step="1"
+                            value={tier?.maxAmount || 0}
+                            onChange={(e) => handleTierChange(index, 'maxAmount', e.target.value, 'withdrawal')}
+                            aria-label={`Withdrawal tier ${index + 1} maximum`}
+                          />
+                        </td>
+                        <td>
+                          <div className="pct-cell">
+                            <input
+                              type="number" min="0" max="100" step="0.01"
+                              value={tier.agentPercent || 0}
+                              onChange={(e) => handleTierChange(index, 'agentPercent', e.target.value, 'withdrawal')}
+                              aria-label={`Withdrawal tier ${index + 1} agent commission`}
+                            />
+                            <span>%</span>
+                          </div>
+                        </td>
+                        <td>
+                          <div className="pct-cell">
+                            <input
+                              type="number" min="0" max="100" step="0.01"
+                              value={tier.companyPercent || 0}
+                              onChange={(e) => handleTierChange(index, 'companyPercent', e.target.value, 'withdrawal')}
+                              aria-label={`Withdrawal tier ${index + 1} company commission`}
+                            />
+                            <span>%</span>
+                          </div>
+                        </td>
+                        <td className="right">
+                          <button
+                            type="button"
+                            className="icon-btn is-danger"
+                            onClick={() => removeTier(index, 'withdrawal')}
+                            aria-label={`Remove withdrawal tier ${index + 1}`}
+                            title="Remove tier"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="tier-actions">
+                <button type="button" className="btn btn-outline" onClick={() => addTier('withdrawal')}>
+                  <Plus size={15} /> Add tier
+                </button>
                 <button
                   type="button"
                   className="btn btn-primary"
                   onClick={handleSaveWithdrawal}
                   disabled={loading || withdrawalTiers.length === 0}
-                  style={{ padding: '10px 20px', flex: 1 }}
                 >
-                  {loading ? 'Saving...' : '💸 Save Withdrawal Tiers'}
+                  <Save size={15} /> {loading ? 'Saving…' : 'Save withdrawal tiers'}
                 </button>
               </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
+      </div>
 
       <div className="card mt-4">
         <div className="card-header">
-          <h3>📋 How It Works</h3>
+          <h3><ClipboardList size={18} /> How It Works</h3>
         </div>
         <div className="card-body">
-          <p>
-            When a user sends money or makes a withdrawal, the system calculates the commission based on the transaction amount and the tiers you define.
-            The system finds the tier where the transaction amount falls within the <strong>minimum to maximum range</strong>.
+          <p className="hiw-lead">
+            When a user sends money or makes a withdrawal, the system finds the tier whose
+            <strong> minimum-to-maximum range</strong> contains the transaction amount, and applies
+            that tier's percentage.
           </p>
-          <p style={{ marginTop: '10px' }}>
-            <strong>Example:</strong> If you set:
-          </p>
-          <ul style={{ marginLeft: '20px', marginTop: '10px' }}>
-            <li>0-99 SSP: 0% commission</li>
-            <li>100-499 SSP: 1% commission</li>
-            <li>500-999 SSP: 2% commission</li>
-            <li>1000+ SSP: 3% commission</li>
-          </ul>
-          <p style={{ marginTop: '10px' }}>
-            A 150 SSP transfer would use the 1% tier (falls in 100-499 range).<br />
-            A 600 SSP transfer would use the 2% tier (falls in 500-999 range).<br />
-            A 50 SSP transfer would use the 0% tier (falls in 0-99 range).
+
+          <div className="hiw-cols">
+            <div className="hiw-col">
+              <span className="hiw-label">Example ladder</span>
+              <ul className="hiw-ladder">
+                {HOW_IT_WORKS_TIERS.map((t) => (
+                  <li key={t.range}>
+                    <span className="hiw-range">{t.range} SSP</span>
+                    <span className={'hiw-pct' + (t.percent === '0%' ? ' is-zero' : '')}>{t.percent}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="hiw-col">
+              <span className="hiw-label">How an amount is matched</span>
+              <ul className="hiw-examples">
+                {HOW_IT_WORKS_EXAMPLES.map((e) => (
+                  <li key={e.amount}>
+                    <span className="hiw-amount">{e.amount} SSP</span>
+                    <ArrowRight size={14} />
+                    <span className="hiw-result">
+                      <strong>{e.percent}</strong>
+                      <em>{e.range} range</em>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <p className="hiw-note">
+            <Info size={14} /> Ranges should not overlap, and the highest tier acts as the catch-all
+            for anything above it.
           </p>
         </div>
       </div>

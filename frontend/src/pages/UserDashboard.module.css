@@ -1,0 +1,1001 @@
+
+
+
+.balanceCard {
+  background: linear-gradient(135deg, #087443 0%, #0A8F53 60%, #E8F7F0 100%);
+  border-radius: 22px;
+  margin: 18px auto;
+  padding: 32px 24px 24px 24px;
+  min-height: 180px;
+  max-width: 420px;
+  width: 100%;
+  
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+@media (max-width: 768px) {
+  .balanceCard {
+    min-height: 220px;
+    padding: 36px 18px 24px 18px;
+    border-radius: 24px;
+  }
+}
+
+.balanceInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.balanceLabel {
+  color: #34C88E;
+  font-size: 0.844rem;
+  margin-bottom: 2px;
+}
+
+.balanceAmount {
+  font-size: 1.594rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.currency {
+  font-size: 0.844rem;
+  color: #34C88E;
+  margin-left: 4px;
+}
+
+.depositBtn {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 14px 14px 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 2px 8px #E8F7F044;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 0;
+  min-height: 80px;
+}
+
+.depositBtn:hover {
+  background: #00A86B;
+  transform: translateY(-2px);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 18px 18px 18px;
+  gap: 10px;
+}
+
+.actionBtn {
+  flex: 1;
+  background: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 0 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.781rem;
+  color: #34C88E;
+  font-weight: 500;
+  gap: 6px;
+  box-shadow: 0 2px 8px #E8F7F044;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.actionBtn:hover {
+  background: #E8F7F0;
+}
+
+.section {
+  margin: 0 18px 18px 18px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.906rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #222;
+}
+
+.seeAll {
+  color: #34C88E;
+  font-size: 0.781rem;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.seeAll:hover {
+  color: #00A86B;
+}
+
+.movers {
+  display: flex;
+  gap: 12px;
+}
+
+.statsGrid {
+  display: flex;
+  flex-direction: row;
+  gap: 18px;
+  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 500px;
+  width: 100%;
+  border: 2px solid #34C88E;
+  background: #E8F7F0;
+  border-radius: 18px;
+  padding: 18px 0;
+}
+
+.statItem {
+  background: #fff;
+  border-radius: 14px;
+  padding: 14px 10px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  width: auto;
+  margin: 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.statItem:hover {
+  transform: translateY(-4px);
+  
+}
+
+.statLabel {
+  color: #34C88E;
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.statValue {
+  font-size: 0.906rem;
+  font-weight: 700;
+  color: #222;
+}
+
+.moverCard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.moverCard:hover {
+  transform: translateY(-4px);
+  
+}
+
+.moverIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.906rem;
+  margin-bottom: 6px;
+}
+
+.moverInfo {
+  text-align: center;
+}
+
+.moverPrice {
+  font-size: 0.844rem;
+  color: #222;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.watchlist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.watchCard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.watchCard:hover {
+  transform: translateY(-4px);
+  
+}
+
+.cryptoIcon {
+  font-size: 1.594rem;
+}
+
+.transactionsList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 480px) {
+  .transactionsList {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+@media (min-width: 768px) {
+  .transactionsList {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 18px;
+  }
+}
+
+.transactionItem {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px 14px 14px 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 0;
+  min-height: 80px;
+}
+@media (min-width: 768px) {
+  .transactionItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 110px;
+    padding: 18px 18px 16px 18px;
+  }
+  .txInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    width: 100%;
+  }
+  .txAmount {
+    align-self: flex-end;
+    margin-top: 8px;
+    font-size: 0.906rem;
+  }
+}
+
+.transactionItem:hover {
+  transform: translateY(-2px);
+  
+}
+
+.txIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #E8F7F0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.txInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.txType {
+  font-size: 0.844rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.txDate {
+  font-size: 0.75rem;
+  color: #34C88E;
+}
+
+.txAmount {
+  font-size: 0.844rem;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Desktop transaction row styles */
+.transactionsTable {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transactionRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #E8F7F0;
+  border-radius: 8px;
+  border-bottom: 1px solid #E8F7F0;
+}
+
+.transactionRow:hover {
+  background: #E8F7F0;
+}
+
+.bottomNav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #E8F7F0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 64px;
+  z-index: 100;
+  box-shadow: 0 -2px 8px #E8F7F044;
+  max-width: 430px;
+  margin: 0 auto;
+}
+
+
+@media (max-width: 480px) {
+  .container {
+    max-width: 100%;
+  }
+
+  .bottomNav {
+    max-width: 100%;
+  }
+
+  .balanceAmount {
+    font-size: 1.438rem;
+  }
+
+  .actions {
+    margin: 0 12px 12px 12px;
+    gap: 8px;
+  }
+
+  .section {
+    margin: 0 12px 12px 12px;
+  }
+
+  .actionBtn {
+    font-size: 11px;
+  }
+
+  .sectionHeader {
+    font-size: 11.5px;
+  }
+
+  .seeAll {
+    font-size: 11px;
+  }
+
+  .txType {
+    font-size: 11px;
+  }
+
+  .txDate {
+    font-size: 11px;
+  }
+
+  .txAmount {
+    font-size: 11px;
+  }
+
+  .statLabel {
+    font-size: 11px;
+  }
+
+  .statValue {
+    font-size: 11px;
+  }
+
+  .txIcon {
+    font-size: 0.844rem;
+  }
+}
+
+/* ==========================================================================
+   Home screen — brand palette
+   Primary #00A86B · Dark #087443 · Light #E8F7F0 · Success #16A34A
+   Error #DC2626 · Warning #F59E0B
+   Appended last so these win over the earlier rules above.
+   ========================================================================== */
+
+.home {
+  background: #FFFFFF;
+  min-height: 100vh;
+  padding-bottom: 84px; /* clear the fixed bottom nav */
+}
+
+/* ---- green header ---- */
+.homeHeader {
+  background: linear-gradient(135deg, #087443 0%, #00A86B 100%);
+  color: #FFFFFF;
+  padding: 22px 20px 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 0 0 24px 24px;
+}
+
+.homeGreeting {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.85;
+  letter-spacing: 0.3px;
+}
+
+.homeName {
+  margin: 2px 0 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.homeBell {
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  color: #FFFFFF;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.homeBell:hover { background: rgba(255, 255, 255, 0.3); }
+
+/* ---- wallet balance: white card, lifted over the green header ---- */
+.balanceCard {
+  background: #FFFFFF;
+  border: 1px solid #E8F7F0;
+  border-radius: 20px;
+  
+  margin: -22px auto 18px;
+  padding: 22px 20px;
+  max-width: 420px;
+  min-height: 0;
+  position: relative;
+  z-index: 2;
+  color: #1E293B;
+}
+
+.balanceLabel { color: #64748B; font-weight: 600; }
+.balanceAmount { color: #1E293B; font-weight: 700; }
+
+/* ---- action row ---- */
+.actions { flex-wrap: wrap; }
+
+.actionBtnPrimary {
+  flex: 1 1 30%;
+  min-width: 96px;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 0 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+/* Send Money + Cash Out — solid brand green */
+.actionBtnPrimary {
+  background: #00A86B;
+  color: #FFFFFF;
+}
+.actionBtnPrimary:hover { filter: brightness(0.94); transform: translateY(-1px); }
+
+/* secondary actions stay light */
+.actionBtn {
+  flex: 1 1 30%;
+  min-width: 96px;
+  background: #E8F7F0;
+  color: #087443;
+  font-weight: 600;
+}
+.actionBtn:hover { background: #D1F0E3; }
+
+/* ---- transaction history: subtle gray ---- */
+.transactionItem {
+  background: #F8FAFC;
+  border: 1px solid #EEF2F6;
+  border-radius: 12px;
+}
+.transactionItem:hover { background: #F1F5F9; }
+
+.txType { color: #1E293B; font-weight: 600; }
+.txDate { color: #64748B; }
+.txAmount { font-weight: 700; }
+
+.sectionHeader { color: #087443; font-weight: 700; }
+.seeAll { color: #00A86B; font-weight: 600; }
+
+/* ---- history stat tiles ---- */
+.statItem {
+  background: #F8FAFC;
+  border: 1px solid #EEF2F6;
+  border-radius: 12px;
+}
+.statLabel { color: #64748B; }
+.statValue { color: #087443; font-weight: 700; }
+
+/* ==========================================================================
+   Mobile polish
+
+   Four actions remain after Buy Airtime was removed, so the wrapping flex row
+   (which left an uneven 3 + 2) becomes an even 2x2 grid.
+   ========================================================================== */
+
+.actions {
+  display: grid;
+  /* all four in one row; they stay usable at ~78px each on a 360px screen */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 0 16px 16px;
+}
+
+.actionBtnPrimary,
+.actionBtn {
+  flex: none;
+  min-width: 0;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px 4px 10px;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 14px;
+  font-size: 0.66rem;
+  line-height: 1.2;
+  letter-spacing: 0;
+  text-align: center;
+  /* two-word labels wrap rather than overflow the narrower tile */
+  overflow-wrap: anywhere;
+}
+
+.actionBtnPrimary:active,
+.actionBtn:active { transform: scale(0.985); }
+
+/* All four tiles share the Receive treatment: light green ground, deep green
+   label. Send Money and Cash Out were solid #00A86B with white text, which
+   made the row read as two ranks of action rather than one set. */
+.actionBtnPrimary,
+.actionBtn {
+  background: #E8F7F0;
+  color: #087443;
+  border: 1px solid #D1F0E3;
+  box-shadow: none;
+}
+
+.actionBtnPrimary:hover,
+.actionBtn:hover {
+  background: #D1F0E3;
+  filter: none;
+  transform: none;
+}
+
+.actions svg { width: 19px; height: 19px; flex-shrink: 0; }
+
+/* ---------- sections ------------------------------------------------------ */
+.section { margin: 0 16px 16px; }
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 0.813rem;
+  font-weight: 700;
+  color: #1E293B;
+}
+
+.seeAll {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #087443;
+  text-decoration: none;
+}
+
+/* ---------- stats --------------------------------------------------------- */
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  /* an earlier rule caps this at 500px and centres it with auto margins, which
+     made the History box narrower than everything around it */
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid #E2E8F0;
+  border-radius: 14px;
+  background: #FFFFFF;
+}
+
+.statLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #64748B;
+}
+
+.statValue {
+  font-size: 0.906rem;
+  font-weight: 800;
+  color: #1E293B;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- header -------------------------------------------------------- */
+.homeHeader { padding: 18px 18px 34px; }
+.homeGreeting { font-size: 0.75rem; opacity: 0.9; }
+.homeName { font-size: 1.031rem; font-weight: 800; margin: 2px 0 0; }
+
+/* ==========================================================================
+   Balance card — redesigned
+
+   Was a label, a large figure with the currency trailing, and a placeholder
+   "**** **** **** 1234". The card now leads with the currency, uses tabular
+   figures, and its foot carries the real account number.
+   ========================================================================== */
+
+.balanceCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  /* an earlier rule in this file sets width:100%; combined with side margins
+     that made the card 32px wider than the space available, so it ran off the
+     right edge. auto lets the margins define the width. */
+  width: auto;
+  max-width: none;
+  margin: -26px 16px 18px;
+  padding: 20px 22px 18px;
+  border-radius: 22px;
+  /* soft brand tint rather than flat white */
+  background: linear-gradient(160deg, #FFFFFF 0%, #FFFFFF 52%, #F2FBF7 100%);
+  border: 1px solid #E3F5EC;
+  overflow: hidden;
+  
+}
+
+/* faint brand wash in the corner so the card is not a plain white box */
+.balanceCard::after {
+  content: '';
+  position: absolute;
+  right: -54px;
+  top: -70px;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #D1F0E3 0%, #E8F7F0 70%, rgba(232, 247, 240, 0) 100%);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.balanceTop,
+.balanceAmount,
+.balanceFoot { position: relative; z-index: 1; }
+
+.balanceTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.balanceLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #64748B;
+}
+
+.balanceAmount {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 16px 0 0;
+  font-size: 2.188rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -1.4px;
+  color: #0F172A;
+  font-variant-numeric: tabular-nums;
+}
+
+/* the currency rides at the cap height of the digits rather than the baseline */
+.currency {
+  margin-top: 4px;
+  font-size: 0.813rem;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: #087443;
+}
+
+.balanceFoot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 18px;
+  padding-top: 14px;
+}
+
+.balanceAccountLabel {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #94A3B8;
+}
+
+.balanceAccount {
+  font-size: 0.969rem;
+  font-weight: 700;
+  color: #1E293B;
+  font-variant-numeric: tabular-nums;
+  /* even digit advance and wide tracking are what make grouped digits read
+     as an account code rather than as a number that happens to have spaces */
+  font-feature-settings: "tnum" 1;
+  letter-spacing: 0.16em;
+}
+
+/* the header no longer holds a bell, so its content sits left */
+.homeHeader { justify-content: flex-start; }
+
+/* ==========================================================================
+   Tablet renders the phone layout, centred
+
+   Below 769px the mobile view already renders, but its content stretched to
+   whatever width was available — so a 744px tablet looked nothing like a
+   390px phone. Capping the column and centring it makes the two identical,
+   just with more empty space either side on the larger screen.
+   ========================================================================== */
+
+/* 640px fills any phone outright and gives a tablet a readable column rather
+   than a stretched-out phone layout */
+.home {
+  max-width: 640px;
+  margin: 0 auto;
+  box-shadow: none;
+  /* clears the fixed bottom nav plus the iOS home indicator */
+  padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ==========================================================================
+   Tablet
+
+   The same single-column mobile layout, filling the screen. No two-column
+   grid: the order stays exactly as it is on a phone. The components scale up
+   instead of stretching thin, so a wide card carries larger type rather than
+   more empty space.
+   ========================================================================== */
+
+@media (min-width: 700px) {
+  .home {
+    max-width: none;
+    margin: 0;
+    display: block;
+    /* clears the taller tablet bottom nav */
+    padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* ---- balance ---- */
+  .balanceCard {
+    margin: -30px 24px 20px;
+    padding: 32px 32px 28px;
+    border-radius: 24px;
+    min-height: 210px;
+    justify-content: center;
+  }
+
+  .balanceLabel { font-size: 0.781rem; }
+  .balanceAmount { font-size: 2.813rem; }
+  .currency { font-size: 0.969rem; margin-top: 6px; }
+  .balanceFoot { margin-top: 22px; padding-top: 16px; }
+  .balanceAccountLabel { font-size: 0.74rem; }
+  .balanceAccount { font-size: 1rem; }
+
+  /* the corner wash grows with the card */
+  .balanceCard::after { width: 230px; height: 230px; right: -70px; top: -92px; }
+
+  /* ---- action tiles: still one row, just taller ---- */
+  .actions {
+    margin: 0 24px 20px;
+    gap: 14px;
+  }
+
+  .actionBtnPrimary,
+  .actionBtn {
+    min-height: 104px;
+    gap: 10px;
+    font-size: 0.781rem;
+    border-radius: 18px;
+  }
+
+  .actions svg { width: 26px; height: 26px; }
+
+  /* ---- sections ---- */
+  .section { margin: 0 24px 20px; }
+  .sectionHeader { font-size: 0.906rem; margin-bottom: 12px; }
+  .seeAll { font-size: 0.781rem; }
+
+  .statsGrid { gap: 14px; }
+  .statItem { padding: 20px 22px; border-radius: 16px; }
+  .statLabel { font-size: 0.75rem; }
+  .statValue { font-size: 1.156rem; }
+
+  /* ---- header ---- */
+  .homeHeader { padding: 26px 24px 40px; }
+  .homeGreeting { font-size: 0.781rem; }
+  .homeName { font-size: 1.219rem; }
+}
+
+@media (min-width: 900px) {
+  .balanceCard { margin: -32px 28px 22px; padding: 36px 36px 30px; min-height: 236px; }
+  .balanceAmount { font-size: 3.156rem; }
+  .actions { margin: 0 28px 22px; }
+  .actionBtnPrimary,
+  .actionBtn { min-height: 112px; font-size: 0.813rem; }
+  .actions svg { width: 28px; height: 28px; }
+  .section { margin: 0 28px 22px; }
+  .statValue { font-size: 1.281rem; }
+  .homeHeader { padding: 28px 28px 44px; }
+  .homeName { font-size: 1.375rem; }
+}
+
+/* ==========================================================================
+   Dark mode — mobile and tablet view
+
+   Every surface in this file was a hardcoded light value (#fff cards, #222
+   text, #E8F7F0 tints), so in dark mode the mobile dashboard stayed white on
+   a dark body. These map onto the palette the rest of the app already uses:
+   #1E293B raised surfaces, #14532D borders, #E2E8F0 text, #94A3B8 muted.
+
+   Appended last so these also win the ties against the hover and media-query
+   rules declared above, which sit at the same specificity.
+   ========================================================================== */
+
+/* ---------- page + header ---------- */
+:global([data-theme='dark']) .home { background: #0F172A; }
+
+/* the brand header keeps its green, a shade deeper so white stays comfortable */
+:global([data-theme='dark']) .homeHeader {
+  background: linear-gradient(135deg, #05512F 0%, #087443 100%);
+}
+
+/* ---------- balance card ---------- */
+:global([data-theme='dark']) .balanceCard {
+  background: #1E293B;
+  border-color: #14532D;
+}
+
+/* the decorative bloom is a light-green wash; on dark it becomes a haze */
+:global([data-theme='dark']) .balanceCard::after {
+  background: radial-gradient(circle, rgba(52, 200, 142, 0.16) 0%, rgba(52, 200, 142, 0.06) 70%, rgba(52, 200, 142, 0) 100%);
+}
+
+:global([data-theme='dark']) .balanceAmount,
+:global([data-theme='dark']) .balanceAccount { color: #E2E8F0; }
+
+:global([data-theme='dark']) .balanceLabel,
+:global([data-theme='dark']) .balanceAccountLabel { color: #94A3B8; }
+
+
+:global([data-theme='dark']) .currency { color: #34C88E; }
+
+/* ---------- action buttons ---------- */
+:global([data-theme='dark']) .actionBtn,
+:global([data-theme='dark']) .actionBtnPrimary {
+  background: #05512F;
+  border-color: #14532D;
+  color: #A9EBD1;
+}
+
+/* the light hover fills #D1F0E3, which against #A9EBD1 text is 1.12:1 */
+:global([data-theme='dark']) .actionBtn:hover,
+:global([data-theme='dark']) .actionBtnPrimary:hover {
+  background: #087443;
+  border-color: #087443;
+  color: #FFFFFF;              /* 5.85:1 */
+}
+
+:global([data-theme='dark']) .depositBtn { background: #1E293B; color: #E2E8F0; }
+:global([data-theme='dark']) .depositBtn:hover { background: #087443; color: #FFFFFF; }
+
+/* ---------- section headings ---------- */
+:global([data-theme='dark']) .sectionHeader { color: #E2E8F0; }
+:global([data-theme='dark']) .seeAll { color: #34C88E; }
+:global([data-theme='dark']) .seeAll:hover { color: #A9EBD1; }
+
+/* ---------- stats ---------- */
+:global([data-theme='dark']) .statsGrid {
+  background: #1E293B;
+  border-color: #14532D;
+}
+
+:global([data-theme='dark']) .statItem {
+  background: #1E293B;
+  border-color: #14532D;
+}
+
+:global([data-theme='dark']) .statLabel { color: #94A3B8; }
+:global([data-theme='dark']) .statValue { color: #E2E8F0; }
+
+/* ---------- transactions ---------- */
+:global([data-theme='dark']) .transactionItem {
+  background: #1E293B;
+  border-color: #14532D;
+}
+
+:global([data-theme='dark']) .transactionItem:hover { background: #0F172A; }
+:global([data-theme='dark']) .transactionRow { background: #05512F; }
+:global([data-theme='dark']) .transactionRow:hover { background: #087443; }
+
+:global([data-theme='dark']) .txIcon { background: #05512F; color: #A9EBD1; }
+:global([data-theme='dark']) .txType { color: #E2E8F0; }
+:global([data-theme='dark']) .txDate { color: #94A3B8; }
+:global([data-theme='dark']) .txAmount { color: #E2E8F0; }
+
+/* ---------- remaining cards ---------- */
+:global([data-theme='dark']) .moverCard,
+:global([data-theme='dark']) .watchCard {
+  background: #1E293B;
+  border-color: #14532D;
+}
+
+:global([data-theme='dark']) .moverPrice { color: #E2E8F0; }

@@ -1,0 +1,307 @@
+/* ==========================================================================
+   My Profile — visual pass
+
+   Works with the existing markup rather than restructuring it. Scoped to
+   .profile-container so nothing leaks; profile.css already defines several
+   unscoped rules (.card-header, .text-success) that reach other pages.
+   ========================================================================== */
+
+/* width is set once, in profile.css (1200px). Declaring it here too made two
+   equal-specificity rules race on import order. */
+.profile-container .profile-header { margin-top: 0; }
+
+.profile-container .profile-header { margin-bottom: 14px; }
+
+.profile-container .profile-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 4px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--primary-dark);
+}
+
+.profile-container .profile-header h1 svg { color: var(--primary); flex-shrink: 0; }
+
+/* ---------- picture section ----------------------------------------------- */
+.profile-container .profile-picture-section {
+  display: flex;
+  justify-content: center;
+}
+
+.profile-container .profile-picture-container {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* the avatar frame: square source, round display */
+.profile-container .profile-picture-display {
+  position: relative;
+  width: 116px;
+  height: 116px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--light, #E8F7F0);
+  border: 3px solid var(--surface, #FFFFFF);
+  box-shadow: 0 0 0 1px var(--border), 0 6px 18px rgba(8, 116, 67, 0.12);
+}
+
+.profile-container .profile-picture-img {
+  width: 100%;
+  height: 100%;
+  /* the upload is already a square crop; cover guards against legacy
+     non-square images stored before that fix */
+  object-fit: cover;
+  display: block;
+}
+
+.profile-container .profile-picture-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  height: 100%;
+  color: var(--primary-dark);
+}
+
+.profile-container .profile-picture-placeholder p {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+/* ---------- picture actions ----------------------------------------------- */
+.profile-container .profile-picture-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-container .profile-picture-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* the second action is secondary — two identical primary buttons gave the
+   camera and the file picker equal visual weight */
+.profile-container .profile-picture-actions .btn:nth-of-type(2) {
+  background: var(--light, #E8F7F0);
+  color: var(--primary-dark);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.profile-container .profile-picture-actions .btn:nth-of-type(2):hover:not(:disabled) {
+  background: #D1F0E3;
+}
+
+.profile-container .profile-picture-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------- cards --------------------------------------------------------- */
+.profile-container .card { margin-bottom: 16px; }
+
+.profile-container .card .card-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+}
+
+.profile-container .card .card-header h3 svg { color: var(--primary); flex-shrink: 0; }
+
+/* ---------- form ---------------------------------------------------------- */
+.profile-container .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.profile-container .form-group input,
+.profile-container .form-group select {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 12.5px;
+  background: var(--surface, #FFFFFF);
+  color: var(--text);
+}
+
+.profile-container .form-group input:focus,
+.profile-container .form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.profile-container .form-group input:disabled {
+  background: #F1F5F9;
+  color: var(--text-light);
+  cursor: not-allowed;
+}
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 560px) {
+  .profile-container .profile-picture-container {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-container .profile-picture-actions {
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .profile-container .profile-picture-actions .btn { justify-content: center; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .profile-container .profile-picture-display {
+  background: #05512F;
+  border-color: #1E293B;
+  box-shadow: 0 0 0 1px #14532D, 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .profile-container .profile-picture-placeholder { color: #A9EBD1; }
+[data-theme="dark"] .profile-container .form-group label { color: #E2E8F0; }
+
+[data-theme="dark"] .profile-container .form-group input,
+[data-theme="dark"] .profile-container .form-group select {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .profile-container .form-group input:disabled { background: #0B1220; }
+
+[data-theme="dark"] .profile-container .profile-picture-actions .btn:nth-of-type(2) {
+  background: #05512F;
+  border-color: #14532D;
+  color: #A9EBD1;
+}
+
+/* The light-mode hover above paints #D1F0E3, and in dark mode the text stays
+   #A9EBD1 — pale on pale, 1.12:1, effectively invisible. Dark mode needs its
+   own hover: white on #087443 is 5.85:1. */
+[data-theme="dark"] .profile-container .profile-picture-actions .btn:nth-of-type(2):hover:not(:disabled) {
+  background: #087443;
+  border-color: #087443;
+  color: #FFFFFF;
+}
+
+/* ---------- camera modal -------------------------------------------------- */
+.camera-modal-body { position: relative; }
+
+.camera-video {
+  display: block;
+  width: 100%;
+  /* capture crops to a square, so preview the same aspect the user will get */
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  background: #0F172A;
+  transform: scaleX(-1);   /* mirror it, so it behaves like a mirror not a camera */
+}
+
+.camera-starting {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0F172A;
+  color: #E2E8F0;
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* ---------- theme toggle row ---------------------------------------------- */
+/* The switch and its label sat as loose siblings with an inline font-size and
+   no alignment, so the icon, text and track floated at different heights. */
+.profile-container .setting-item .switch { flex-shrink: 0; }
+
+.profile-container .theme-toggle-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-container .theme-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.profile-container .theme-toggle-label svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+[data-theme="dark"] .profile-container .theme-toggle-label { color: #E2E8F0; }
+[data-theme="dark"] .profile-container .theme-toggle-label svg { color: #FCD34D; }
+
+/* ==========================================================================
+   Two-column layout — Profile Picture beside Account Information
+   The shared .grid-2 asks for 500px per column, which never fits inside the
+   user layout, so these cards always stacked. (0,2,0) outranks it.
+   ========================================================================== */
+.profile-container .profile-grid {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* the grid owns the gaps between cards */
+.profile-container .profile-grid > .card { margin-bottom: 0; }
+
+/* Account Details runs the full width on the second row */
+.profile-container .profile-grid > .card.span-2 { grid-column: 1 / -1; }
+
+/* the picture column is narrower, so the avatar and its buttons stack */
+.profile-container .profile-grid .profile-picture-container {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.profile-container .profile-grid .profile-picture-actions {
+  align-items: stretch;
+  width: 100%;
+}
+
+.profile-container .profile-grid .profile-picture-actions .btn {
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .profile-container .profile-grid { grid-template-columns: 1fr; }
+  .profile-container .profile-grid > .card.span-2 { grid-column: auto; }
+}

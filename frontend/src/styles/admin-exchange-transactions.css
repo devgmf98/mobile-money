@@ -1,0 +1,240 @@
+/* ==========================================================================
+   Exchange Transactions
+   Page-specific pieces only; card, table, badges and buttons come from
+   design-system.css.
+   ========================================================================== */
+
+.extx-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+@keyframes extx-spin { to { transform: rotate(360deg); } }
+.exchange-tx .spin { animation: extx-spin 0.9s linear infinite; }
+
+/* ---------- summary ------------------------------------------------------- */
+.extx-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.extx-tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  
+}
+
+.extx-icon {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+
+.extx-icon.tone-primary { background: #E8F7F0; color: var(--primary); }
+.extx-icon.tone-success { background: #DCFCE7; color: #16A34A; }
+.extx-icon.tone-warning { background: #FEF3C7; color: #B45309; }
+
+.extx-value {
+  font-size: 17.5px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.extx-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+/* ---------- toolbar ------------------------------------------------------- */
+.extx-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.extx-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.extx-search { position: relative; display: flex; align-items: center; }
+
+.extx-search svg {
+  position: absolute;
+  left: 11px;
+  color: var(--text-light);
+  pointer-events: none;
+}
+
+.extx-search input {
+  width: 250px;
+  max-width: 100%;
+  padding: 8px 12px 8px 32px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.extx-search input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.extx-mode { width: auto; min-width: 150px; flex-shrink: 0; }
+
+/* ---------- table --------------------------------------------------------- */
+.extx-table th.num,
+.extx-table td.num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.extx-table td.strong { font-weight: 700; color: var(--primary-dark); }
+
+.extx-table .cur {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.extx-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  color: var(--primary-dark);
+  white-space: nowrap;
+}
+
+.extx-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.extx-pair strong {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--primary-dark);
+}
+
+.extx-pair svg { color: var(--primary); flex-shrink: 0; }
+
+.extx-admin,
+/* .extx-date is a <td>. A table cell must keep display:table-cell or it drops
+   out of table layout and stops honouring vertical-align, which left the date
+   sitting at the top of the row while every other column stayed centred. The
+   icon/text row moved to an inner span. */
+.extx-date {
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.extx-date-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.extx-date { font-size: 12px; color: var(--text-light); }
+.extx-admin svg,
+.extx-date svg { color: var(--primary); flex-shrink: 0; }
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .extx-tile { background: #1E293B; border-color: #14532D; }
+[data-theme="dark"] .extx-value { color: #E2E8F0; }
+[data-theme="dark"] .extx-icon.tone-primary { background: #05512F; color: #34C88E; }
+[data-theme="dark"] .extx-icon.tone-success { background: #14532D; color: #4ADE80; }
+[data-theme="dark"] .extx-icon.tone-warning { background: #4A2E05; color: #FBBF24; }
+[data-theme="dark"] .extx-search input {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #E2E8F0;
+}
+[data-theme="dark"] .extx-id { background: #0F172A; color: #34C88E; }
+[data-theme="dark"] .extx-pair strong { color: #34C88E; }
+[data-theme="dark"] .extx-table td.strong { color: #34C88E; }
+[data-theme="dark"] .extx-admin { color: #E2E8F0; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 640px) {
+  .extx-toolbar,
+  .extx-toolbar-right { flex-direction: column; align-items: stretch; }
+  .extx-search input,
+  .extx-mode { width: 100%; }
+  .extx-tile { padding: 12px 13px; }
+  .extx-value { font-size: 16.5px; }
+}
+
+/* ---------- row actions ---------------------------------------------------- */
+.extx-table th.right,
+.extx-table td.right { text-align: right; }
+
+.extx-actions {
+  display: inline-flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.exchange-tx .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.exchange-tx .icon-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.exchange-tx .icon-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .exchange-tx .icon-btn {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #A9EBD1;
+}

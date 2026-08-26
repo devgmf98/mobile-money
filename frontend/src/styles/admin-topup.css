@@ -1,0 +1,364 @@
+/* ==========================================================================
+   User Topup
+   Page-specific pieces only; card, form fields, badges and buttons come from
+   design-system.css. Selectors are scoped to .topup-page so nothing leaks
+   into other pages (all CSS in this app is bundled globally).
+
+   Deliberately mirrors admin-agent-withdraw.css: the two admin cash-movement
+   screens are the same task in opposite directions and should read the same.
+   ========================================================================== */
+
+.tp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* The shared .grid-2 needs 500px per column, which never fits beside the admin
+   sidebar, so the cards stacked full-width. This min actually fits. */
+.topup-page .tp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.topup-page .tp-card { margin-bottom: 0; }
+
+.topup-page .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tp-step {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.topup-page .form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topup-page .form-group label svg { color: var(--primary); flex-shrink: 0; }
+
+.topup-page .tp-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+/* ---------- alerts -------------------------------------------------------- */
+.tp-alert {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tp-alert svg { flex-shrink: 0; }
+.tp-alert.is-error { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+.tp-alert.is-success { background: #E8F7F0; border-color: #A9EBD1; color: #065F46; }
+
+/* ---------- search -------------------------------------------------------- */
+.tp-search-field {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.tp-search-field input { flex: 1; min-width: 0; }
+.topup-page .tp-search-field .btn { flex-shrink: 0; white-space: nowrap; }
+
+/* ---------- user result --------------------------------------------------- */
+.tp-user {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--light, #E8F7F0);
+}
+
+.tp-user-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.tp-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 12.5px;
+  letter-spacing: 0.5px;
+}
+
+.tp-user-id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.tp-user-id strong {
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tp-user-id span { font-size: 12px; color: var(--text-light); }
+
+.tp-balance {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+}
+
+.tp-balance-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.tp-balance-value {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+.tp-verify {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 11px;
+  padding: 8px 11px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tp-verify svg { flex-shrink: 0; }
+.tp-verify.is-ok { background: #FFFFFF; color: #065F46; border: 1px solid #A9EBD1; }
+.tp-verify.is-warn { background: #FEF9E7; color: #92400E; border: 1px solid #FDE68A; }
+
+/* ---------- amount -------------------------------------------------------- */
+.tp-amount-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  overflow: hidden;
+}
+
+.tp-amount-field:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.tp-currency {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-light);
+  border-right: 1px solid var(--border);
+}
+
+/* the wrapper owns the frame, so the input inside is bare */
+.topup-page .tp-amount-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.topup-page .tp-amount-field input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.tp-quick {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.tp-quick button {
+  flex: 1;
+  padding: 5px 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.tp-quick button:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+/* ---------- summary ------------------------------------------------------- */
+.tp-summary {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--light, #E8F7F0);
+}
+
+.tp-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  padding: 3px 0;
+  color: var(--text-light);
+}
+
+.tp-summary-row strong { color: var(--text); font-weight: 700; }
+.tp-summary-row strong.is-in { color: var(--success, #16A34A); }
+
+.tp-summary-row.is-total {
+  margin-top: 7px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tp-summary-row.is-total strong {
+  font-size: 14px;
+  color: var(--primary-dark);
+}
+
+.topup-page .tp-verify-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+.topup-page .tp-verify-note svg { flex-shrink: 0; }
+
+/* locked step 2 reads as inactive until a user is loaded */
+.topup-page .tp-card.is-locked { opacity: 0.85; }
+.topup-page .tp-empty { padding: 26px 16px; }
+
+/* ---------- guide --------------------------------------------------------- */
+.topup-page .tp-guide { margin-top: 18px; }
+
+.tp-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.tp-guide-col {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--light, #E8F7F0);
+}
+
+.tp-guide-col.is-warn { background: #FEF9E7; border-color: #FDE68A; }
+
+.tp-guide-col h4 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--primary-dark);
+}
+
+.tp-guide-col.is-warn h4 { color: #92400E; }
+
+.tp-steps,
+.tp-notes {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+}
+
+.tp-steps li,
+.tp-notes li {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.tp-guide-col.is-warn li { color: #78350F; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 560px) {
+  .tp-search-field { flex-direction: column; }
+  .topup-page .tp-search-field .btn { width: 100%; justify-content: center; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .topup-page .tp-user { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .topup-page .tp-user-id strong { color: #E2E8F0; }
+[data-theme="dark"] .topup-page .tp-balance-value { color: #A9EBD1; }
+[data-theme="dark"] .topup-page .tp-verify.is-ok { background: #0F172A; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .topup-page .tp-amount-field { background: #0F172A; border-color: #14532D; }
+[data-theme="dark"] .topup-page .tp-currency { border-right-color: #14532D; }
+[data-theme="dark"] .topup-page .tp-quick button { background: #0F172A; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .topup-page .tp-summary { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .topup-page .tp-summary-row strong { color: #E2E8F0; }
+[data-theme="dark"] .topup-page .tp-summary-row.is-total { color: #E2E8F0; }
+[data-theme="dark"] .topup-page .tp-summary-row.is-total strong { color: #A9EBD1; }
+[data-theme="dark"] .topup-page .tp-guide-col { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .topup-page .tp-guide-col h4 { color: #A9EBD1; }
+[data-theme="dark"] .topup-page .tp-steps li,
+[data-theme="dark"] .topup-page .tp-notes li { color: #E2E8F0; }
+[data-theme="dark"] .tp-alert.is-success { background: #05512F; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .tp-alert.is-error { background: #450A0A; border-color: #7F1D1D; color: #FCA5A5; }

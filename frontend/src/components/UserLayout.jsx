@@ -1,10 +1,48 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import BottomNav from './BottomNav';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import mpLogo from '../assets/mp-logo.png';
+import mpIcon from '../assets/mp-icon.png';
+import { Banknote, Bell, QrCode, ChartColumn, CircleUserRound, ClipboardList, Hourglass, Lock, PanelLeftClose, PanelLeftOpen, RefreshCw, Upload, User, UserCog } from 'lucide-react';
 import { useAuthStore } from '../context/store';
 import { useNotificationStore } from '../context/store';
 import { notificationAPI } from '../utils/api';
 import io from 'socket.io-client';
 import '../styles/layout.css';
+import './HamburgerMenu.css';
+
+/* Navbar page title — keyed by the last path segment, so it works for both the
+   /user and /agent trees. Titles and icons match the sidebar nav items, since
+   the navbar is naming whichever one is active.
+
+   `scan`, `receive` and `designing` are reachable inside this layout without
+   having a sidebar item of their own; they get a title here rather than
+   falling through to the path-segment fallback. */
+const PAGE_META = {
+  dashboard: { title: 'Dashboard', Icon: ChartColumn },
+  'send-money': { title: 'Send Money', Icon: Upload },
+  withdraw: { title: 'Withdraw', Icon: Banknote },
+  'pull-from-user': { title: 'Pull from User', Icon: RefreshCw },
+  'pending-admin-requests': { title: 'Admin Requests', Icon: UserCog },
+  transactions: { title: 'Transactions', Icon: ClipboardList },
+  notifications: { title: 'Notifications', Icon: Bell },
+  profile: { title: 'Profile', Icon: User },
+  scan: { title: 'Scan QR', Icon: QrCode },
+  receive: { title: 'Receive', Icon: QrCode },
+  designing: { title: 'Designing', Icon: ChartColumn },
+};
+
+// The one path both roles share under a different sidebar label.
+const PENDING = {
+  user: { title: 'Pending Withdrawals', Icon: Hourglass },
+  agent: { title: 'Pending Requests', Icon: Hourglass },
+};
+
+// Keeps a new route from rendering a blank navbar.
+const titleFromPath = (segment) => segment
+  .split('-')
+  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+  .join(' ');
 
 export default function UserLayout() {
   const user = useAuthStore((state) => state.user);
@@ -13,6 +51,7 @@ export default function UserLayout() {
   const setNotifications = useNotificationStore((state) => state.setNotifications);
   const addNotification = useNotificationStore((state) => state.addNotification);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     try {
@@ -57,7 +96,7 @@ export default function UserLayout() {
     fetchNotifications();
 
     // Connect to socket
-    const socket = io('http://localhost:8080');
+    const socket = io(import.meta.env.VITE_SOCKET_URL || 'https://cash-app-apis.up.railway.app');
     socket.emit('join-user', user?.id);
 
     socket.on('new-notification', (data) => {
@@ -121,72 +160,84 @@ export default function UserLayout() {
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const baseRoute = `/${user?.role || 'user'}`;
 
+  const segment = pathname.split('/').filter(Boolean).pop() || 'dashboard';
+  const pageMeta = segment === 'pending-withdrawals'
+    ? (PENDING[user?.role] || PENDING.user)
+    : PAGE_META[segment];
+  const pageTitle = pageMeta?.title || titleFromPath(segment);
+  const PageIcon = pageMeta?.Icon;
+
   return (
     <div className="layout">
       <aside className={`sidebar ${menuOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`} ref={menuRef}>
         <div className="sidebar-brand">
-          <span className="brand-icon">💰</span>
-          <span className="brand-label">MoneyPay</span>
+          <img src={mpLogo} alt="MoneyPay" className="brand-logo-full" />
+          <img src={mpIcon} alt="" aria-hidden="true" className="brand-logo-mark" />
+          <button
+            type="button"
+            className="sidebar-toggle"
+            onClick={toggleCollapse}
+            aria-pressed={collapsed}
+            aria-label={collapsed ? 'Show labels' : 'Show icons only'}
+            title={collapsed ? 'Show labels' : 'Show icons only'}
+          >
+            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
         </div>
-        <button className="sidebar-toggle" onClick={toggleCollapse} title={collapsed ? 'Expand' : 'Collapse'}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 6L15 12L9 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </button>
         <nav className="sidebar-nav">
-          <Link to={`${baseRoute}/dashboard`} className="nav-item nav-card">
-            <span className="nav-icon">📊</span>
+          <NavLink to={`${baseRoute}/dashboard`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+            <span className="nav-icon"><ChartColumn size={18} /></span>
             <span className="nav-label">Dashboard</span>
-          </Link>
-          <Link to={`${baseRoute}/send-money`} className="nav-item nav-card">
-            <span className="nav-icon">📤</span>
+          </NavLink>
+          <NavLink to={`${baseRoute}/send-money`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+            <span className="nav-icon"><Upload size={18} /></span>
             <span className="nav-label">Send Money</span>
-          </Link>
+          </NavLink>
           {user?.role === 'user' && (
-            <Link to={`${baseRoute}/withdraw`} className="nav-item nav-card">
-              <span className="nav-icon">💵</span>
+            <NavLink to={`${baseRoute}/withdraw`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+              <span className="nav-icon"><Banknote size={18} /></span>
               <span className="nav-label">Withdraw</span>
-            </Link>
+            </NavLink>
           )}
           {user?.role === 'agent' && (
             <>
-              <Link to={`${baseRoute}/pull-from-user`} className="nav-item nav-card">
-                <span className="nav-icon">🔄</span>
+              <NavLink to={`${baseRoute}/pull-from-user`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+                <span className="nav-icon"><RefreshCw size={18} /></span>
                 <span className="nav-label">Pull from User</span>
-              </Link>
-              <Link to={`${baseRoute}/pending-withdrawals`} className="nav-item nav-card">
-                <span className="nav-icon">⏳</span>
+              </NavLink>
+              <NavLink to={`${baseRoute}/pending-withdrawals`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+                <span className="nav-icon"><Hourglass size={18} /></span>
                 <span className="nav-label">Pending Requests</span>
-              </Link>
-              <Link to={`${baseRoute}/pending-admin-requests`} className="nav-item nav-card">
-                <span className="nav-icon">👨‍💼</span>
+              </NavLink>
+              <NavLink to={`${baseRoute}/pending-admin-requests`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+                <span className="nav-icon"><UserCog size={18} /></span>
                 <span className="nav-label">Admin Requests</span>
-              </Link>
+              </NavLink>
             </>
           )}
           {user?.role === 'user' && (
-            <Link to={`${baseRoute}/pending-withdrawals`} className="nav-item nav-card">
-              <span className="nav-icon">⏳</span>
+            <NavLink to={`${baseRoute}/pending-withdrawals`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+              <span className="nav-icon"><Hourglass size={18} /></span>
               <span className="nav-label">Pending Withdrawals</span>
-            </Link>
+            </NavLink>
           )}
-          <Link to={`${baseRoute}/transactions`} className="nav-item nav-card">
-            <span className="nav-icon">📋</span>
+          <NavLink to={`${baseRoute}/transactions`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+            <span className="nav-icon"><ClipboardList size={18} /></span>
             <span className="nav-label">Transactions</span>
-          </Link>
-          <Link to={`${baseRoute}/notifications`} className="nav-item nav-card">
-            <span className="nav-icon">🔔</span>
+          </NavLink>
+          <NavLink to={`${baseRoute}/notifications`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+            <span className="nav-icon"><Bell size={18} /></span>
             <span className="nav-label">Notifications</span>
             {unreadCount > 0 && <span className="badge-count">{unreadCount}</span>}
-          </Link>
-          <Link to={`${baseRoute}/profile`} className="nav-item nav-card">
-            <span className="nav-icon">👤</span>
+          </NavLink>
+          <NavLink to={`${baseRoute}/profile`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
+            <span className="nav-icon"><User size={18} /></span>
             <span className="nav-label">Profile</span>
-          </Link>
+          </NavLink>
         </nav>
         <div className="sidebar-footer">
           <button className="btn btn-outline logout-mobile sidebar-logout" onClick={() => { setMenuOpen(false); handleLogout(); }}>
-            <span className="btn-icon">🔒</span>
+            <span className="btn-icon"><Lock size={18} /></span>
             <span className="btn-label">Logout</span>
           </button>
         </div>
@@ -194,50 +245,78 @@ export default function UserLayout() {
 
       <div className="main">
         <div className="navbar">
+          {/* Logo below 769px, where the sidebar is off-canvas and the navbar
+              is the only thing carrying the brand. */}
           <div className="navbar-brand">
-            <h2>💰 MoneyPay</h2>
+            <img src={mpLogo} alt="MoneyPay" className="navbar-brand-logo" />
           </div>
 
-          <button ref={toggleRef} className="menu-toggle" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(s => !s)}>
-            {menuOpen ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 6H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M4 12H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M4 18H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
-          </button>
+          {/* From 769px up the sidebar is on screen with the brand at its top,
+              so repeating the logo here said nothing. This names the active
+              sidebar item instead. */}
+          <div className="navbar-page-title">
+            {PageIcon && <PageIcon size={18} />}
+            <span>{pageTitle}</span>
+          </div>
 
-          <div className="navbar-user" ref={userRef}>
+          <div style={{ flex: 1 }}></div>
+
+          <div className="navbar-icons">
+            {/* Quick access to the user's own QR code. Large screens only —
+                below 769px the bottom nav already covers this. */}
             <div
-              className="user-info"
-              onClick={() => {
-                if (typeof window !== 'undefined' && window.matchMedia('(min-width: 769px)').matches) {
-                  setUserMenuOpen(s => !s);
-                }
-              }}
-              style={{ cursor: 'pointer' }}
+              className="navbar-icon-item navbar-qr"
+              onClick={() => navigate(`${baseRoute}/receive`)}
+              title="Show my QR code"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`${baseRoute}/receive`); } }}
             >
-              <span className="user-name">{user?.name}</span>
-              <span className="user-role">{user?.role}</span>
+              <QrCode size={20} />
             </div>
 
-            {userMenuOpen && (
-              <div className="user-dropdown" ref={userMenuRef}>
-                <button className="btn btn-outline" onClick={() => { setUserMenuOpen(false); handleLogout(); }}>Logout</button>
-              </div>
-            )}
+            {/* Notification Icon */}
+            <div
+              className="navbar-icon-item"
+              style={{ position: 'relative', cursor: 'pointer' }}
+              onClick={() => navigate(`${baseRoute}/notifications`)}
+              title="Notifications"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="navbar-badge">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+
+            {/* Profile Avatar */}
+            <div
+              ref={userRef}
+              className="navbar-icon-item"
+              onClick={() => navigate(`${baseRoute}/profile`)}
+              style={{ cursor: 'pointer', position: 'relative' }}
+              title="Profile"
+            >
+              {/* the avatar when one is set, the fallback icon otherwise */}
+              {user?.profileImage
+                ? <img src={user.profileImage} alt="" className="navbar-avatar" />
+                : <CircleUserRound size={28} />}
+            </div>
           </div>
         </div>
 
         <div className="layout-body">
-          <Outlet />
+          <Suspense fallback={<div className="route-loading" aria-busy="true">Loading...</div>}>
+            <Outlet />
+          </Suspense>
         </div>
+        {/* Always rendered; a media query decides whether it shows. Gating on
+            window.innerWidth read the width once at render and never again, so
+            the bar did not appear or disappear when the window was resized. */}
+        <BottomNav />
+        {/* ...existing code... */}
+
       </div>
     </div>
   );

@@ -1,21 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { adminAPI, authAPI } from '../utils/api';
 import { useAuthStore } from '../context/store';
 import Toast from '../components/Toast';
 import Footer from '../components/Footer';
-import '../styles/withdraw.css';
+import '../styles/admin-account.css';
+import { MapPin, Monitor, Moon, Settings, Sun, TriangleAlert } from 'lucide-react';
 
 export default function AdminSettings() {
-  const user = useAuthStore((state) => state.user);
   const setTheme = useAuthStore((state) => state.setTheme);
-  const [theme, setThemeLocal] = useState(user?.theme || 'light');
+  const updateUser = useAuthStore((state) => state.updateUser);
+  // Read from the store rather than a local copy of user.theme, so the switch
+  // can never disagree with the theme actually applied to the document.
+  const theme = useAuthStore((state) => state.theme);
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('info');
   const [granting, setGranting] = useState(false);
-
-  useEffect(() => {
-    // Settings page initialization if needed
-  }, []);
 
   const handleThemeChange = async (newThemeOverride) => {
     try {
@@ -24,15 +23,14 @@ export default function AdminSettings() {
       // Update backend using authAPI.updateProfile
       const { data } = await authAPI.updateProfile({ theme: newTheme });
 
-      // Update store with returned user data
+      // updateUser (not setState) so localStorage is written too - otherwise
+      // the change is lost on refresh.
       if (data) {
-        useAuthStore.setState({ user: data });
+        updateUser(data);
         setTheme(data.theme || newTheme);
-        setThemeLocal(data.theme || newTheme);
       }
 
-      // Show toast
-      const themeLabel = newTheme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
+      const themeLabel = newTheme === 'dark' ? 'Dark Mode' : 'Light Mode';
       setToastMessage(`Theme changed to ${themeLabel}`);
       setToastType('success');
     } catch (err) {
@@ -42,82 +40,99 @@ export default function AdminSettings() {
     }
   };
 
+  const handleGrantLocation = async () => {
+    if (!window.confirm('Grant location consent to ALL users? This cannot be undone easily.')) return;
+    setGranting(true);
+    try {
+      const { data } = await adminAPI.grantLocationPermissionToAll();
+      setToastMessage(`Granted to ${data.modifiedCount || 0} users`);
+      setToastType('success');
+    } catch (err) {
+      console.error('Grant failed', err);
+      setToastMessage(err?.response?.data?.message || 'Failed to grant');
+      setToastType('error');
+    } finally {
+      setGranting(false);
+    }
+  };
+
   return (
     <>
-    <div className="page-container">
-      <div className="page-header">
-        <h1>Admin Settings</h1>
-        <p>Configure system-wide settings</p>
-      </div>
+      <div className="page-container account-page">
+        <div className="page-header">
+          <h1>Admin Settings</h1>
+          <p>Configure appearance and system-wide options.</p>
+        </div>
 
-      <div className="card">
+        {/* appearance */}
+        <div className="card">
           <div className="card-header">
-            <h3>⚙️ Display Settings</h3>
+            <h3><Settings size={18} /> Appearance</h3>
           </div>
           <div className="card-body">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 0' }}>
-              <div>
-                <h4 style={{ margin: '0 0 5px 0' }}>Display Mode</h4>
-                <p style={{ margin: 0, fontSize: '14px', color: 'var(--text-light)' }}>Choose between light and dark mode</p>
+            <div className="setting-row">
+              <div className="setting-icon" aria-hidden="true"><Monitor size={20} /></div>
+              <div className="setting-copy">
+                <span className="setting-title">Display mode</span>
+                <span className="setting-hint">Choose between a light or dark interface. Saved to your account.</span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <label className="switch" style={{ marginRight: '10px' }}>
+              <div className="setting-control">
+                <span className="theme-tag">
+                  {theme === 'dark' ? <><Moon size={15} /> Dark</> : <><Sun size={15} /> Light</>}
+                </span>
+                <label className="switch" title="Toggle dark mode">
                   <input
                     type="checkbox"
                     checked={theme === 'dark'}
+                    aria-label="Dark mode"
                     onChange={async (e) => {
                       const newTheme = e.target.checked ? 'dark' : 'light';
-                      setThemeLocal(newTheme);
+                      setTheme(newTheme); // optimistic; reconciled on response
                       await handleThemeChange(newTheme);
                     }}
                   />
                   <span className="slider"></span>
                 </label>
-                <span style={{ fontSize: '14px' }}>{theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}</span>
               </div>
             </div>
           </div>
-      </div>
+        </div>
 
-      <div className="card">
+        {/* system-wide, destructive */}
+        <div className="card danger-card">
           <div className="card-header">
-            <h3>Location Permissions</h3>
+            <h3><TriangleAlert size={18} /> System-wide actions</h3>
           </div>
           <div className="card-body">
-            <p style={{ marginTop: 0 }}>Grant server-side location consent for all users. Note: this sets a server flag so the app can use IP-based location fallback automatically; it cannot override browser-level geolocation permissions.</p>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <button
-                className="btn btn-danger"
-                onClick={async () => {
-                  if (!confirm('Grant location consent to ALL users? This cannot be undone easily.')) return;
-                  setGranting(true);
-                  try {
-                    const { data } = await adminAPI.grantLocationPermissionToAll();
-                    setToastMessage(`Granted to ${data.modifiedCount || 0} users`);
-                    setToastType('success');
-                  } catch (err) {
-                    console.error('Grant failed', err);
-                    setToastMessage(err?.response?.data?.message || 'Failed to grant');
-                    setToastType('error');
-                  } finally {
-                    setGranting(false);
-                  }
-                }}
-                disabled={granting}
-              >
-                {granting ? 'Granting...' : 'Grant Location Consent to All Users'}
-              </button>
-              <small className="text-muted">This will mark users server-side for automatic IP-based location fallback.</small>
+            <div className="setting-row">
+              <div className="setting-icon is-danger" aria-hidden="true"><MapPin size={20} /></div>
+              <div className="setting-copy">
+                <span className="setting-title">Grant location consent to all users</span>
+                <span className="setting-hint">
+                  Sets a server-side flag so the app can fall back to IP-based location for every
+                  user. It cannot override browser-level geolocation permissions, and it affects all
+                  accounts at once.
+                </span>
+              </div>
+              <div className="setting-control">
+                <button className="btn btn-danger" onClick={handleGrantLocation} disabled={granting}>
+                  {granting ? 'Granting…' : 'Grant to all'}
+                </button>
+              </div>
             </div>
+
+            <p className="danger-note">
+              <TriangleAlert size={14} /> This applies to every user account and is not easily reversed.
+            </p>
           </div>
+        </div>
       </div>
-    </div>
-    <Footer />
-    <Toast 
-      message={toastMessage} 
-      type={toastType} 
-      onClose={() => setToastMessage('')} 
-    />
+      <Footer />
+      <Toast
+        message={toastMessage}
+        type={toastType}
+        onClose={() => setToastMessage('')}
+      />
     </>
   );
 }

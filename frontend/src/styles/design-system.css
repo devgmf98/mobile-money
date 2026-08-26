@@ -1,0 +1,785 @@
+/* ==========================================================================
+   MoneyPay design system
+   --------------------------------------------------------------------------
+   The shared primitives (.btn, .card, .badge, .page-header, .table) were each
+   defined in several page stylesheets - .btn alone appeared in seven. Because
+   Vite bundles all CSS globally, whichever copy happened to load last won, so
+   the same class rendered differently from page to page.
+
+   This file is imported LAST in main.jsx and is the single source of truth for
+   those primitives. Page stylesheets can still add page-specific rules; they
+   just no longer decide what a button looks like.
+
+   Palette: #00A86B primary · #087443 dark · #E8F7F0 light · #FFFFFF surface
+            #16A34A success · #DC2626 error · #F59E0B warning
+   ========================================================================== */
+
+/* ---------- page shell ---------------------------------------------------- */
+.page-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-top: 0;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  margin: 0 0 4px;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+  color: var(--primary-dark);
+}
+
+.page-header p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-light);
+}
+
+/* ---------- card ---------------------------------------------------------- */
+.card {
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  
+}
+
+.card + .card {
+  margin-top: 18px;
+}
+
+.card-header {
+  padding: 0 0 14px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+}
+
+.card-header h2,
+.card-header h3,
+.card-header h4 {
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-body { padding: 0; }
+
+.card-footer {
+  padding: 14px 0 0;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- buttons ------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease,
+              box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn:disabled,
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn svg { flex-shrink: 0; }
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-dark);
+  border-color: var(--primary-dark);
+  box-shadow: 0 4px 14px rgba(0, 168, 107, 0.28);
+}
+
+.btn-secondary {
+  background: #E8F7F0;
+  border-color: #D1F0E3;
+  color: var(--primary-dark);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #D1F0E3;
+  border-color: var(--primary);
+}
+
+.btn-success {
+  background: var(--success, #16A34A);
+  border-color: var(--success, #16A34A);
+  color: #FFFFFF;
+}
+.btn-success:hover:not(:disabled) { filter: brightness(0.93); }
+
+.btn-danger {
+  background: var(--error, #DC2626);
+  border-color: var(--error, #DC2626);
+  color: #FFFFFF;
+}
+.btn-danger:hover:not(:disabled) { filter: brightness(0.93); }
+
+.btn-warning {
+  background: var(--warning, #F59E0B);
+  border-color: var(--warning, #F59E0B);
+  color: #3A2606;
+}
+.btn-warning:hover:not(:disabled) { filter: brightness(0.95); }
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--primary-dark);
+}
+.btn-outline:hover:not(:disabled) {
+  background: #E8F7F0;
+  border-color: var(--primary);
+  color: var(--primary-dark);
+}
+
+/* .btn-outline.btn-danger appears in a few places - keep it readable */
+.btn-outline.btn-danger {
+  background: transparent;
+  border-color: var(--error, #DC2626);
+  color: var(--error, #DC2626);
+}
+.btn-outline.btn-danger:hover:not(:disabled) {
+  background: var(--error, #DC2626);
+  color: #FFFFFF;
+}
+
+/* Narrowed: horizontal padding and the icon/label gap are what drive width, so
+   both come down. Vertical padding is left at 6px — these are already ~31px
+   tall, under the ~44px touch target guideline, and trimming height would make
+   that worse without making the button narrower. */
+.btn-sm {
+  padding: 6px 9px;
+  gap: 6px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+.btn-lg { padding: 12px 22px; font-size: 14px; border-radius: 12px; }
+.btn-block { display: flex; width: 100%; }
+
+/* ---------- forms --------------------------------------------------------- */
+.form-group { margin-bottom: 16px; }
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-dark);
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  font-family: inherit;
+  font-size: 12.5px;
+  color: var(--text);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+  background: #F1F5F9;
+  color: var(--text-light);
+  cursor: not-allowed;
+}
+
+.form-group small,
+.form-group .help-text {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+/* ---------- table --------------------------------------------------------- */
+.table-wrap { overflow-x: auto; }
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+.table th {
+  padding: 11px 13px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table th:first-child { border-top-left-radius: 10px; }
+.table th:last-child { border-top-right-radius: 10px; }
+
+.table td {
+  padding: 12px 13px;
+  border-bottom: 1px solid #EEF2F6;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.table tbody tr:hover td { background: #F8FAFC; }
+.table tbody tr:last-child td { border-bottom: none; }
+
+/* ---------- badges -------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.badge-success { background: #DCFCE7; color: #15803D; }
+.badge-danger,
+.badge-error   { background: #FEE2E2; color: #B91C1C; }
+.badge-warning { background: #FEF3C7; color: #B45309; }
+.badge-info    { background: #DCF3F4; color: #0E7C86; }
+.badge-primary { background: #E8F7F0; color: var(--primary-dark); }
+.badge-muted   { background: #F1F5F9; color: #64748B; }
+
+/* ---------- empty state --------------------------------------------------- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.empty-state .empty-icon,
+.empty-state .empty-state-icon {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: #E8F7F0;
+  color: var(--primary);
+}
+
+.empty-state h3 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--primary-dark);
+}
+
+/* ---------- modal --------------------------------------------------------- */
+.modal-overlay,
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4, 51, 30, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+}
+
+.modal,
+.modal-content {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--surface, #FFFFFF);
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 24px 60px rgba(4, 51, 30, 0.28);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2,
+.modal-header h3 {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.modal-close {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: #E8F7F0;
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.modal-close:hover { background: var(--error, #DC2626); color: #FFFFFF; }
+
+.modal-actions,
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 16px;
+  margin-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .modal-content {
+  background: #1E293B;
+  border-color: #14532D;
+}
+
+/* Cards are flat now and read as flat by their border alone. Modals still need
+   elevation: they float over a dimmed backdrop of the same colour family, and
+   with no shadow the panel edge disappears into it. */
+[data-theme="dark"] .modal,
+[data-theme="dark"] .modal-content {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .page-header h1,
+[data-theme="dark"] .card-header h2,
+[data-theme="dark"] .card-header h3,
+[data-theme="dark"] .card-header h4,
+[data-theme="dark"] .modal-header h2,
+[data-theme="dark"] .modal-header h3 { color: #34C88E; }
+
+[data-theme="dark"] .form-group label { color: #A9EBD1; }
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #E2E8F0;
+}
+
+[data-theme="dark"] .table th { background: #0F172A; color: #94A3B8; }
+[data-theme="dark"] .table td { border-bottom-color: #14532D; color: #E2E8F0; }
+[data-theme="dark"] .table tbody tr:hover td { background: #0F172A; }
+
+[data-theme="dark"] .btn-secondary {
+  background: #05512F;
+  border-color: #14532D;
+  color: #A9EBD1;
+}
+[data-theme="dark"] .btn-outline {
+  border-color: #14532D;
+  color: #A9EBD1;
+}
+[data-theme="dark"] .btn-outline:hover:not(:disabled) {
+  background: #05512F;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .empty-state .empty-icon,
+[data-theme="dark"] .empty-state .empty-state-icon {
+  background: #05512F;
+  color: #34C88E;
+}
+
+[data-theme="dark"] .modal-close { background: #05512F; color: #34C88E; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 640px) {
+  .page-container { padding: 14px; }
+  .page-header h1 { font-size: 17.5px; }
+  .card { padding: 16px; border-radius: 12px; }
+  .modal,
+  .modal-content { padding: 18px; border-radius: 14px; }
+  .modal-actions,
+  .modal-footer { flex-direction: column-reverse; }
+  .modal-actions .btn,
+  .modal-footer .btn { width: 100%; }
+  .table { font-size: 12px; }
+  .table th,
+  .table td { padding: 10px; }
+}
+
+/* ==========================================================================
+   Placeholders
+   The previous rule only reached `.form-group input`, so search boxes, modal
+   fields and the amount input kept the browser default. These selectors are
+   unscoped so every field is consistent.
+   ========================================================================== */
+
+input::placeholder,
+textarea::placeholder {
+  color: #94A3B8;
+  /* placeholders must never read as an entered value: the amount field sets
+     font-weight 600, which the placeholder would otherwise inherit */
+  font-weight: 400;
+  font-style: normal;
+  opacity: 1;               /* Firefox dims placeholders by default */
+  transition: color 0.18s ease, opacity 0.18s ease;
+}
+
+/* fade back while typing focus is in the field */
+input:focus::placeholder,
+textarea:focus::placeholder {
+  color: #CBD5E1;
+}
+
+/* A select showing its "-- Select … --" option is a placeholder too, so tint
+   the closed control while leaving the open list at normal contrast. */
+select:has(option[value=""]:checked) {
+  color: #94A3B8;
+}
+
+select option {
+  color: var(--text);
+  font-weight: 400;
+}
+
+select option[value=""] {
+  color: #94A3B8;
+}
+
+/* ---- dark mode ---- */
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #64748B;
+}
+
+[data-theme="dark"] input:focus::placeholder,
+[data-theme="dark"] textarea:focus::placeholder {
+  color: #475569;
+}
+
+[data-theme="dark"] select:has(option[value=""]:checked) {
+  color: #64748B;
+}
+
+[data-theme="dark"] select option {
+  color: #E2E8F0;
+  background: #0F172A;
+}
+
+/* ==========================================================================
+   Dropdown option highlight
+   The blue bar on an open <select> is the browser/OS default. Native option
+   rendering is only partly styleable: Chrome ignores a plain background on
+   option:checked but honours a linear-gradient, while Firefox accepts either.
+   accent-color additionally recolours the highlight in engines that support it.
+   ========================================================================== */
+
+select {
+  accent-color: var(--primary, #00A86B);
+}
+
+select option {
+  padding: 8px 10px;
+}
+
+/* selected row in the open list */
+select option:checked,
+select option[selected] {
+  background: linear-gradient(#E8F7F0, #E8F7F0);
+  background-color: #E8F7F0 !important;
+  color: var(--primary-dark, #087443) !important;
+  font-weight: 600;
+}
+
+/* hovered / keyboard-highlighted row */
+select option:hover,
+select option:focus {
+  background: linear-gradient(#D1F0E3, #D1F0E3);
+  background-color: #D1F0E3 !important;
+  color: var(--primary-dark, #087443) !important;
+}
+
+/* the empty "Select …" row stays muted even when checked */
+select option[value=""]:checked {
+  background: linear-gradient(#F1F5F9, #F1F5F9);
+  background-color: #F1F5F9 !important;
+  color: #94A3B8 !important;
+  font-weight: 400;
+}
+
+/* multi-selects and size>1 lists render inline, where this fully applies */
+select[multiple] option:checked,
+select[size]:not([size="1"]) option:checked {
+  background: linear-gradient(#E8F7F0, #E8F7F0);
+  color: var(--primary-dark, #087443);
+}
+
+/* ---- dark mode ---- */
+[data-theme="dark"] select option:checked,
+[data-theme="dark"] select option[selected] {
+  background: linear-gradient(#05512F, #05512F);
+  background-color: #05512F !important;
+  color: #A9EBD1 !important;
+}
+
+[data-theme="dark"] select option:hover,
+[data-theme="dark"] select option:focus {
+  background: linear-gradient(#087443, #087443);
+  background-color: #087443 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="dark"] select option[value=""]:checked {
+  background: linear-gradient(#0F172A, #0F172A);
+  background-color: #0F172A !important;
+  color: #64748B !important;
+}
+
+/* ==========================================================================
+   Number inputs
+   The native spinner arrows are fiddly to hit, add nothing on touch, and look
+   out of place next to the rest of the fields. Removed globally — all 21
+   number inputs are money/percentage values that get typed, not stepped.
+   Keyboard arrow keys still increment, so nothing is lost functionally.
+   ========================================================================== */
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ==========================================================================
+   Scrollbars
+   Hidden everywhere, while scrolling itself is untouched — wheel, trackpad,
+   touch, keyboard and programmatic scrolling all behave as before.
+   Loaded last, and uses the universal selector so it also covers elements
+   whose own scrollbar rules were removed.
+   ========================================================================== */
+
+* {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* legacy Edge / IE */
+}
+
+*::-webkit-scrollbar {            /* Chrome, Safari, current Edge */
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* ==========================================================================
+   Reduced motion
+   Honours the OS-level setting. Loaded last, so it overrides the entry
+   animations and hover transitions declared in the page stylesheets.
+   Animations are reduced to a single instant frame rather than removed, so
+   anything relying on an animationend event still fires.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Dark-mode hover for .btn-secondary
+
+   The light hover paints a pale fill (#D1F0E3 here, #E8F7F0 in qr-scan.css)
+   while dark mode leaves the text at #A9EBD1 — pale on pale, 1.12:1, which is
+   invisible. Dark mode had a base treatment but no hover to go with it.
+
+   Both selector forms are listed because the light rules use both, and the
+   attribute prefix outranks either. This file is last in the bundle, so it
+   also wins the tie against equal-specificity page overrides.
+   ========================================================================== */
+
+[data-theme="dark"] .btn-secondary:hover,
+[data-theme="dark"] .btn-secondary:hover:not(:disabled) {
+  background: #087443;      /* white on this is 5.85:1 */
+  border-color: #087443;
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Page inset — the cards carry it, the containers do not
+
+   Both shells (.layout-body, .admin-body) run at padding:0, and so does the
+   page container inside them. Each block within then carries the inset as its
+   own margin. Doing it this way lets a block opt out and run full-bleed by
+   zeroing its own margin, which is impossible when the parent pads everything.
+
+   Scoped to the two shells, so nothing here reaches the auth pages — they use
+   .auth-* and never .page-container.
+
+   At (0,2,0) this outranks the unscoped .page-container padding declared in
+   qr-scan.css, send-money.css, withdraw.css, layout.css and above in this
+   file, and being last in the bundle it also wins the tie against the
+   equally-specific .receive-qr.page-container.
+
+   Pages do not all share one root class — most use .page-container, the three
+   dashboards use .dashboard-container, Profile uses .profile-container and
+   Agent Withdraw uses .pull-money-container, Users uses .admin-page — so every root is listed. :is()
+   keeps that list readable and takes the specificity of its most specific
+   argument, so this still resolves to (0,2,0).
+   ========================================================================== */
+
+:is(.layout-body, .admin-body)
+:is(.page-container, .dashboard-container, .profile-container,
+    .pull-money-container, .admin-page, .container) {
+  padding: 0;
+}
+
+:is(.layout-body, .admin-body)
+:is(.page-container, .dashboard-container, .profile-container,
+    .pull-money-container, .admin-page, .container) > * {
+  margin-left: var(--page-gutter);
+  margin-right: var(--page-gutter);
+}
+
+/* clearance from the navbar, and from the footer or bottom nav */
+:is(.layout-body, .admin-body)
+:is(.page-container, .dashboard-container, .profile-container,
+    .pull-money-container, .admin-page, .container) > *:first-child {
+  margin-top: var(--page-gutter);
+}
+
+:is(.layout-body, .admin-body)
+:is(.page-container, .dashboard-container, .profile-container,
+    .pull-money-container, .admin-page, .container) > *:last-child {
+  margin-bottom: var(--page-gutter);
+}
+
+
+/* ==========================================================================
+   Page gutter
+
+   One value drives the inset on all four sides and the rhythm between blocks,
+   so a column cannot end up with 10px sides, a 14px gap and a 16px tail the
+   way it did when each was set independently.
+   ========================================================================== */
+
+:root { --page-gutter: 16px; }
+
+@media screen and (max-width: 640px) {
+  :root { --page-gutter: 12px; }
+}
+
+/* ==========================================================================
+   Icon buttons keep their own size
+
+   globals.css gives every <button> a touch-target default of
+   `padding: 12px 20px; min-height: 48px` on small screens. Square icon buttons
+   set their own width and height, but min-height beats height no matter the
+   specificity — so they rendered 48px tall and off-square (the admin menu
+   button measured 40x48 instead of 38x38, the avatar beside it 38x38, and the
+   pair looked mismatched).
+
+   These are (0,1,0), which outranks the bare `button` element selector.
+   ========================================================================== */
+
+:is(.admin-menu-btn, .admin-drawer-close, .password-toggle, .modal-close,
+    .icon-btn, .sidebar-toggle, .qr-scanner-close, .close-btn,
+    .pm-swap, .conv-swap, .converter-swap-btn, .admin-id-copy) {
+  min-height: 0;
+  padding: 0;
+}

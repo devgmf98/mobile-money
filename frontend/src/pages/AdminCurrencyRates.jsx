@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../utils/api';
 import '../styles/layout.css';
+import { ArrowRight, Banknote, ChartColumn, Link2, Pencil, Plus, RefreshCw, Search, Trash2, X, Zap } from 'lucide-react';
+import '../styles/admin-currency-rates.css';
 
 export default function AdminCurrencyRates() {
   const [currencies, setCurrencies] = useState([]);
@@ -55,13 +57,9 @@ export default function AdminCurrencyRates() {
 
   
 
-  const filteredCurrencies = currencies.filter(c =>
-    (c.code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const startEdit = (currency) => {
-    setEditingId(currency._id);
+    setEditingId(currency.id);
     setEditData({
       name: currency.name,
       symbol: currency.symbol || '',
@@ -205,141 +203,168 @@ export default function AdminCurrencyRates() {
   };
 
   // Base currency used for pairwise rate context
-  const baseCurrency = 'USD';
+  // Rates are DECIMAL(x,10) so they arrive as "8000.0000000000". Show a
+  // readable number: thousands separators, no trailing zero padding, but keep
+  // small rates like 0.000125 intact.
+  const fmtRate = (v) => {
+    if (v === null || v === undefined || v === '') return '—';
+    const n = Number(v);
+    if (!Number.isFinite(n)) return String(v);
+    const decimals = Math.abs(n) >= 1 ? 2 : 8;
+    return Number(n.toFixed(decimals)).toLocaleString(undefined, { maximumFractionDigits: decimals });
+  };
+
+  // Real figures rather than the hardcoded "Real-time"/"Active" placeholders.
+  const rateSearch = searchTerm.trim().toLowerCase();
+  const filteredRates = exchangeRates.filter(r => {
+    if (!rateSearch) return true;
+    return `${r.fromCode || ''} ${r.toCode || ''}`.toLowerCase().includes(rateSearch);
+  });
+  const currenciesInPairs = new Set(
+    exchangeRates.flatMap(r => [r.fromCode, r.toCode]).filter(Boolean).map(c => c.toUpperCase())
+  );
+  const fixedCount = exchangeRates.filter(r => r.priceType === 'fixed').length;
+  const lastUpdated = exchangeRates.reduce((latest, r) => {
+    const t = new Date(r.updatedAt || r.createdAt || 0).getTime();
+    return t > latest ? t : latest;
+  }, 0);
 
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>📊 Exchange Rates</h1>
+        <h1>Exchange Rates</h1>
         <p>View and manage all currency exchange rates</p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="rates-summary-grid">
-        <div className="rate-summary-card">
-          <div className="rate-summary-icon">🔗</div>
-          <div className="rate-summary-content">
-            <div className="rate-summary-label">Pairwise Rates</div>
-            <div className="rate-summary-value">{exchangeRates.length}</div>
-          </div>
+      {/* summary */}
+      <div className="rates-summary">
+        <div className="rsum-tile">
+          <span className="rsum-icon"><Link2 size={18} /></span>
+          <span className="rsum-value">{exchangeRates.length}</span>
+          <span className="rsum-label">Pair rates</span>
         </div>
-
-        <div className="rate-summary-card">
-          <div className="rate-summary-icon">💵</div>
-          <div className="rate-summary-content">
-            <div className="rate-summary-label">Base Currency</div>
-            <div className="rate-summary-value">{baseCurrency}</div>
-          </div>
+        <div className="rsum-tile">
+          <span className="rsum-icon"><Banknote size={18} /></span>
+          <span className="rsum-value">{currenciesInPairs.size}</span>
+          <span className="rsum-label">Currencies used</span>
         </div>
-
-        <div className="rate-summary-card">
-          <div className="rate-summary-icon">⚡</div>
-          <div className="rate-summary-content">
-            <div className="rate-summary-label">Last Updated</div>
-            <div className="rate-summary-value">Real-time</div>
-          </div>
+        <div className="rsum-tile">
+          <span className="rsum-icon"><Zap size={18} /></span>
+          <span className="rsum-value">{fixedCount}<span className="rsum-sub">/{exchangeRates.length}</span></span>
+          <span className="rsum-label">Fixed rate</span>
         </div>
-
-        <div className="rate-summary-card">
-          <div className="rate-summary-icon">🔄</div>
-          <div className="rate-summary-content">
-            <div className="rate-summary-label">Status</div>
-            <div className="rate-summary-value" style={{color: '#10b981'}}>Active</div>
-          </div>
+        <div className="rsum-tile">
+          <span className="rsum-icon"><RefreshCw size={18} /></span>
+          <span className="rsum-value is-small">
+            {lastUpdated ? new Date(lastUpdated).toLocaleDateString() : '—'}
+          </span>
+          <span className="rsum-label">Last updated</span>
         </div>
       </div>
 
-      {/* Search and Filter */}
-      <div className="card" style={{marginBottom: 24}}>
-        <div className="rates-search-container">
-          <input
-            type="text"
-            placeholder="Search by currency code or name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="rates-search-input"
-          />
-          <span className="rates-search-icon">🔍</span>
-        </div>
-      </div>
-
-      {/* Currency list removed from this page — pairwise rates are managed below */}
-
-      
-
-      {/* Conversion Reference (removed per request) */}
-
-      <div className="card" style={{marginTop: 24}}>
-        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
-          <h3 style={{margin: 0}}>Pairwise Exchange Rates</h3>
-          <div>
-            {loadingRates && <span style={{fontSize: 12, color: '#999', marginRight: 8}}>Loading...</span>}
-            <button className="btn btn-primary" onClick={openCreateRate}>＋ Add Pair Rate</button>
+      {/* pair rates */}
+      <div className="card">
+        <div className="card-header rates-toolbar">
+          <h3><Link2 size={18} /> Pairwise exchange rates</h3>
+          <div className="rates-toolbar-right">
+            <div className="rate-search">
+              <Search size={15} />
+              <input
+                type="search"
+                placeholder="Search by currency code"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Search rates by currency code"
+              />
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={openCreateRate}>
+              <Plus size={15} /> Add pair rate
+            </button>
           </div>
         </div>
 
-        {loadingRates ? (
-          <div style={{padding: 12, color: '#666'}}>Loading pairwise rates...</div>
-        ) : exchangeRates.length === 0 ? (
-          <div style={{padding: 12, color: '#666'}}>No pairwise rates configured.</div>
-        ) : (
-          <div className="rates-table-wrapper">
-            <table className="rates-table">
-              <thead>
-                <tr>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Buying</th>
-                  <th>Selling</th>
-                  <th>Type</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {exchangeRates.map(r => (
-                  <tr key={r.id}>
-                    <td><strong>{r.fromCode}</strong></td>
-                    <td>{r.toCode}</td>
-                    <td>{r.buyingPrice ?? '—'}</td>
-                    <td>{r.sellingPrice ?? '—'}</td>
-                    <td>{r.priceType}</td>
-                    <td>
-                      <div style={{display: 'flex', gap: 6}}>
-                        <button className="action-btn view-btn" onClick={() => startEditRate(r)}>✏️</button>
-                        <button className="action-btn delete-btn" onClick={() => deleteRate(r.id)}>🗑️</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      <div className="card quick-note" style={{marginTop: 24}}>
-        <h3 style={{marginBottom: 12}}>Quick Note — Recent Pairwise Rates</h3>
-        <div>
-          <div style={{marginBottom: 10, color: '#666'}}>Pairwise exchange rates (most recent shown). Manage full list above.</div>
+        <div className="card-body">
           {loadingRates ? (
-            <div className="muted">Loading pairwise rates...</div>
-          ) : exchangeRates.length === 0 ? (
-            <div className="muted">No pairwise rates configured.</div>
+            <div className="empty-state">
+              <span className="empty-icon"><RefreshCw size={22} className="spin" /></span>
+              <h3>Loading rates…</h3>
+            </div>
+          ) : filteredRates.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon"><Link2 size={22} /></span>
+              <h3>{exchangeRates.length === 0 ? 'No pair rates yet' : 'No matching rates'}</h3>
+              <p>
+                {exchangeRates.length === 0
+                  ? 'Add a currency pair to start converting between currencies.'
+                  : `Nothing matches "${searchTerm}".`}
+              </p>
+              {exchangeRates.length === 0 ? (
+                <button className="btn btn-primary btn-sm" onClick={openCreateRate}>
+                  <Plus size={15} /> Add pair rate
+                </button>
+              ) : (
+                <button className="btn btn-secondary btn-sm" onClick={() => setSearchTerm('')}>Clear search</button>
+              )}
+            </div>
           ) : (
-            <div className="pairwise-grid">
-              {exchangeRates.slice(0, 8).map(r => (
-                <div key={r._id} className="pairwise-tile">
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <div className="pair-title">{r.fromCode} → {r.toCode}</div>
-                    <div style={{fontSize: 12, color: '#6b7280'}}>{r.priceType}</div>
-                  </div>
-                  <div className="pair-values">
-                    <div><span className="price-badge buying-badge" style={{minWidth: '64px', padding: '6px 10px'}}>Buy {r.buyingPrice ?? '—'}</span></div>
-                    <div style={{marginTop: 6}}><span className="price-badge selling-badge" style={{minWidth: '64px', padding: '6px 10px'}}>Sell {r.sellingPrice ?? '—'}</span></div>
-                  </div>
-                  <div className="pair-meta">Updated: {new Date(r.updatedAt || r.createdAt).toLocaleString()}</div>
-                </div>
-              ))}
+            <div className="table-wrap">
+              <table className="table rates-table">
+                <thead>
+                  <tr>
+                    <th>Pair</th>
+                    <th className="num">Buying</th>
+                    <th className="num">Selling</th>
+                    <th>Type</th>
+                    <th>Updated</th>
+                    <th className="right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRates.map(r => (
+                    <tr key={r.id} className={editingRateId === r.id ? 'is-editing' : ''}>
+                      <td>
+                        <span className="pair-cell">
+                          <strong>{r.fromCode}</strong>
+                          <ArrowRight size={14} />
+                          <strong>{r.toCode}</strong>
+                        </span>
+                      </td>
+                      <td className="num"><span className="rate-num is-buy">{fmtRate(r.buyingPrice)}</span></td>
+                      <td className="num"><span className="rate-num is-sell">{fmtRate(r.sellingPrice)}</span></td>
+                      <td>
+                        <span className={'badge ' + (r.priceType === 'fixed' ? 'badge-primary' : 'badge-info')}>
+                          {r.priceType === 'fixed' ? 'Fixed' : 'Percentage'}
+                        </span>
+                      </td>
+                      <td className="rate-when">
+                        {r.updatedAt || r.createdAt
+                          ? new Date(r.updatedAt || r.createdAt).toLocaleDateString()
+                          : '—'}
+                      </td>
+                      <td className="right">
+                        <div className="row-actions">
+                          <button
+                            className="icon-btn"
+                            onClick={() => startEditRate(r)}
+                            aria-label={`Edit ${r.fromCode} to ${r.toCode}`}
+                            title="Edit"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            className="icon-btn is-danger"
+                            onClick={() => deleteRate(r.id)}
+                            aria-label={`Delete ${r.fromCode} to ${r.toCode}`}
+                            title="Delete"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -350,8 +375,8 @@ export default function AdminCurrencyRates() {
         <div className="modal-overlay" onClick={cancelEdit}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>✏️ Edit Currency</h2>
-              <button className="modal-close" onClick={cancelEdit}>✕</button>
+              <h2><Pencil size={18} /> Edit Currency</h2>
+              <button className="modal-close" onClick={cancelEdit}><X size={18} /></button>
             </div>
 
             <div className="modal-body">
@@ -400,7 +425,7 @@ export default function AdminCurrencyRates() {
                         className="country-tag-remove"
                         onClick={() => removeCountry(idx)}
                       >
-                        ✕
+                        <X size={18} />
                       </button>
                     </div>
                   ))}
@@ -423,8 +448,8 @@ export default function AdminCurrencyRates() {
         <div className="modal-overlay" onClick={() => setShowCreateRate(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingRateId ? '✏️ Edit Pair Rate' : '＋ Add Pair Rate'}</h2>
-              <button className="modal-close" onClick={() => setShowCreateRate(false)}>✕</button>
+              <h2>{editingRateId ? <><Pencil size={18} /> Edit Pair Rate</> : <><Plus size={18} /> Add Pair Rate</>}</h2>
+              <button className="modal-close" onClick={() => setShowCreateRate(false)}><X size={18} /></button>
             </div>
 
             <div className="modal-body">
@@ -500,8 +525,8 @@ export default function AdminCurrencyRates() {
         <div className="modal-overlay" onClick={() => setShowCreate(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>＋ Add Currency Rate</h2>
-              <button className="modal-close" onClick={() => setShowCreate(false)}>✕</button>
+              <h2><Plus size={18} /> Add Currency Rate</h2>
+              <button className="modal-close" onClick={() => setShowCreate(false)}><X size={18} /></button>
             </div>
 
             <div className="modal-body">
@@ -563,7 +588,7 @@ export default function AdminCurrencyRates() {
                         className="country-tag-remove"
                         onClick={() => removeCreateCountry(idx)}
                       >
-                        ✕
+                        <X size={18} />
                       </button>
                     </div>
                   ))}

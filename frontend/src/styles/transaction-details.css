@@ -1,0 +1,341 @@
+/* Full transaction detail dialog, opened from the transaction lists.
+   Rendered through a portal on document.body, because the lists sit inside
+   transformed containers that would otherwise trap position: fixed.
+   Everything is scoped to .td-* so nothing leaks into the pages. */
+
+.td-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(9, 20, 16, 0.55);
+  overscroll-behavior: contain;
+}
+
+.td-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 100%);
+  max-height: min(88vh, 800px);
+  border-radius: 18px;
+  background: var(--surface, #fff);
+  box-shadow: 0 24px 60px -20px rgba(9, 20, 16, 0.45);
+  overflow: hidden;
+}
+
+/* ---- header: the amount is the headline, everything else supports it ---- */
+.td-head {
+  padding: 16px 20px 18px;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+  background: var(--primary-surface, #F0FAF4);
+}
+
+.td-head-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.td-type {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--primary-dark, #005C2E);
+}
+
+.td-type.is-money_exchange { background: #DCF3F4; color: #0E7C86; }
+.td-type.is-withdrawal,
+.td-type.is-user_withdraw,
+.td-type.is-agent_cash_out_money { background: #FEF3C7; color: #B45309; }
+.td-type.is-admin_push,
+.td-type.is-admin_state_push { background: #EDE9FE; color: #5B21B6; }
+
+.td-close {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-light, #5B6B66);
+  cursor: pointer;
+}
+
+.td-close:hover { background: #fff; color: var(--text-dark, #16302B); }
+
+.td-amount {
+  margin: 0 0 10px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+.td-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.td-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+  color: var(--text-light, #5B6B66);
+}
+
+.td-status.is-completed { background: #DCFCE7; color: #0F7A43; }
+.td-status.is-pending   { background: #FEF3C7; color: #B45309; }
+.td-status.is-failed,
+.td-status.is-cancelled,
+.td-status.is-rejected  { background: #FEE2E2; color: #B42318; }
+
+.td-when {
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+.td-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-light, #5B6B66);
+  cursor: pointer;
+}
+
+.td-ref:hover { color: var(--primary, #007A3D); }
+
+/* ---- body ---- */
+.td-body {
+  padding: 0 20px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.td-section { padding-top: 18px; }
+
+.td-section h4 {
+  margin: 0 0 10px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+/* ---- parties: a flow, not a list of four equal rows ---- */
+.td-flow {
+  position: relative;
+  display: grid;
+  gap: 6px;
+}
+
+.td-party {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 12px;
+  background: var(--surface-2, #F7FAF9);
+}
+
+.td-avatar {
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--primary, #007A3D);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.td-party-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.td-party-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.td-party-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.td-party-sub {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--text-light, #5B6B66);
+}
+
+.td-party-place {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-light, #5B6B66);
+}
+
+.td-role {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #E3EAE7);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.td-flow-arrow {
+  display: grid;
+  place-items: center;
+  height: 18px;
+  color: var(--primary, #007A3D);
+}
+
+/* ---- figure rows ---- */
+.td-rows {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.td-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+}
+
+.td-row dt {
+  flex: 0 0 auto;
+  color: var(--text-light, #5B6B66);
+}
+
+.td-row dd {
+  margin: 0;
+  min-width: 0;
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+  /* Long descriptions wrap rather than pushing the label off the row. */
+  overflow-wrap: anywhere;
+}
+
+/* The figures a reader is actually looking for — what left the sender, what
+   reached the recipient — are set apart from the components that make them. */
+.td-row.is-strong {
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #E3EAE7);
+  font-size: 14px;
+}
+
+.td-row.is-strong dt { font-weight: 600; color: var(--text-dark, #16302B); }
+.td-row.is-strong dd { font-weight: 700; color: var(--primary-dark, #005C2E); }
+
+@media screen and (max-width: 480px) {
+  .td-scrim { padding: 0; align-items: flex-end; }
+  .td-panel { max-height: 92vh; border-radius: 18px 18px 0 0; }
+  .td-amount { font-size: 26px; }
+  .td-row { flex-direction: column; align-items: flex-start; gap: 1px; }
+  .td-row dd { text-align: left; }
+  .td-role { display: none; }
+}
+
+/* ---- dark ---- */
+[data-theme="dark"] .td-panel { background: #14201B; }
+
+[data-theme="dark"] .td-head {
+  background: rgba(0, 180, 100, 0.10);
+  border-bottom-color: rgba(255, 255, 255, 0.10);
+}
+
+[data-theme="dark"] .td-amount,
+[data-theme="dark"] .td-party-name,
+[data-theme="dark"] .td-row dd,
+[data-theme="dark"] .td-row.is-strong dt { color: #E6F2EC; }
+
+[data-theme="dark"] .td-section h4,
+[data-theme="dark"] .td-row dt,
+[data-theme="dark"] .td-ref,
+[data-theme="dark"] .td-when,
+[data-theme="dark"] .td-party-tag,
+[data-theme="dark"] .td-party-sub,
+[data-theme="dark"] .td-party-place,
+[data-theme="dark"] .td-role { color: #9FB3AB; }
+
+[data-theme="dark"] .td-row.is-strong dd { color: #34D399; }
+[data-theme="dark"] .td-row.is-strong { border-top-color: rgba(255, 255, 255, 0.10); }
+
+[data-theme="dark"] .td-party,
+[data-theme="dark"] .td-role {
+  border-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .td-type,
+[data-theme="dark"] .td-status,
+[data-theme="dark"] .td-close {
+  background: rgba(255, 255, 255, 0.08);
+  color: #C7D8D0;
+}
+
+[data-theme="dark"] .td-close:hover { background: rgba(255, 255, 255, 0.14); color: #E6F2EC; }
+[data-theme="dark"] .td-status.is-completed { background: rgba(0, 180, 100, 0.16); color: #34D399; }
+[data-theme="dark"] .td-status.is-pending   { background: rgba(224, 177, 92, 0.16); color: #E0B15C; }
+[data-theme="dark"] .td-status.is-failed,
+[data-theme="dark"] .td-status.is-cancelled,
+[data-theme="dark"] .td-status.is-rejected  { background: rgba(240, 145, 137, 0.14); color: #F09189; }

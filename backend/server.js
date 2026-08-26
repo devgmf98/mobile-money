@@ -25,7 +25,7 @@ const httpServer = createServer(app);
 // Allow both common frontend ports for development (5173, 5174)
 // and also read from FRONTEND_URL, API_URL, and API_PRODUCTION_URL env vars if set
 const allowedOrigins = [
-  'https://gpay-ss.netlify.app',
+  'http://zainss.dpdns.org',
   'http://localhost:5173',
   'http://localhost:5174'
 ];
@@ -84,13 +84,15 @@ app.options('*', cors({
 }));
 
 
-app.use(express.json());
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-
-// Test Sequelize connection
-sequelize.authenticate()
-  .then(() => console.log('MySQL connected via Sequelize'))
-  .catch(err => console.error('Sequelize connection error:', err));
+app.use(express.json({ 
+  limit: '100mb',
+  parameterLimit: 50000
+}));
+app.use(express.urlencoded({ 
+  limit: '100mb', 
+  extended: true,
+  parameterLimit: 50000
+}));
 
 // Import models to set up associations
 import User from './models/User.js';
@@ -111,11 +113,6 @@ Object.keys(models).forEach(modelName => {
     models[modelName].associate(models);
   }
 });
-
-// Sync database (create tables)
-sequelize.sync()
-  .then(() => console.log('Database synchronized'))
-  .catch(err => console.error('Database sync error:', err));;
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -166,9 +163,26 @@ app.post('/api/admin/verify', (req, res) => {
 });
 const PORT = process.env.PORT || 5000;
 
-httpServer.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Healthcheck endpoint: http://0.0.0.0:${PORT}/api/health`);
-});
+async function startServer() {
+  try {
+    await sequelize.authenticate();
+    console.log('MySQL connected via Sequelize');
+
+    // Create missing tables and add missing model columns on every startup.
+    // Sequelize alter preserves existing rows while bringing the schema up to date.
+    await sequelize.sync({ alter: true });
+    console.log('Database synchronized and schema updated');
+
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`Server running on port ${PORT}`);
+      console.log(`Healthcheck endpoint: http://0.0.0.0:${PORT}/api/health`);
+    });
+  } catch (error) {
+    console.error('Database startup error:', error);
+    process.exitCode = 1;
+  }
+}
+
+startServer();
 
 export { io };

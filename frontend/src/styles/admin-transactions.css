@@ -1,23 +1,138 @@
-.admin-transactions {
-  max-width: 1400px;
-  margin: 0 auto;
+/* ==========================================================================
+   All Transactions
+   Page-specific pieces only; card, table, badges and buttons come from
+   design-system.css.
+   ========================================================================== */
+
+@keyframes tx-spin { to { transform: rotate(360deg); } }
+.admin-tx .spin { animation: tx-spin 0.9s linear infinite; }
+
+.admin-tx .table th.num,
+.admin-tx .table td.num { text-align: right; white-space: nowrap; }
+
+.admin-tx .table th.right,
+.admin-tx .table td.right { text-align: right; }
+
+/* ---------- transaction id ------------------------------------------------ */
+.tx-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  background: #F1F5F9;
+  color: var(--primary-dark);
+  white-space: nowrap;
 }
 
-code {
-  background-color: var(--light);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-family: 'Courier New', monospace;
+/* ---------- parties ------------------------------------------------------- */
+.tx-parties {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.tx-party {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 12px;
+  line-height: 1.35;
 }
 
-@media (max-width: 768px) {
-  .table {
-    font-size: 12px;
-  }
+.tx-party svg { flex-shrink: 0; margin-top: 2px; }
+.tx-party:first-child svg { color: var(--error, #DC2626); }
+.tx-party:last-child svg { color: var(--success, #16A34A); }
 
-  .table th,
-  .table td {
-    padding: 8px;
-  }
+.tx-party span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tx-party strong { font-weight: 600; color: var(--text); }
+
+.tx-party em {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--text-light);
+}
+
+.tx-party.is-none {
+  font-size: 11.5px;
+  color: var(--text-light);
+  padding-left: 19px;
+}
+
+/* ---------- type ---------------------------------------------------------- */
+.tx-type { background: #E8F7F0; color: var(--primary-dark); }
+.tx-type.is-money_exchange { background: #DCF3F4; color: #0E7C86; }
+.tx-type.is-withdrawal,
+.tx-type.is-user_withdraw,
+.tx-type.is-agent_cash_out_money { background: #FEF3C7; color: #B45309; }
+.tx-type.is-topup,
+.tx-type.is-agent_deposit { background: #DCFCE7; color: #15803D; }
+
+/* ---------- amount / date -------------------------------------------------- */
+.admin-tx .table td.num {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.tx-cur {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light);
+  margin-right: 2px;
+}
+
+.tx-when {
+  font-size: 12px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+/* ---------- actions -------------------------------------------------------- */
+.tx-actions {
+  display: inline-flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.admin-tx .icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.admin-tx .icon-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.admin-tx .icon-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---------- dark mode ------------------------------------------------------ */
+[data-theme="dark"] .tx-id { background: #0F172A; color: #34C88E; }
+[data-theme="dark"] .tx-party strong { color: #E2E8F0; }
+[data-theme="dark"] .admin-tx .table td.num { color: #E2E8F0; }
+[data-theme="dark"] .admin-tx .icon-btn {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #A9EBD1;
+}
+
+/* ---------- responsive ----------------------------------------------------- */
+@media (max-width: 640px) {
+  .tx-parties { min-width: 0; }
+  .admin-tx .icon-btn { width: 30px; height: 30px; }
 }

@@ -28,11 +28,11 @@ async function createAdminUser() {
 
     // Create admin user
     const adminUser = await User.create({
-      name: 'Admin User',
+      name: 'Admin',
       email: 'admin@example.com',
       phone: '+211900000000',
       password: hashedPassword,
-      balance: 100000,
+      balance: 0,
       role: 'admin',
       isVerified: true,
       theme: 'light'
@@ -42,7 +42,7 @@ async function createAdminUser() {
     console.log('Email: admin@example.com');
     console.log('Password: admin123');
     console.log('Phone: +211900000000');
-    console.log('Balance: 100000');
+    console.log('Balance: 0');
 
     // Generate JWT token
     const token = jwt.sign(

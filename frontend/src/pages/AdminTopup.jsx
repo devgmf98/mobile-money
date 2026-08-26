@@ -1,8 +1,42 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import {
+  BadgeCheck,
+  CircleCheck,
+  ClipboardList,
+  Info,
+  Plus,
+  Search,
+  ShieldAlert,
+  TriangleAlert,
+  User,
+  Wallet,
+  X,
+} from 'lucide-react';
 import Footer from '../components/Footer';
-import '../styles/withdraw.css';
-import { adminAPI, authAPI } from '../utils/api';
+import '../styles/admin-topup.css';
+import { adminAPI, transactionAPI } from '../utils/api';
+
+// Sequelize returns DECIMAL columns as strings, so coerce before arithmetic.
+const n2 = (v) => {
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const money = (v) => 'SSP ' + n2(v).toLocaleString('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const initials = (name) => String(name || '?')
+  .trim()
+  .split(/\s+/)
+  .slice(0, 2)
+  .map(w => w[0])
+  .join('')
+  .toUpperCase();
+
+const PRESETS = [1000, 5000, 10000];
 
 export default function AdminTopup() {
   const [userPhone, setUserPhone] = useState('');
@@ -15,27 +49,27 @@ export default function AdminTopup() {
 
   const location = useLocation();
 
+  const balance = n2(userInfo?.balance);
+  const entered = n2(amount);
+  const newBalance = balance + entered;
+  const canTopup = !!userInfo && entered > 0 && !loading;
+
   // fetch user by phone helper (can be called programmatically)
   const fetchUserByPhone = async (phone) => {
     setError('');
     setUserInfo(null);
     setChecking(true);
     try {
-      // Use getUserInfo helper from transactionAPI (or similar) if available, else fallback to getProfile
-      // If your backend supports searching by phone, use that endpoint here
-      // Example: const { data } = await transactionAPI.getUserInfo(phone);
-      // For now, fallback to getProfile (may need backend adjustment)
-      const { data } = await authAPI.getProfile();
+      const { data } = await transactionAPI.getUserInfo(phone);
       setUserInfo(data);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to check user balance');
+      setError(err.response?.data?.message || err.message || 'Failed to find that user.');
       setUserInfo(null);
     } finally {
       setChecking(false);
     }
   };
 
-  // Check user balance (form submit)
   const handleCheckUserBalance = async (e) => {
     e.preventDefault();
     await fetchUserByPhone(userPhone);
@@ -57,168 +91,242 @@ export default function AdminTopup() {
     }
   }, [location]);
 
-  // Complete topup
+  const clearUser = () => {
+    setUserInfo(null);
+    setUserPhone('');
+    setAmount('');
+    setError('');
+    setSuccess('');
+  };
+
   const handleTopup = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (!userInfo) {
+      setError('Search for a user first.');
+      return;
+    }
+    if (entered <= 0) {
+      setError('Topup amount must be greater than 0.');
+      return;
+    }
+
     setLoading(true);
-
     try {
-      if (!userInfo) {
-        setError('Please check user balance first');
-        setLoading(false);
-        return;
-      }
-
-      const topupAmount = parseFloat(amount);
-      if (topupAmount <= 0) {
-        setError('Topup amount must be greater than 0');
-        setLoading(false);
-        return;
-      }
-
-      // Use adminAPI to topup user
       const { data } = await adminAPI.topupUser({
         userId: userInfo.id,
-        amount: topupAmount
+        amount: entered,
       });
-      setSuccess(`Topup successful! New balance: SSP ${data.user?.balance?.toFixed(2) || '0.00'}`);
-      setUserPhone('');
+      setSuccess('Topup successful. New balance is ' + money(data.user?.balance) + '.');
+      // Keep the user on screen with their updated balance so a second topup
+      // does not require searching again.
+      setUserInfo((prev) => ({ ...(prev || {}), ...(data.user || {}) }));
       setAmount('');
-      setUserInfo(null);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to process topup');
+      setError(err.response?.data?.message || err.message || 'Failed to process topup.');
     } finally {
       setLoading(false);
     }
   };
 
+  const verified = !!userInfo?.isVerified;
+
   return (
     <>
-    <div className="page-container">
-      <div className="page-header">
-        <h1>User Topup</h1>
-        <p>Search user and add balance to their account</p>
-      </div>
-
-      <div className="grid-2">
-        <div className="card">
-          <div className="card-header">
-            <h3>Search User</h3>
+      <div className="page-container topup-page">
+        <div className="page-header tp-header">
+          <div>
+            <h1>User Topup</h1>
+            <p>Search for a user and add balance to their account.</p>
           </div>
-          <div className="card-body">
-            <form onSubmit={handleCheckUserBalance}>
-              {error && <div className="alert alert-danger">{error}</div>}
-              {success && <div className="alert alert-success">{success}</div>}
-
-              <div className="form-group">
-                <label htmlFor="user-phone">User Phone Number</label>
-                <input
-                  id="user-phone"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  value={userPhone}
-                  onChange={(e) => setUserPhone(e.target.value)}
-                  required
-                  placeholder="+211..."
-                />
-              </div>
-
-              <button type="submit" className="btn btn-primary btn-block" disabled={checking}>
-                {checking ? 'Searching...' : 'Search User'}
-              </button>
-            </form>
-
-            {userInfo && (
-              <div className="user-info mt-3" style={{ padding: '1rem', backgroundColor: '#f0f9ff', borderRadius: '8px', borderLeft: '4px solid #2563eb' }}>
-                <div className="mb-2">
-                  <strong>{userInfo.name}</strong>
-                  <div className="text-small text-muted">{userInfo.phone}</div>
-                </div>
-                <div className="mb-2">
-                  <span className="text-muted">Current Balance: </span>
-                  <span className="text-success font-weight-bold" style={{ fontSize: '18px' }}>
-                    SSP {userInfo.balance?.toFixed(2) || '0.00'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted">Status: </span>
-                  <span className="badge badge-success">
-                    {userInfo.isVerified ? '✓ Verified' : 'Pending Verification'}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+          {userInfo && (
+            <button type="button" className="btn btn-secondary btn-sm" onClick={clearUser}>
+              <X size={15} /> Start over
+            </button>
+          )}
         </div>
 
-        <div className="card">
-          <div className="card-header">
-            <h3>Topup Amount</h3>
+        {/* page-level alerts, so they stay visible whichever card is in play */}
+        {error && (
+          <div className="tp-alert is-error" role="alert">
+            <TriangleAlert size={17} /> <span>{error}</span>
           </div>
-          <div className="card-body">
-            <form onSubmit={handleTopup}>
-              {userInfo ? (
-                <>
-                  <div className="form-group">
-                    <label htmlFor="topup-amount">Topup Amount (SSP)</label>
+        )}
+        {success && (
+          <div className="tp-alert is-success" role="status">
+            <CircleCheck size={17} /> <span>{success}</span>
+          </div>
+        )}
+
+        <div className="tp-grid">
+          {/* ---------- step 1: find the user ---------- */}
+          <div className="card tp-card">
+            <div className="card-header">
+              <h3><Search size={18} /> Find user</h3>
+              <span className="tp-step">Step 1</span>
+            </div>
+            <div className="card-body">
+              <form onSubmit={handleCheckUserBalance}>
+                <div className="form-group">
+                  <label htmlFor="user-phone"><User size={14} /> Phone number</label>
+                  <div className="tp-search-field">
                     <input
-                      id="topup-amount"
-                      name="amount"
-                      type="number"
-                      autoComplete="off"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
+                      id="user-phone"
+                      name="phone"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      value={userPhone}
+                      onChange={(e) => setUserPhone(e.target.value)}
                       required
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
+                      placeholder="+211 9XX XXX XXX"
                     />
-                    <small className="text-muted">Enter amount to add to user account</small>
+                    <button type="submit" className="btn btn-primary" disabled={checking || !userPhone.trim()}>
+                      <Search size={15} /> {checking ? 'Searching…' : 'Search'}
+                    </button>
+                  </div>
+                  <small className="tp-hint">The phone number registered to the account.</small>
+                </div>
+              </form>
+
+              {userInfo && (
+                <div className="tp-user">
+                  <div className="tp-user-top">
+                    <span className="tp-avatar">{initials(userInfo.name)}</span>
+                    <div className="tp-user-id">
+                      <strong>{userInfo.name}</strong>
+                      <span>{userInfo.phone}</span>
+                    </div>
+                    <span className={'badge ' + (verified ? 'badge-success' : 'badge-warning')}>
+                      {verified ? 'Verified' : 'Pending'}
+                    </span>
                   </div>
 
-                  <button type="submit" className="btn btn-success btn-block btn-lg" disabled={loading}>
-                    {loading ? 'Processing...' : 'Complete Topup'}
-                  </button>
-                </>
-              ) : (
-                <p className="text-muted text-center">Search user first to proceed</p>
-              )}
-            </form>
-          </div>
-        </div>
-      </div>
+                  <div className="tp-balance">
+                    <span className="tp-balance-label"><Wallet size={14} /> Current balance</span>
+                    <strong className="tp-balance-value">{money(userInfo.balance)}</strong>
+                  </div>
 
-      <div className="card mt-4">
-        <div className="card-header">
-          <h3>📋 Topup Guide</h3>
-        </div>
-        <div className="card-body">
-          <div className="info-box">
-            <h4>Steps:</h4>
-            <ol>
-              <li>Enter the user's phone number</li>
-              <li>Click "Search User" to find and view their account</li>
-              <li>Review current balance and verification status</li>
-              <li>Enter the topup amount</li>
-              <li>Click "Complete Topup"</li>
-              <li>Confirm success message shows new balance</li>
-            </ol>
+                  <div className={'tp-verify ' + (verified ? 'is-ok' : 'is-warn')}>
+                    {verified
+                      ? <><BadgeCheck size={15} /> Account verified.</>
+                      : <><ShieldAlert size={15} /> Not verified &mdash; topups may be rejected.</>}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="info-box warning">
-            <h4>⚠️ Important:</h4>
-            <ul>
-              <li>Only verified users can receive topups</li>
-              <li>Ensure correct phone number before proceeding</li>
-              <li>All topups are recorded in transaction history</li>
-            </ul>
+
+          {/* ---------- step 2: top up ---------- */}
+          <div className={'card tp-card' + (userInfo ? '' : ' is-locked')}>
+            <div className="card-header">
+              <h3><Plus size={18} /> Add balance</h3>
+              <span className="tp-step">Step 2</span>
+            </div>
+            <div className="card-body">
+              {userInfo ? (
+                <form onSubmit={handleTopup}>
+                  <div className="form-group">
+                    <label htmlFor="topup-amount"><Plus size={14} /> Amount</label>
+                    <div className="tp-amount-field">
+                      <span className="tp-currency">SSP</span>
+                      <input
+                        id="topup-amount"
+                        name="amount"
+                        type="number"
+                        autoComplete="off"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        required
+                        placeholder="0.00"
+                        step="0.01"
+                        min="0"
+                        inputMode="decimal"
+                      />
+                    </div>
+
+                    <div className="tp-quick">
+                      {PRESETS.map(p => (
+                        <button key={p} type="button" onClick={() => setAmount(String(p))}>
+                          +{p.toLocaleString('en-US')}
+                        </button>
+                      ))}
+                    </div>
+
+                    <small className="tp-hint">Credited to the user&rsquo;s account.</small>
+                  </div>
+
+                  <div className="tp-summary">
+                    <div className="tp-summary-row">
+                      <span>Current balance</span>
+                      <strong>{money(balance)}</strong>
+                    </div>
+                    <div className="tp-summary-row">
+                      <span>Adding</span>
+                      <strong className="is-in">+ {money(entered)}</strong>
+                    </div>
+                    <div className="tp-summary-row is-total">
+                      <span>Balance after</span>
+                      <strong>{money(newBalance)}</strong>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn btn-primary btn-block" disabled={!canTopup}>
+                    <Plus size={16} /> {loading ? 'Processing…' : 'Complete topup'}
+                  </button>
+
+                  {!verified && (
+                    <p className="tp-verify-note">
+                      <Info size={13} /> This account is not verified yet.
+                    </p>
+                  )}
+                </form>
+              ) : (
+                <div className="empty-state tp-empty">
+                  <span className="empty-icon"><Search size={22} /></span>
+                  <h3>No user selected</h3>
+                  <p>Search for a user to unlock the topup form.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ---------- guide ---------- */}
+        <div className="card tp-guide">
+          <div className="card-header">
+            <h3><ClipboardList size={18} /> Topup guide</h3>
+          </div>
+          <div className="card-body">
+            <div className="tp-guide-grid">
+              <div className="tp-guide-col">
+                <h4>How it works</h4>
+                <ol className="tp-steps">
+                  <li>Enter the user&rsquo;s phone number.</li>
+                  <li>Search to load their account and balance.</li>
+                  <li>Review the balance and verification status.</li>
+                  <li>Enter the amount to add.</li>
+                  <li>Complete the topup.</li>
+                  <li>Check the confirmation for the new balance.</li>
+                </ol>
+              </div>
+
+              <div className="tp-guide-col is-warn">
+                <h4><TriangleAlert size={15} /> Before you confirm</h4>
+                <ul className="tp-notes">
+                  <li>Only verified users can receive topups.</li>
+                  <li>Check the phone number matches the right account.</li>
+                  <li>Topups take effect immediately.</li>
+                  <li>Every topup is recorded in transaction history.</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <Footer />
+      <Footer />
     </>
   );
 }

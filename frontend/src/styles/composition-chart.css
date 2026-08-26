@@ -1,0 +1,162 @@
+/* ==========================================================================
+   Composition chart
+
+   Colour slots are defined as custom properties so light/dark swap in one
+   place and the marks are written against roles, not raw hex.
+
+   ROLE slots are the validated categorical order (blue / orange / aqua).
+   Validated against this app's surfaces with the palette validator:
+     light on #FFFFFF  — all checks pass; aqua sits at 2.82:1, below 3:1, so
+       the relief rule applies: every value is visible in the legend.
+     dark  on #1E293B  — all checks pass, all >= 3:1.
+
+   STATUS slots are the reserved status palette (good / warning / serious /
+   critical). Those are deliberately NOT categorical hues, and on a light
+   surface warning and serious are sub-3:1 by design — the mitigation is that
+   every segment carries a written name and value in the legend, so a status
+   colour never carries meaning on its own.
+   ========================================================================== */
+
+.comp-chart {
+  --surface: #FFFFFF;
+
+  /* categorical — identity */
+  --role-user:  #2a78d6;
+  --role-agent: #eb6834;
+  --role-admin: #1baf7a;
+  --role-other: #4a3aa7;
+
+  /* status — reserved, never reused as a series colour */
+  --status-completed:  #0ca30c;
+  --status-pending:    #fab219;
+  --status-processing: #ec835a;
+  --status-failed:     #d03b3b;
+  --status-rejected:   #d03b3b;
+  --status-cancelled:  #64748B;
+  --status-other:      #4a3aa7;
+}
+
+[data-theme="dark"] .comp-chart {
+  --surface: #1E293B;
+  --role-user:  #3987e5;
+  --role-agent: #d95926;
+  --role-admin: #199e70;
+  --role-other: #9085e9;
+}
+
+/* ---------- headline total ------------------------------------------------ */
+.comp-total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.comp-total strong {
+  font-size: 19.5px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.6px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.comp-total span {
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+/* ---------- the bar ------------------------------------------------------- */
+.comp-track {
+  display: flex;
+  /* the 2px surface gap is what separates segments - never a border */
+  gap: 2px;
+  height: 26px;
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.comp-seg {
+  min-width: 3px;
+  background: var(--seg, #CBD5E1);
+  transition: opacity 0.16s ease;
+}
+
+.comp-seg.is-dim { opacity: 0.35; }
+
+/* ---------- legend / value table ------------------------------------------ */
+.comp-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.comp-legend li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: default;
+  transition: background 0.16s ease, opacity 0.16s ease;
+}
+
+.comp-legend li:hover { background: var(--light, #E8F7F0); }
+.comp-legend li.is-dim { opacity: 0.45; }
+
+/* text wears text tokens - identity comes from the dot beside it */
+.comp-name { color: var(--text); font-weight: 600; }
+
+.comp-val {
+  margin-left: auto;
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.comp-pct {
+  min-width: 42px;
+  text-align: right;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.comp-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  background: var(--seg, #CBD5E1);
+}
+
+[data-theme="dark"] .comp-legend li:hover { background: #0F172A; }
+[data-theme="dark"] .comp-name,
+[data-theme="dark"] .comp-val,
+[data-theme="dark"] .comp-total strong { color: #E2E8F0; }
+
+/* ==========================================================================
+   Slot assignment — colour follows the entity, never its rank
+   ========================================================================== */
+/* fallbacks first; the keyed rules below are (0,2,0) and outrank them */
+[data-scheme="role"]   { --seg: var(--role-other); }
+[data-scheme="status"] { --seg: var(--status-other); }
+
+[data-scheme="role"][data-key="user"]   { --seg: var(--role-user); }
+[data-scheme="role"][data-key="agent"]  { --seg: var(--role-agent); }
+[data-scheme="role"][data-key="admin"]  { --seg: var(--role-admin); }
+
+[data-scheme="status"][data-key="completed"]  { --seg: var(--status-completed); }
+[data-scheme="status"][data-key="pending"]    { --seg: var(--status-pending); }
+[data-scheme="status"][data-key="processing"] { --seg: var(--status-processing); }
+[data-scheme="status"][data-key="failed"]     { --seg: var(--status-failed); }
+[data-scheme="status"][data-key="rejected"]   { --seg: var(--status-rejected); }
+[data-scheme="status"][data-key="cancelled"]  { --seg: var(--status-cancelled); }
+
+@media (max-width: 640px) {
+  .comp-total strong { font-size: 17.5px; }
+  .comp-track { height: 22px; }
+}

@@ -1,0 +1,298 @@
+/* ==========================================================================
+   Withdrawal Requests — redesigned
+
+   Cards in a responsive grid with a summary strip above. Scoped to .pw-page;
+   the old pending-withdrawals.css rules for the previous markup are now inert.
+   ========================================================================== */
+
+.pw-page { max-width: 1100px; margin: 0 auto; }
+
+.pw-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+@keyframes pw-spin { to { transform: rotate(360deg); } }
+.pw-spin { animation: pw-spin 0.9s linear infinite; }
+
+/* ---------- suspended notice ---------------------------------------------- */
+.pw-alert {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  border: 1px solid #FDE68A;
+  border-radius: 10px;
+  background: #FEF9E7;
+  color: #92400E;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pw-alert svg { flex-shrink: 0; }
+
+/* ---------- summary ------------------------------------------------------- */
+.pw-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.pw-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--light, #E8F7F0);
+  min-width: 132px;
+}
+
+.pw-summary-item span {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.pw-summary-item strong {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- grid ---------------------------------------------------------- */
+.pw-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.pw-page .pw-card {
+  margin-bottom: 0;
+  padding: 17px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+/* ---------- party --------------------------------------------------------- */
+.pw-card-top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.pw-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.pw-party {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.pw-party strong {
+  font-size: 12.5px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pw-party span { font-size: 11.5px; color: var(--text-light); }
+.pw-status { flex-shrink: 0; }
+
+/* ---------- amount -------------------------------------------------------- */
+.pw-amount {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: var(--light, #E8F7F0);
+}
+
+.pw-amount span {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.pw-amount strong {
+  font-size: 18.5px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- breakdown ----------------------------------------------------- */
+.pw-breakdown {
+  margin: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.pw-breakdown > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pw-breakdown dt {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.pw-breakdown dd {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pw-breakdown .pw-total {
+  margin-top: 4px;
+  padding-top: 9px;
+  border-top: 1px dashed var(--border);
+}
+
+.pw-breakdown .pw-total dt { font-weight: 700; color: var(--text); }
+.pw-breakdown .pw-total dd { font-size: 13px; color: var(--primary-dark); }
+
+/* ---------- timestamp ----------------------------------------------------- */
+.pw-page .pw-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+.pw-page .pw-time svg { flex-shrink: 0; }
+
+/* ---------- actions ------------------------------------------------------- */
+.pw-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 3px;
+}
+
+.pw-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.pw-btn svg { flex-shrink: 0; }
+
+.pw-btn.is-approve { background: var(--primary); color: #FFFFFF; }
+.pw-btn.is-approve:hover:not(:disabled) { background: var(--primary-dark, #087443); }
+
+.pw-btn.is-reject {
+  background: var(--surface, #FFFFFF);
+  border-color: #FECACA;
+  color: #DC2626;
+}
+
+.pw-btn.is-reject:hover:not(:disabled) { background: #DC2626; border-color: #DC2626; color: #FFFFFF; }
+
+.pw-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.pw-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.pw-spinner {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: pw-spin 0.7s linear infinite;
+}
+
+/* ---------- empty / loading ---------------------------------------------- */
+.pw-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 46px 20px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background: var(--surface, #FFFFFF);
+  text-align: center;
+}
+
+.pw-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary);
+}
+
+.pw-empty h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+.pw-empty p { margin: 0; font-size: 12px; color: var(--text-light); }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 520px) {
+  .pw-grid { grid-template-columns: 1fr; }
+  .pw-summary-item { flex: 1; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .pw-summary-item { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .pw-summary-item strong { color: #A9EBD1; }
+[data-theme="dark"] .pw-amount { background: #05512F; }
+[data-theme="dark"] .pw-amount strong { color: #A9EBD1; }
+[data-theme="dark"] .pw-party strong { color: #E2E8F0; }
+[data-theme="dark"] .pw-breakdown dd { color: #E2E8F0; }
+[data-theme="dark"] .pw-breakdown .pw-total dt { color: #E2E8F0; }
+[data-theme="dark"] .pw-breakdown .pw-total dd { color: #A9EBD1; }
+[data-theme="dark"] .pw-btn.is-reject { background: #1E293B; border-color: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .pw-empty { background: #1E293B; border-color: #14532D; }
+[data-theme="dark"] .pw-empty h3 { color: #E2E8F0; }
+[data-theme="dark"] .pw-empty-icon { background: #05512F; color: #A9EBD1; }
+[data-theme="dark"] .pw-alert { background: #422006; border-color: #78350F; color: #FCD34D; }

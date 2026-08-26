@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 import { useAuthStore } from '../context/store';
 import '../styles/auth.css';
+import mpLogo from '../assets/mp-logo.png';
+import { Eye, EyeOff, ShieldCheck, Store, Zap } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -10,7 +12,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [locationDenied, setLocationDenied] = useState(false);
   const navigate = useNavigate();
   const login = useAuthStore((state) => state.login);
 
@@ -23,7 +24,6 @@ export default function Login() {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude
       }));
-      setLocationDenied(false);
     };
 
     const fetchIpLocation = async () => {
@@ -46,12 +46,8 @@ export default function Login() {
     };
 
     const handleGeoError = (err) => {
+      // Location is a nice-to-have, not a requirement - log and move on.
       console.warn('Geolocation error:', err);
-      if (!mounted) return;
-      // If permission denied, show a friendly hint so the user can enable it
-      if (err && err.code === 1) {
-        setLocationDenied(true);
-      }
     };
 
     if (navigator.permissions && navigator.permissions.query) {
@@ -61,7 +57,6 @@ export default function Login() {
           // Trigger prompt if needed and save location when available
           navigator.geolocation.getCurrentPosition(saveLocation, handleGeoError, { enableHighAccuracy: true, timeout: 7000 });
         } else if (perm.state === 'denied') {
-          setLocationDenied(true);
           // fallback to IP-based location when permission is denied
           fetchIpLocation();
         }
@@ -72,8 +67,6 @@ export default function Login() {
             if (!mounted) return;
             if (perm.state === 'granted') {
               navigator.geolocation.getCurrentPosition(saveLocation, handleGeoError, { enableHighAccuracy: true, timeout: 7000 });
-            } else if (perm.state === 'denied') {
-              setLocationDenied(true);
             }
           };
         } catch (e) {
@@ -127,6 +120,15 @@ export default function Login() {
         navigate('/user/dashboard');
       }
     } catch (err) {
+      /* An unverified account is not a failed sign-in — it is an unfinished
+         sign-up, so send them to the step they never completed rather than
+         showing an error they cannot act on. */
+      if (err.response?.data?.needsVerification) {
+        navigate('/register', {
+          state: { verifyPhone: err.response.data.phone, fromLogin: true },
+        });
+        return;
+      }
       setError(err.response?.data?.message || 'Login failed');
     } finally {
       setLoading(false);
@@ -137,19 +139,21 @@ export default function Login() {
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
-          <h1>💰 MoneyPay</h1>
-          <p>Digital Money Transfer Solution</p>
+          <img src={mpLogo} alt="MoneyPay" className="auth-logo" />
+          <div className="auth-brand-copy">
+            <h2>Send money across South Sudan</h2>
+            <p>Digital Money Transfer Solution</p>
+          </div>
+          <ul className="auth-points">
+            <li><ShieldCheck size={15} /> Every transfer secured end to end</li>
+            <li><Zap size={15} /> Instant delivery, day or night</li>
+            <li><Store size={15} /> Cash in and out at agents nationwide</li>
+          </ul>
         </div>
 
         <div className="auth-form">
           <h2>Welcome Back</h2>
           <p className="auth-subtitle">Sign in to your account</p>
-
-          {locationDenied && (
-            <div className="alert alert-warning">
-              Location access is blocked. Allow location in your browser settings for better functionality (auto-fill location on login).
-            </div>
-          )}
 
           {error && <div className="alert alert-danger">{error}</div>}
 
@@ -187,9 +191,10 @@ export default function Login() {
                   onClick={() => setShowPassword(!showPassword)}
                   title={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? '🙈' : '👁️'}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              <Link to="/forgot-password" className="forgot-link">Forgot password?</Link>
             </div>
 
             <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={loading}>
@@ -199,10 +204,6 @@ export default function Login() {
 
           <div className="auth-footer">
             <p>Don't have an account? <Link to="/register">Create one</Link></p>
-            <p><Link to="/forgot-password">Forgot password?</Link></p>
-            <p style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #ddd' }}>
-              <Link to="/admin-login" style={{ color: '#2563eb', fontWeight: '600' }}>Admin Login</Link>
-            </p>
           </div>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import express from 'express';
+import { getUserOrAgentDetails } from '../controllers/adminController.js';
 import {
   topupUser,
   withdrawFromUser,
@@ -35,16 +36,21 @@ import {
   ,createExchangeRate, getExchangeRates, updateExchangeRate, deleteExchangeRate
   ,createMoneyExchangeTransaction, convertMoneyExchange
 } from '../controllers/adminController.js';
+
 import { createCurrency, getCurrencies, updateCurrency, deleteCurrency } from '../controllers/adminController.js';
 import { getPendingSendByStateCount } from '../controllers/adminController.js';
 import { authMiddleware, adminMiddleware, notSuspended } from '../middleware/auth.js';
 
+
 const router = express.Router();
 
-// Require authentication for all admin routes
+// Require authentication for all admin routes (must be first)
 router.use(authMiddleware);
 // prevent suspended admins from performing admin actions
 router.use(notSuspended);
+
+// User/Agent details endpoint
+router.get('/user-details', adminMiddleware, getUserOrAgentDetails);
 
 // Allow any authenticated user to read the commission percent
 router.get('/commission', getCommission);

@@ -22,27 +22,28 @@ export default function RouteError() {
   // If it's a Response-like error (ErrorResponseImpl), try to read its fields
   // ErrorResponseImpl often exposes `status` and `statusText` and may include a `data` or `message`.
   if (typeof error === 'object') {
-    // status and statusText
     status = error.status || error.statusCode || null
-    if (error.statusText) title = `${error.status} ${error.statusText}`
-
-    // Some implementations include a `data` or `message` field
-    if (error.data && typeof error.data === 'object') {
-      message = error.data.message || JSON.stringify(error.data)
-    } else if (error.message) {
-      message = error.message
-    } else if (error.statusText) {
-      message = error.statusText
+    if (status === 404) {
+      title = '404 Not Found';
+      message = 'The page or resource you are looking for does not exist.';
     } else {
-      // fallback to stringified error
-      try {
-        message = JSON.stringify(error)
-      } catch (e) {
-        message = String(error)
+      if (error.statusText) title = `${error.status} ${error.statusText}`;
+      if (error.data && typeof error.data === 'object') {
+        message = error.data.message || JSON.stringify(error.data);
+      } else if (error.message) {
+        message = error.message;
+      } else if (error.statusText) {
+        message = error.statusText;
+      } else {
+        try {
+          message = JSON.stringify(error);
+        } catch (e) {
+          message = String(error);
+        }
       }
     }
   } else {
-    message = String(error)
+    message = String(error);
   }
 
   return (

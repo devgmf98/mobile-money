@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../utils/api';
 import Toast from '../components/Toast';
+import { ArrowRight, Banknote, Coins, Map, Send, User } from 'lucide-react';
+import Select from '../components/Select';
+import '../styles/admin-state-send.css';
 
 export default function AdminStateSend() {
   const [states, setStates] = useState([]);
@@ -32,7 +35,7 @@ export default function AdminStateSend() {
       }
     } catch (err) {
       console.error(err);
-      alert('Failed to load data');
+      setToast({ type: 'error', message: 'Failed to load data' });
     }
   };
 
@@ -40,7 +43,7 @@ export default function AdminStateSend() {
 
   useEffect(() => {
     const amt = parseFloat(amount) || 0;
-    const st = states.find(s => String(s._id) === String(stateId));
+    const st = states.find(s => String(s.id) === String(stateId));
     const pct = st ? Number(st.commissionPercent || 0) : 0;
     const comm = Math.round((amt * (pct / 100)) * 100) / 100;
     setCommission(comm);
@@ -52,6 +55,11 @@ export default function AdminStateSend() {
       setReceiverAmount(amt);
     }
   }, [amount, stateId, deduct, states]);
+
+  const selectedState = states.find(s => String(s.id) === String(stateId));
+  const symbol = selectedCurrency?.symbol || selectedCurrency?.code || 'SSP';
+  const amountValid = parseFloat(amount) > 0;
+  const canSend = Boolean(stateId && toAdminId && currencyId && amountValid) && !loading;
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -81,79 +89,159 @@ export default function AdminStateSend() {
   };
 
   return (
-    <div>
-      <h2 className="send-by-state-title">Send By State</h2>
-      <form onSubmit={handleSend} className="card fade-in send-by-state" style={{display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 640}}>
-        <label>State (commission source)</label>
-        <select value={stateId} onChange={(e) => setStateId(e.target.value)}>
-          <option value="">-- Select state --</option>
-          {states.map(s => <option key={s.id} value={s.id}>{s.name} ({s.commissionPercent}%)</option>)}
-        </select>
+    <div className="page-container state-send">
+      <div className="page-header">
+        <h1>Send To Destination</h1>
+        <p>Transfer funds to another admin and credit the destination commission to your account.</p>
+      </div>
 
-        <label>Destination Admin</label>
-        <select value={toAdminId} onChange={(e) => setToAdminId(e.target.value)}>
-          <option value="">-- Select admin --</option>
-          {admins.map(a => <option key={a.id} value={a.id}>{a.name} ({a.phone})</option>)}
-        </select>
+      <form onSubmit={handleSend} className="card state-send-card">
+        <div className="card-header">
+          <h3><Send size={18} /> Transfer details</h3>
+        </div>
 
-        <label>Currency</label>
-        <select value={currencyId} onChange={(e) => {
-          setCurrencyId(e.target.value);
-          const cur = currencies.find(c => c.id === e.target.value);
-          setSelectedCurrency(cur || null);
-        }}>
-          <option value="">-- Select currency --</option>
-          {currencies.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code}) {c.symbol ? ` ${c.symbol}` : ''}</option>)}
-        </select>
+        <div className="card-body">
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="ss-state"><Map size={14} /> Destination (commission source)</label>
+              <Select
+                id="ss-state"
+                value={stateId}
+                onChange={setStateId}
+                placeholder="Select destination"
+                ariaLabel="Destination (commission source)"
+                options={states.map(s => ({ value: String(s.id), label: s.name, hint: `${s.commissionPercent}% commission` }))}
+              />
+              {selectedState && (
+                <small>Commission rate: <strong>{selectedState.commissionPercent}%</strong></small>
+              )}
+            </div>
 
-        <label>Amount</label>
-        <input value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount" />
-
-        <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
-          <div style={{display: 'flex', flexDirection: 'column'}}>
-            <div style={{fontWeight: 600}}>{deduct ? 'Deduct Commission' : 'Give Full Amount'}</div>
-            <div className="switch-labels">
-              {deduct ? 'You send 100, receiver gets 95, you get 5 commission' : 'You send 95, receiver gets 100 (commission credited to you)'}
+            <div className="form-group">
+              <label htmlFor="ss-admin"><User size={14} /> Destination admin</label>
+              <Select
+                id="ss-admin"
+                value={toAdminId}
+                onChange={setToAdminId}
+                placeholder="Select destination admin"
+                ariaLabel="Destination admin"
+                options={admins.map(a => ({ value: String(a.id), label: a.name, hint: a.phone }))}
+              />
             </div>
           </div>
-          <div className="toggle-group" role="tablist" aria-label="Commission mode">
-            <button
-              type="button"
-              className={"toggle-option" + (deduct ? ' active' : '')}
-              aria-pressed={deduct}
-              onClick={() => setDeduct(true)}
-            >
-              Deduct
-            </button>
-            <button
-              type="button"
-              className={"toggle-option" + (!deduct ? ' active' : '')}
-              aria-pressed={!deduct}
-              onClick={() => setDeduct(false)}
-            >
-              Full
-            </button>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="ss-currency"><Coins size={14} /> Currency</label>
+              <Select
+                id="ss-currency"
+                value={currencyId}
+                placeholder="Select currency"
+                ariaLabel="Currency"
+                onChange={(val) => {
+                  setCurrencyId(val);
+                  // option values are strings while Currency.id is an integer,
+                  // so this has to compare as strings or it never matches.
+                  const cur = currencies.find(c => String(c.id) === String(val));
+                  setSelectedCurrency(cur || null);
+                }}
+                options={currencies.map(c => ({
+                  value: String(c.id),
+                  label: `${c.name} (${c.code})`,
+                  hint: c.symbol || undefined,
+                }))}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="ss-amount"><Banknote size={14} /> Amount</label>
+              <div className="amount-field">
+                <span className="amount-prefix">{symbol}</span>
+                <input
+                  id="ss-amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div style={{padding:12, border:'1px solid #eee', borderRadius:6}}>
-          {deduct ? (
-            <>
-              <div>You send: <strong>{selectedCurrency?.symbol || 'SSP'} {amount || '0.00'}</strong></div>
-              <div>Commission (credited to your Admin Cash): <strong>{selectedCurrency?.symbol || 'SSP'} {commission.toFixed(2)}</strong></div>
-              <div>Receiver gets: <strong>{selectedCurrency?.symbol || 'SSP'} {receiverAmount.toFixed(2)}</strong></div>
-            </>
-          ) : (
-            <>
-              <div>Receiver gets: <strong>{selectedCurrency?.symbol || 'SSP'} {receiverAmount.toFixed(2)}</strong></div>
-              <div>Commission (credited to you): <strong>{selectedCurrency?.symbol || 'SSP'} {commission.toFixed(2)}</strong></div>
-              <div style={{marginTop:8, color:'#555', fontSize:'0.9rem'}}>Commission is credited to your <strong>Admin Commission Cash</strong>.</div>
-            </>
+          {/* commission mode */}
+          <div className="commission-mode">
+            <div className="commission-mode-copy">
+              <span className="commission-mode-title">
+                {deduct ? 'Deduct commission' : 'Give full amount'}
+              </span>
+              <span className="commission-mode-hint">
+                {deduct
+                  ? 'You send 100, receiver gets 95, you keep 5 as commission.'
+                  : 'You send 100, receiver gets 100 — commission is credited to you.'}
+              </span>
+            </div>
+            <div className="segmented" role="group" aria-label="Commission mode">
+              <button
+                type="button"
+                className={'segmented-option' + (deduct ? ' active' : '')}
+                aria-pressed={deduct}
+                onClick={() => setDeduct(true)}
+              >
+                Deduct
+              </button>
+              <button
+                type="button"
+                className={'segmented-option' + (!deduct ? ' active' : '')}
+                aria-pressed={!deduct}
+                onClick={() => setDeduct(false)}
+              >
+                Full
+              </button>
+            </div>
+          </div>
+
+          {/* summary */}
+          <div className="transfer-summary">
+            {deduct ? (
+              <>
+                <div className="summary-row">
+                  <span>You send</span>
+                  <strong>{symbol} {(parseFloat(amount) || 0).toFixed(2)}</strong>
+                </div>
+                <div className="summary-row">
+                  <span>Commission <em>credited to your Admin Cash</em></span>
+                  <strong className="is-credit">+{symbol} {commission.toFixed(2)}</strong>
+                </div>
+                <div className="summary-row summary-total">
+                  <span>Receiver gets <ArrowRight size={14} /></span>
+                  <strong>{symbol} {receiverAmount.toFixed(2)}</strong>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="summary-row">
+                  <span>Commission <em>credited to your Admin Cash</em></span>
+                  <strong className="is-credit">+{symbol} {commission.toFixed(2)}</strong>
+                </div>
+                <div className="summary-row summary-total">
+                  <span>Receiver gets <ArrowRight size={14} /></span>
+                  <strong>{symbol} {receiverAmount.toFixed(2)}</strong>
+                </div>
+              </>
+            )}
+          </div>
+
+          <button className="btn btn-primary btn-block btn-lg" type="submit" disabled={!canSend}>
+            <Send size={17} />
+            {loading ? 'Sending…' : 'Send transfer'}
+          </button>
+
+          {!canSend && !loading && (
+            <p className="form-hint">Select a destination, destination admin, currency and an amount to continue.</p>
           )}
-        </div>
-
-        <div style={{display: 'flex', gap: 8}}>
-          <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? 'Sending...' : 'Send'}</button>
         </div>
 
         {toast && (

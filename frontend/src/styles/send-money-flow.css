@@ -1,0 +1,538 @@
+/* ==========================================================================
+   Send Money — redesigned flow
+
+   Two clear steps in one column. The previous version nested two tab layers
+   (Phone / QR, then Scan / Your-code), which buried the scanner and put the
+   receive view two levels down.
+
+   Kept in its own file rather than appended to send-money.css, which is 800+
+   lines of the old layout. Everything here is scoped to .send-money-page.
+   ========================================================================== */
+
+.sm-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sm-balance {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--light, #E8F7F0);
+}
+
+.sm-balance span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.sm-balance strong {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- alerts -------------------------------------------------------- */
+.sm-alert {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sm-alert svg { flex-shrink: 0; }
+.sm-alert.is-error { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+.sm-alert.is-success { background: #E8F7F0; border-color: #A9EBD1; color: #065F46; }
+
+/* ---------- cards --------------------------------------------------------- */
+.send-money-page .sm-card { margin-bottom: 16px; }
+
+.send-money-page .sm-card .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.send-money-page .sm-card .card-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.send-money-page .sm-card .card-header h3 svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.sm-step {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+/* ---------- recipient ----------------------------------------------------- */
+.send-money-page .sm-recipient-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.send-money-page .sm-recipient-row .form-group {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.sm-or {
+  padding-bottom: 12px;
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+.sm-scan-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 11px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.sm-scan-btn:hover:not(:disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.sm-scan-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sm-scanned {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 13px;
+  padding: 9px 12px;
+  border: 1px solid #A9EBD1;
+  border-radius: 10px;
+  background: var(--light, #E8F7F0);
+  font-size: 12px;
+  color: #065F46;
+}
+
+.sm-scanned-badge {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #FFFFFF;
+}
+
+.sm-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #065F46;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sm-clear:hover { border-color: #A9EBD1; background: #FFFFFF; }
+
+.send-money-page .sm-notice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 11px 0 0;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.send-money-page .sm-notice svg { flex-shrink: 0; }
+
+/* ---------- amount -------------------------------------------------------- */
+.sm-amount-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  overflow: hidden;
+}
+
+.sm-amount-field:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.sm-amount-field.is-invalid { border-color: var(--error, #DC2626); }
+
+.sm-currency {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  padding: 0 13px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-light);
+  border-right: 1px solid var(--border);
+}
+
+/* the wrapper owns the frame, so the input inside is bare */
+.send-money-page .sm-amount-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 17.5px;
+  font-weight: 700;
+}
+
+.send-money-page .sm-amount-field input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.sm-quick {
+  display: flex;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.sm-quick button {
+  flex: 1;
+  padding: 7px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.sm-quick button:hover:not(:disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.sm-quick button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.send-money-page .sm-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.send-money-page .sm-error {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error, #DC2626);
+}
+
+.sm-optional {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.send-money-page .btn-lg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ---------- receive link -------------------------------------------------- */
+.sm-receive {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px 17px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface, #FFFFFF);
+  text-decoration: none;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+
+.sm-receive:hover { border-color: var(--primary); transform: translateY(-1px); }
+
+.sm-receive-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary-dark);
+}
+
+.sm-receive-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sm-receive-text strong { font-size: 12.5px; color: var(--text); }
+.sm-receive-text span { font-size: 12px; color: var(--text-light); }
+.sm-receive > svg { color: var(--primary); flex-shrink: 0; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 560px) {
+  .send-money-page .sm-recipient-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 9px;
+  }
+
+  .sm-or { padding: 0; text-align: center; }
+  .sm-scan-btn { justify-content: center; }
+  .sm-balance { align-items: flex-start; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .sm-balance { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .sm-balance strong { color: #A9EBD1; }
+[data-theme="dark"] .sm-scan-btn { background: #0F172A; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .sm-amount-field { background: #0F172A; border-color: #14532D; }
+[data-theme="dark"] .sm-currency { border-right-color: #14532D; }
+[data-theme="dark"] .sm-quick button { background: #0F172A; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .sm-scanned { background: #05512F; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .sm-clear { color: #A9EBD1; }
+[data-theme="dark"] .sm-receive { background: #1E293B; border-color: #14532D; }
+[data-theme="dark"] .sm-receive-icon { background: #05512F; color: #A9EBD1; }
+[data-theme="dark"] .sm-receive-text strong { color: #E2E8F0; }
+[data-theme="dark"] .sm-alert.is-error { background: #450A0A; border-color: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .sm-alert.is-success { background: #05512F; border-color: #14532D; color: #A9EBD1; }
+
+/* ==========================================================================
+   Two-column layout with a review panel
+
+   The steps sat in one tall column with the submit buried inside the amount
+   card. They now sit side by side, and the review spans both — restating the
+   recipient and what the transfer leaves behind before you commit.
+   ========================================================================== */
+
+.send-money-page { max-width: 980px; }
+
+.send-money-page .sm-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.send-money-page .sm-grid .sm-card { margin-bottom: 0; }
+
+/* ---------- review ---------------------------------------------------------- */
+.sm-review {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--light, #E8F7F0);
+}
+
+.sm-review-flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.sm-review-flow > svg { color: var(--primary); flex-shrink: 0; }
+
+.sm-party-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+}
+
+.sm-party-label {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.sm-party-chip strong {
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+
+.sm-party-chip.is-to { border-color: #A9EBD1; }
+
+/* ---------- figures --------------------------------------------------------- */
+.sm-review-figures {
+  display: flex;
+  gap: 22px;
+  margin: 0;
+  margin-left: auto;
+}
+
+.sm-review-figures div { display: flex; flex-direction: column; gap: 2px; }
+
+.sm-review-figures dt {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.sm-review-figures dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sm-review-figures dd.is-amount { color: var(--primary-dark); font-size: 16.5px; }
+
+.send-money-page .sm-send { flex-shrink: 0; }
+
+/* ---------- quick amounts --------------------------------------------------- */
+.send-money-page .sm-quick { flex-wrap: wrap; }
+.send-money-page .sm-quick button { flex: 1; min-width: 62px; }
+
+/* ---------- responsive ------------------------------------------------------ */
+@media (max-width: 860px) {
+  .send-money-page { max-width: 720px; }
+  .send-money-page .sm-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .sm-review { flex-direction: column; align-items: stretch; }
+  .sm-review-figures { margin-left: 0; justify-content: space-between; }
+  .send-money-page .sm-send { width: 100%; justify-content: center; }
+}
+
+/* ---------- dark mode ------------------------------------------------------- */
+[data-theme="dark"] .sm-review { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .sm-party-chip { background: #0F172A; border-color: #14532D; }
+[data-theme="dark"] .sm-party-chip strong { color: #E2E8F0; }
+[data-theme="dark"] .sm-review-figures dd { color: #E2E8F0; }
+[data-theme="dark"] .sm-review-figures dd.is-amount { color: #A9EBD1; }
+
+/* .sm-clear's light hover fills white; in dark mode the text stays #A9EBD1,
+   giving 1.36:1. It is a quiet chip rather than a primary action, so it keeps
+   the muted treatment on hover: #A9EBD1 on #05512F is 6.96:1. */
+[data-theme="dark"] .sm-clear:hover {
+  background: #05512F;
+  border-color: #A9EBD1;
+  color: #A9EBD1;
+}
+
+/* Fee breakdown under the amount field — mirrors the withdraw page. The sender
+   pays amount + service fee; the recipient always receives the full amount. */
+.send-money-page .sm-fees {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface-2, #F7FAF9);
+}
+
+.send-money-page .sm-fee-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+.send-money-page .sm-fee-row + .sm-fee-row { margin-top: 6px; }
+
+.send-money-page .sm-fee-row.is-total {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border, #E3EAE7);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+}
+
+[data-theme="dark"] .send-money-page .sm-fees {
+  border-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .send-money-page .sm-fee-row { color: #9FB3AB; }
+[data-theme="dark"] .send-money-page .sm-fee-row.is-total {
+  border-top-color: rgba(255, 255, 255, 0.10);
+  color: #E6F2EC;
+}
+
+.send-money-page .sm-fee-note {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--text-light, #5B6B66);
+}
+[data-theme="dark"] .send-money-page .sm-fee-note { color: #9FB3AB; }

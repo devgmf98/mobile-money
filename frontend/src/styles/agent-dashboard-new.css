@@ -1,0 +1,382 @@
+/* Animations */
+@keyframes slideInUp { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes cardFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Recent Money Received table styles */
+.received-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.received-table thead {
+  background: #E8F7F0;
+  border-bottom: 2px solid #D1F0E3;
+}
+
+.received-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #087443;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
+.received-table tbody tr {
+  border-bottom: 1px solid #D1F0E3;
+  transition: background-color 0.2s ease;
+}
+
+.received-table tbody tr:hover {
+  background-color: #E8F7F0;
+}
+
+.received-table td {
+  padding: 12px;
+  color: #087443;
+}
+
+.received-table .view-btn {
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #16A34A 0%, #16A34A 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+.received-table .view-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+}
+
+/* Recent Withdrawals styles */
+.withdrawals-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.withdrawals-table thead {
+  background: #E8F7F0;
+  border-bottom: 2px solid #D1F0E3;
+}
+
+.withdrawals-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #087443;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+
+.withdrawals-table tbody tr {
+  border-bottom: 1px solid #D1F0E3;
+  transition: background-color 0.2s ease;
+}
+
+.withdrawals-table tbody tr:hover {
+  background-color: #E8F7F0;
+}
+
+.withdrawals-table td {
+  padding: 12px;
+  color: #087443;
+}
+
+.withdrawals-table .view-btn {
+  padding: 6px 10px;
+  background: linear-gradient(135deg, #16A34A 0%, #16A34A 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+.withdrawals-table .view-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+  .received-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .received-card {
+    padding: 12px;
+  }
+
+  .avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 13.5px;
+  }
+
+  .received-right .amount {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Mobile Styles (480px - 768px) */
+@media (min-width: 480px) and (max-width: 768px) {
+  .agent-dashboard {
+    padding: 16px;
+    
+  }
+
+  .dashboard-header {
+    margin-bottom: 25px;
+    
+  }
+
+  .dashboard-header h1 {
+    font-size: 19px;
+    
+  }
+
+  .dashboard-header p {
+    font-size: 12px;
+    
+  }
+
+  .stats-grid {
+    gap: 16px;
+    
+  }
+
+  .stat-card {
+    padding: 20px;
+    border-radius: 12px;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
+  }
+
+  .stat-card:hover {
+    transform: translateY(-5px);
+    
+  }
+
+  .stat-icon {
+    font-size: 22px;
+    
+    
+  }
+
+  .stat-value {
+    font-size: 19px;
+    
+    
+  }
+
+  .stat-label {
+    font-size: 12px;
+    
+    
+  }
+}
+
+/* Tablet Styles (834px - 1024px) */
+@media (min-width: 834px) and (max-width: 1024px) {
+  .agent-dashboard {
+    padding: 20px;
+    
+  }
+
+  .dashboard-header {
+    margin-bottom: 30px;
+    
+  }
+
+  .dashboard-header h1 {
+    font-size: 20.5px;
+    
+  }
+
+  .dashboard-header p {
+    font-size: 12.5px;
+    
+  }
+
+  .stats-grid {
+    gap: 20px;
+    
+  }
+
+  .stat-card {
+    padding: 24px;
+    border-radius: 14px;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
+  }
+
+  .stat-card:hover {
+    transform: translateY(-6px);
+    
+  }
+
+  .stat-icon {
+    font-size: 24px;
+    
+    
+  }
+
+  .stat-value {
+    font-size: 20.5px;
+    
+    
+  }
+
+  .stat-label {
+    font-size: 12.5px;
+    
+    
+  }
+}
+
+/* Laptop Styles (1440px+) */
+@media (min-width: 1440px) {
+  .agent-dashboard {
+    padding: 30px;
+    
+  }
+
+  .dashboard-header {
+    margin-bottom: 40px;
+    
+  }
+
+  .dashboard-header h1 {
+    font-size: 24px;
+    
+  }
+
+  .dashboard-header .text-muted {
+    font-size: 13.5px;
+    
+  }
+
+  .stats-grid {
+    gap: 25px;
+    
+  }
+
+  .stat-card {
+    padding: 28px;
+    border-radius: 16px;
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
+  }
+
+  .stat-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    
+  }
+
+  .stat-icon {
+    font-size: 25.5px;
+    
+    
+  }
+
+  .stat-value {
+    font-size: 22px;
+    
+    
+  }
+
+  .stat-label {
+    font-size: 13.5px;
+    
+    
+  }
+}
+
+/* Additional Keyframe Animations */
+@keyframes fadeInUp { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInDown { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInLeft { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInRight { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes fadeInDown { from { opacity: 0; } to { opacity: 1; } }
+
+/* ===== DARK MODE STYLES FOR AGENT DASHBOARD ===== */
+
+[data-theme="dark"] .received-table thead {
+  background: #0F172A;
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .received-table th {
+  color: var(--text);
+}
+
+[data-theme="dark"] .received-table tbody tr {
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .received-table tbody tr:hover {
+  background-color: #1E293B;
+}
+
+[data-theme="dark"] .received-table td {
+  color: var(--text);
+}
+
+[data-theme="dark"] .withdrawals-table thead {
+  background: #0F172A;
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .withdrawals-table th {
+  color: var(--text);
+}
+
+[data-theme="dark"] .withdrawals-table tbody tr {
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .withdrawals-table tbody tr:hover {
+  background-color: #1E293B;
+}
+
+[data-theme="dark"] .withdrawals-table td {
+  color: var(--text);
+}

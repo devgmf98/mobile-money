@@ -1,0 +1,445 @@
+/* ==========================================================================
+   Admin Profile & Admin Settings
+   Page-specific pieces only; cards, buttons, badges and form fields come from
+   design-system.css.
+   ========================================================================== */
+
+.account-page .card + .card { margin-top: 18px; }
+
+/* ---------- identity header ---------------------------------------------- */
+.card.identity-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: linear-gradient(135deg, #087443 0%, #00A86B 100%);
+  border: none;
+  color: #FFFFFF;
+}
+
+.identity-avatar {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  font-size: 19.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.identity-meta { min-width: 0; }
+
+.identity-meta h2 {
+  margin: 0 0 2px;
+  font-size: 17.5px;
+  font-weight: 700;
+  color: #FFFFFF;
+  overflow-wrap: anywhere;
+}
+
+.identity-meta p {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  overflow-wrap: anywhere;
+}
+
+.identity-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* badges sit on a green ground here, so override the light-tint variants */
+.identity-badges .badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+/* ---------- two-column layout -------------------------------------------- */
+.account-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.account-grid .card + .card { margin-top: 0; }
+
+.account-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.account-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+/* ---------- definition list ---------------------------------------------- */
+.detail-list { margin: 0; }
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid #EEF2F6;
+}
+
+.detail-row:last-child { border-bottom: none; }
+
+.detail-row dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.detail-row dt svg { color: var(--primary); flex-shrink: 0; }
+
+.detail-row dd {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- admin id ------------------------------------------------------ */
+.admin-id-block {
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1px solid #D1F0E3;
+  border-radius: 12px;
+  background: #F6FCF9;
+}
+
+.admin-id-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.admin-id-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-id-value code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 17.5px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--primary-dark);
+}
+
+.admin-id-copy {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #D1F0E3;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.admin-id-copy:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.admin-id-block small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* ---------- guidance list -------------------------------------------------- */
+.guidance-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.guidance-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.guidance-list li svg {
+  color: var(--primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ---------- settings rows -------------------------------------------------- */
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #EEF2F6;
+}
+
+.setting-row:last-of-type { border-bottom: none; }
+
+.setting-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 11px;
+  background: #E8F7F0;
+  color: var(--primary);
+}
+
+.setting-icon.is-danger { background: #FEE2E2; color: var(--error, #DC2626); }
+
+.setting-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.setting-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.setting-hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-light);
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.theme-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #E8F7F0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-dark);
+  white-space: nowrap;
+}
+
+/* ---------- danger card ---------------------------------------------------- */
+.card.danger-card { border-color: #FCA5A5; }
+.card.danger-card .card-header { border-bottom-color: #FEE2E2; }
+.card.danger-card .card-header h3 { color: var(--error, #DC2626); }
+
+.danger-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 14px 0 0;
+  padding: 10px 13px;
+  border-radius: 10px;
+  background: #FEF2F2;
+  font-size: 12px;
+  color: #B91C1C;
+}
+
+.danger-note svg { flex-shrink: 0; }
+
+/* ---------- dark mode ------------------------------------------------------ */
+[data-theme="dark"] .detail-row { border-bottom-color: #14532D; }
+[data-theme="dark"] .detail-row dd { color: #E2E8F0; }
+
+[data-theme="dark"] .admin-id-block {
+  background: #0F172A;
+  border-color: #14532D;
+}
+[data-theme="dark"] .admin-id-value code { color: #34C88E; }
+[data-theme="dark"] .admin-id-copy {
+  background: #05512F;
+  border-color: #14532D;
+  color: #A9EBD1;
+}
+
+[data-theme="dark"] .guidance-list li { background: #0F172A; color: #E2E8F0; }
+
+[data-theme="dark"] .setting-row { border-bottom-color: #14532D; }
+[data-theme="dark"] .setting-icon { background: #05512F; color: #34C88E; }
+[data-theme="dark"] .setting-icon.is-danger { background: #4C1D1D; color: #F87171; }
+[data-theme="dark"] .theme-tag { background: #05512F; color: #A9EBD1; }
+
+[data-theme="dark"] .card.danger-card { border-color: #7F1D1D; }
+[data-theme="dark"] .danger-note { background: #4C1D1D; color: #FCA5A5; }
+
+/* ---------- responsive ----------------------------------------------------- */
+@media (max-width: 640px) {
+  .card.identity-card {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .setting-row {
+    flex-wrap: wrap;
+  }
+
+  .setting-control {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: 56px;
+  }
+
+  .setting-control .btn { flex: 1; }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .detail-row dd { text-align: left; }
+
+  .account-form-actions .btn { flex: 1; }
+}
+
+/* ==========================================================================
+   Log out — sits at the far end of the identity card
+   The card is a white-on-green gradient, so this is a translucent outline
+   button rather than a solid one: a red .btn-danger on green would fight the
+   surface, and the action is already unambiguous from its label.
+   ========================================================================== */
+
+.identity-logout {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;          /* pushes it to the end of the row */
+  flex-shrink: 0;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.identity-logout svg { flex-shrink: 0; }
+
+.identity-logout:hover {
+  background: #FFFFFF;
+  border-color: #FFFFFF;
+  color: var(--error, #DC2626);
+}
+
+.identity-logout:focus-visible {
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
+}
+
+/* matches the 640px breakpoint where .identity-card switches to a column -
+   at any other width margin-left:auto would strand it against the edge */
+@media (max-width: 640px) {
+  .identity-logout {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ==========================================================================
+   Identity card — dark mode
+
+   The light card is a green gradient with white text, but in dark mode it was
+   rendering as a flat #1E293B slab. `.card.identity-card` and
+   `[data-theme="dark"] .card` are both (0,2,0), and the latter lives in
+   design-system.css which loads last — so it won the tie and painted over the
+   gradient. These rules are (0,3,0) and win regardless of order.
+
+   The gradient runs deeper than the light one (#05512F -> #087443 rather than
+   #087443 -> #00A86B): white on #00A86B is only 3.08:1, whereas the darkest
+   stop here keeps white at 5.85:1 against the lightest.
+   ========================================================================== */
+
+[data-theme="dark"] .card.identity-card {
+  background: linear-gradient(135deg, #05512F 0%, #087443 100%);
+  border: none;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .card.identity-card .identity-avatar {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.38);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .card.identity-card .identity-meta h2 { color: #FFFFFF; }
+
+/* .9 rather than the light card's .85 — on this darker green that is 5.06:1,
+   where .8 would drop to 4.35 and fail */
+[data-theme="dark"] .card.identity-card .identity-meta p {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* the badge fill is only 3.91:1 behind white text, so the border does the
+   separating work rather than relying on the fill alone */
+[data-theme="dark"] .card.identity-card .identity-badges .badge {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .card.identity-card .identity-logout {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.14);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .card.identity-card .identity-logout:hover {
+  background: #FFFFFF;
+  border-color: #FFFFFF;
+  color: #B91C1C;
+}

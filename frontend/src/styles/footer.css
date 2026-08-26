@@ -1,6 +1,6 @@
 /* Footer Styles */
 .footer {
-  background-color: var(--dark, #1f2937);
+  background-color: var(--dark, #1E293B);
   color: var(--light, #f3f4f6);
   padding: 20px 20px;
   margin-top: 30px;
@@ -20,13 +20,13 @@
 }
 
 .footer-section h3 {
-  font-size: 16px;
+  font-size: 13.5px;
   margin-bottom: 8px;
-  color: var(--primary, #2563eb);
+  color: var(--primary, #00A86B);
 }
 
 .footer-section h4 {
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
   margin-bottom: 10px;
   text-transform: uppercase;
@@ -35,7 +35,7 @@
 }
 
 .footer-section p {
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.5;
   color: var(--text-light, #d1d5db);
   margin: 0;
@@ -54,12 +54,12 @@
 .footer-section a {
   color: white;
   text-decoration: none;
-  font-size: 12px;
+  font-size: 11px;
   transition: color 0.3s ease;
 }
 
 .footer-section a:hover {
-  color: var(--primary, #2563eb);
+  color: var(--primary, #00A86B);
 }
 
 .footer-bottom {
@@ -69,7 +69,7 @@
 }
 
 .footer-bottom p {
-  font-size: 13px;
+  font-size: 11.5px;
   color: var(--text-light, #d1d5db);
   margin: 0;
 }
@@ -88,12 +88,12 @@
   }
 
   .footer-section h3 {
-    font-size: 14px;
+    font-size: 12px;
     margin-bottom: 6px;
   }
 
   .footer-section h4 {
-    font-size: 12px;
+    font-size: 11px;
     margin-bottom: 8px;
   }
 
@@ -103,7 +103,7 @@
   }
 
   .footer-bottom p {
-    font-size: 10px;
+    font-size: 11px;
   }
 }
 
@@ -120,7 +120,7 @@
   }
 
   .footer-section h3 {
-    font-size: 13px;
+    font-size: 11.5px;
     margin-bottom: 5px;
   }
 
@@ -131,11 +131,11 @@
 
   .footer-section p,
   .footer-section a {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .footer-bottom p {
-    font-size: 9px;
+    font-size: 11px;
   }
 
   .footer-section ul li {
@@ -148,8 +148,8 @@
   .footer {
     padding: 20px 20px;
     margin-top: 25px;
-    animation: slideInUp 0.6s ease-out;
-    transition: all 0.3s ease;
+    
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .footer:hover {
@@ -157,69 +157,69 @@
   }
 
   .footer-container {
-    animation: fadeIn 0.8s ease-out 0.2s both;
+    
   }
 
   .footer-content {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 25px;
     margin-bottom: 18px;
-    animation: slideInUp 0.6s ease-out 0.4s both;
+    
   }
 
   .footer-section {
-    animation: fadeInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.6s);
+    
+    
   }
 
   .footer-section h3 {
-    font-size: 16px;
+    font-size: 13.5px;
     margin-bottom: 10px;
-    animation: slideInLeft 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.8s);
+    
+    
   }
 
   .footer-section h4 {
-    font-size: 13px;
+    font-size: 11.5px;
     margin-bottom: 12px;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1s);
+    
+    
   }
 
   .footer-section p {
-    font-size: 13px;
+    font-size: 11.5px;
     line-height: 1.6;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1.1s);
+    
+    
   }
 
   .footer-section ul li {
     margin-bottom: 8px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.05s + 1.2s);
+    
+    
   }
 
   .footer-section a {
-    font-size: 13px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.05s + 1.3s);
+    font-size: 11.5px;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
   }
 
   .footer-section a:hover {
     transform: translateX(5px);
-    color: var(--primary, #2563eb);
+    color: var(--primary, #00A86B);
   }
 
   .footer-bottom {
     border-top: 1px solid rgba(209, 213, 219, 0.3);
     padding-top: 15px;
-    animation: fadeIn 0.5s ease-out 0.8s both;
+    
   }
 
   .footer-bottom p {
-    font-size: 12px;
-    animation: slideInUp 0.4s ease-out 1s both;
+    font-size: 11px;
+    
   }
 }
 
@@ -228,8 +228,8 @@
   .footer {
     padding: 25px 25px;
     margin-top: 30px;
-    animation: slideInUp 0.6s ease-out;
-    transition: all 0.3s ease;
+    
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .footer:hover {
@@ -237,69 +237,69 @@
   }
 
   .footer-container {
-    animation: fadeIn 0.8s ease-out 0.2s both;
+    
   }
 
   .footer-content {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 30px;
     margin-bottom: 20px;
-    animation: slideInUp 0.6s ease-out 0.4s both;
+    
   }
 
   .footer-section {
-    animation: fadeInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.6s);
+    
+    
   }
 
   .footer-section h3 {
-    font-size: 17px;
+    font-size: 14.5px;
     margin-bottom: 12px;
-    animation: slideInLeft 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.8s);
+    
+    
   }
 
   .footer-section h4 {
-    font-size: 14px;
+    font-size: 12px;
     margin-bottom: 14px;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1s);
+    
+    
   }
 
   .footer-section p {
-    font-size: 14px;
+    font-size: 12px;
     line-height: 1.7;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1.1s);
+    
+    
   }
 
   .footer-section ul li {
     margin-bottom: 10px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.04s + 1.2s);
+    
+    
   }
 
   .footer-section a {
-    font-size: 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.04s + 1.3s);
+    font-size: 12px;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
   }
 
   .footer-section a:hover {
     transform: translateX(8px);
-    color: var(--primary, #2563eb);
+    color: var(--primary, #00A86B);
   }
 
   .footer-bottom {
     border-top: 1px solid rgba(209, 213, 219, 0.3);
     padding-top: 18px;
-    animation: fadeIn 0.5s ease-out 0.8s both;
+    
   }
 
   .footer-bottom p {
-    font-size: 13px;
-    animation: slideInUp 0.4s ease-out 1s both;
+    font-size: 11.5px;
+    
   }
 }
 
@@ -308,8 +308,8 @@
   .footer {
     padding: 35px 35px;
     margin-top: 40px;
-    animation: slideInUp 0.6s ease-out;
-    transition: all 0.4s ease;
+    
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease;
   }
 
   .footer:hover {
@@ -318,83 +318,74 @@
 
   .footer-container {
     max-width: 1400px;
-    animation: fadeIn 0.8s ease-out 0.2s both;
+    
   }
 
   .footer-content {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 40px;
     margin-bottom: 25px;
-    animation: slideInUp 0.6s ease-out 0.4s both;
+    
   }
 
   .footer-section {
-    animation: fadeInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.6s);
+    
+    
   }
 
   .footer-section h3 {
-    font-size: 18px;
+    font-size: 14.5px;
     margin-bottom: 15px;
-    animation: slideInLeft 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.8s);
+    
+    
   }
 
   .footer-section h4 {
-    font-size: 15px;
+    font-size: 12.5px;
     margin-bottom: 16px;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1s);
+    
+    
   }
 
   .footer-section p {
-    font-size: 15px;
+    font-size: 12.5px;
     line-height: 1.8;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1.1s);
+    
+    
   }
 
   .footer-section ul li {
     margin-bottom: 12px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.03s + 1.2s);
+    
+    
   }
 
   .footer-section a {
-    font-size: 15px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.03s + 1.3s);
+    font-size: 12.5px;
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
   }
 
   .footer-section a:hover {
     transform: translateX(10px);
-    color: var(--primary, #2563eb);
+    color: var(--primary, #00A86B);
   }
 
   .footer-bottom {
     border-top: 1px solid rgba(209, 213, 219, 0.3);
     padding-top: 20px;
-    animation: fadeIn 0.5s ease-out 0.8s both;
+    
   }
 
   .footer-bottom p {
-    font-size: 14px;
-    animation: slideInUp 0.4s ease-out 1s both;
+    font-size: 12px;
+    
   }
 }
 
 /* Keyframe Animations */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+@keyframes slideInUp { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes fadeIn {
   from {
@@ -405,35 +396,236 @@
   }
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
+@keyframes fadeInUp { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInLeft { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInUp { from { opacity: 0; } to { opacity: 1; } }
+
+/* ==========================================================================
+   Footer — brand palette
+   Was slate navy (var(--dark) #1E293B), which sat oddly against a green app.
+   Now a deep-green ground, and the muted text uses a light green rather than
+   var(--text-light) (#64748B slate) which was near-illegible on a dark ground.
+   ========================================================================== */
+
+.footer {
+  background: linear-gradient(180deg, #087443 0%, #05512F 55%, #04331E 100%);
+  color: #E8F7F0;
+  padding: 40px 24px 20px;
+  margin-top: 40px;
+  border-top: none;
+  position: relative;
+}
+
+/* thin brand rule across the top instead of the pale 1px border */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #00A86B 0%, #34C88E 50%, #00A86B 100%);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-content {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 32px;
+  margin-bottom: 28px;
+}
+
+/* ---- brand ---- */
+.footer-section h3 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15.5px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: #34C88E;
+  letter-spacing: -0.2px;
+}
+
+.footer-section h3 svg {
+  color: #34C88E;
+  flex-shrink: 0;
+}
+
+.footer-brand p {
+  max-width: 30ch;
+}
+
+/* ---- column headings ---- */
+.footer-section h4 {
+  font-size: 11px;
+  font-weight: 700;
+  margin: 0 0 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #FFFFFF;
+}
+
+/* ---- body copy: light green reads on the dark ground ---- */
+.footer-section p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #A9EBD1;
+  margin: 0;
+}
+
+/* ---- links ---- */
+.footer-section ul li {
+  margin-bottom: 9px;
+}
+
+.footer-section a {
+  display: inline-block;
+  color: #D1F0E3;
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 1.5;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.footer-section a:hover,
+.footer-section a:focus-visible {
+  color: #FFFFFF;
+  transform: translateX(3px);
+}
+
+.footer-section a:focus-visible {
+  outline: 2px solid #34C88E;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* ---- bottom bar ---- */
+.footer-bottom {
+  border-top: 1px solid rgba(169, 235, 209, 0.18);
+  padding-top: 18px;
+  text-align: center;
+}
+
+.footer-bottom p {
+  font-size: 11.5px;
+  color: #A9EBD1;
+  margin: 0;
+}
+
+/* ---- responsive ---- */
+@media (max-width: 900px) {
+  .footer-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .footer-brand {
+    grid-column: 1 / -1;
   }
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
+@media (max-width: 560px) {
+  .footer {
+    padding: 30px 18px 16px;
+    margin-top: 28px;
   }
-  to {
-    opacity: 1;
-    transform: translateX(0);
+
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin-bottom: 20px;
+  }
+
+  .footer-section h3 { font-size: 14.5px; }
+  .footer-section h4 { margin-bottom: 10px; }
+  .footer-section p,
+  .footer-section a { font-size: 11.5px; }
+  .footer-bottom p { font-size: 11px; }
+}
+
+/* pages that do not exist yet: present but visibly inactive */
+.footer-pending {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(169, 235, 209, 0.45);
+  cursor: default;
+}
+
+/* ---- brand logo -----------------------------------------------------------
+   The logo's wordmark and phone are dark navy, which all but disappears on the
+   dark-green footer. A light plate keeps it legible without needing a separate
+   inverted artwork file. */
+.footer-logo-plate {
+  display: inline-flex;
+  align-items: center;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.footer-logo {
+  height: 36px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+@media (max-width: 560px) {
+  .footer-logo-plate {
+    padding: 8px 13px;
+    margin-bottom: 12px;
+  }
+
+  .footer-logo { height: 30px; }
+}
+
+/* ==========================================================================
+   Full-bleed inside the user layout
+
+   The admin shell renders the footer inside .admin-body (padding: 0), so it
+   spans the full content width. The user shell uses .layout-body, which has
+   30px of padding — that inset is what left a strip of page background down
+   both sides and under the footer. Negative margins pull it back out, and
+   each step matches the padding at that breakpoint.
+   ========================================================================== */
+
+.layout-body > .footer {
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+@media (max-width: 1024px) {
+  .layout-body > .footer {
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
   }
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@media (max-width: 768px) {
+  .layout-body > .footer {
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .layout-body > .footer {
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0;
   }
 }

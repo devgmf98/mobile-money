@@ -69,7 +69,8 @@ const Transaction = sequelize.define('Transaction', {
     defaultValue: 0
   },
   receiverCredit: {
-    type: DataTypes.DECIMAL(10, 2),
+    // widened so an exchange result like 0.0125 is not rounded to 0.01
+    type: DataTypes.DECIMAL(20, 6),
     allowNull: true
   },
   currencyCode: {
@@ -81,8 +82,22 @@ const Transaction = sequelize.define('Transaction', {
     allowNull: true
   },
   exchangeRate: {
-    type: DataTypes.DECIMAL(10, 4),
+    // 10,4 rounded small rates away (0.000125 became 0.0001)
+    type: DataTypes.DECIMAL(20, 10),
     defaultValue: 1
+  },
+  // ---- money exchange ----
+  toCurrencyCode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  convertedAmount: {
+    type: DataTypes.DECIMAL(20, 6),
+    allowNull: true
+  },
+  exchangeMode: {
+    type: DataTypes.ENUM('buying', 'selling'),
+    allowNull: true
   },
   currencyTier: {
     type: DataTypes.STRING,

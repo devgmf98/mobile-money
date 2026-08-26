@@ -1,0 +1,660 @@
+{
+ "getUserOrAgentDetails": {
+  "query": [
+   "id",
+   "phone"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "topupUser": {
+  "body": [
+   "userId",
+   "description"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "createStateSetting": {
+  "body": [
+   "name",
+   "commissionPercent"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "createCurrency": {
+  "body": [
+   "name",
+   "code",
+   "symbol",
+   "countries",
+   "exchangeRate",
+   "tier",
+   "buyingPrice",
+   "sellingPrice",
+   "priceType"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "getCurrencies": {
+  "codes": [
+   "500"
+  ]
+ },
+ "updateCurrency": {
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "deleteCurrency": {
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "createExchangeRate": {
+  "body": [
+   "fromCode",
+   "toCode",
+   "buyingPrice",
+   "sellingPrice",
+   "priceType"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "getExchangeRates": {
+  "query": [
+   "fromCode",
+   "toCode"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "updateExchangeRate": {
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "deleteExchangeRate": {
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "getStateSettings": {
+  "codes": [
+   "500"
+  ]
+ },
+ "updateStateSetting": {
+  "body": [
+   "name",
+   "commissionPercent"
+  ],
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "deleteStateSetting": {
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "sendMoneyBetweenAdminsByState": {
+  "body": [
+   "toAdminId",
+   "amount: amtRaw",
+   "stateId",
+   "deductCommissionFromAmount",
+   "currencyId"
+  ],
+  "codes": [
+   "400",
+   "403",
+   "404",
+   "500"
+  ]
+ },
+ "withdrawFromUser": {
+  "body": [
+   "userId",
+   "description"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "withdrawFromAgent": {
+  "body": [
+   "agentId",
+   "description"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "findAgentByAgentId": {
+  "query": [
+   "agentId"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "getAllUsers": {
+  "codes": [
+   "500"
+  ]
+ },
+ "getAllTransactions": {
+  "codes": [
+   "500"
+  ]
+ },
+ "suspendUser": {
+  "body": [
+   "userId"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "unsuspendUser": {
+  "body": [
+   "userId"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "getAdminStats": {
+  "codes": [
+   "500"
+  ]
+ },
+ "grantLocationPermissionToAll": {
+  "codes": [
+   "500"
+  ]
+ },
+ "getCommission": {
+  "codes": [
+   "500"
+  ]
+ },
+ "setCommission": {
+  "codes": [
+   "500"
+  ]
+ },
+ "requestAgentWithdrawal": {
+  "body": [
+   "agentId",
+   "amount"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "approveAdminWithdrawalRequest": {
+  "body": [
+   "requestId"
+  ],
+  "codes": [
+   "400",
+   "403",
+   "404",
+   "409",
+   "500"
+  ]
+ },
+ "rejectAdminWithdrawalRequest": {
+  "body": [
+   "requestId",
+   "reason"
+  ],
+  "codes": [
+   "403",
+   "404",
+   "409",
+   "500"
+  ]
+ },
+ "getAgentWithdrawalRequests": {
+  "codes": [
+   "500"
+  ]
+ },
+ "pushMoneyBetweenUsers": {
+  "body": [
+   "fromPhone",
+   "toPhone",
+   "amount: amtRaw",
+   "description"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "getTieredCommission": {
+  "codes": [
+   "500"
+  ]
+ },
+ "setTieredCommission": {
+  "body": [
+   "tiers",
+   "withdrawalTiers"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "setSendMoneyTiers": {
+  "body": [
+   "tiers"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "setWithdrawalTiers": {
+  "body": [
+   "withdrawalTiers"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "getMyAdminCashOut": {
+  "codes": [
+   "500"
+  ]
+ },
+ "getMyAdminCommission": {
+  "codes": [
+   "500"
+  ]
+ },
+ "getPendingSendByState": {
+  "codes": [
+   "500"
+  ]
+ },
+ "receiveSendByState": {
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "400",
+   "403",
+   "404",
+   "500"
+  ]
+ },
+ "getPendingSendByStateCount": {
+  "codes": [
+   "500"
+  ]
+ },
+ "cancelSendByState": {
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "400",
+   "403",
+   "404",
+   "500"
+  ]
+ },
+ "editSendByState": {
+  "body": [
+   "description",
+   "amount",
+   "toAdminId",
+   "deductCommissionFromAmount"
+  ],
+  "params": [
+   "id"
+  ],
+  "codes": [
+   "400",
+   "403",
+   "404",
+   "500"
+  ]
+ },
+ "createMoneyExchangeTransaction": {
+  "body": [
+   "amount",
+   "fromCurrency",
+   "toCurrency",
+   "convertedAmount",
+   "priceMode",
+   "pairUsed",
+   "description"
+  ],
+  "codes": [
+   "201",
+   "400",
+   "500"
+  ]
+ },
+ "convertMoneyExchange": {
+  "body": [
+   "amount",
+   "fromCurrency",
+   "toCurrency",
+   "priceMode"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "register": {
+  "body": [
+   "name",
+   "email",
+   "phone",
+   "password",
+   "role",
+   "agentId"
+  ],
+  "codes": [
+   "201",
+   "400",
+   "500"
+  ]
+ },
+ "verifyPhone": {
+  "body": [
+   "phone",
+   "code"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "resendVerification": {
+  "body": [
+   "phone"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "login": {
+  "body": [
+   "email",
+   "password",
+   "latitude",
+   "longitude"
+  ],
+  "codes": [
+   "400",
+   "401",
+   "403",
+   "500"
+  ]
+ },
+ "getProfile": {
+  "codes": [
+   "500"
+  ]
+ },
+ "updateProfile": {
+  "body": [
+   "name",
+   "profileImage",
+   "idNumber",
+   "autoAdminCashout",
+   "theme"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "checkUserBalance": {
+  "query": [
+   "phone"
+  ],
+  "codes": [
+   "400",
+   "403",
+   "404",
+   "500"
+  ]
+ },
+ "forgotPassword": {
+  "body": [
+   "email"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "resetPassword": {
+  "body": [
+   "email",
+   "code",
+   "password"
+  ],
+  "codes": [
+   "400",
+   "500"
+  ]
+ },
+ "getNotifications": {
+  "codes": [
+   "500"
+  ]
+ },
+ "markAsRead": {
+  "body": [
+   "notificationId"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "markAllAsRead": {
+  "codes": [
+   "500"
+  ]
+ },
+ "sendNotificationToAll": {
+  "body": [
+   "title",
+   "message",
+   "type"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "sendNotificationToUser": {
+  "body": [
+   "userId",
+   "title",
+   "message",
+   "type"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "deleteNotification": {
+  "params": [
+   "notificationId"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "sendMoney": {
+  "body": [
+   "recipientPhone",
+   "description"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "withdrawMoney": {
+  "body": [
+   "agentId"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "getTransactions": {
+  "codes": [
+   "500"
+  ]
+ },
+ "getTransactionStats": {
+  "codes": [
+   "500"
+  ]
+ },
+ "getSendQuote": {
+  "query": [
+   "amount",
+   "recipientPhone"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "getWithdrawalQuote": {
+  "query": [
+   "amount",
+   "forPhone"
+  ],
+  "codes": [
+   "500"
+  ]
+ },
+ "getAgentInfo": {
+  "params": [
+   "agentId"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "getUserInfo": {
+  "params": [
+   "phoneNumber"
+  ],
+  "codes": [
+   "404",
+   "500"
+  ]
+ },
+ "requestWithdrawalFromUser": {
+  "body": [
+   "userPhone",
+   "amount"
+  ],
+  "codes": [
+   "400",
+   "404",
+   "500"
+  ]
+ },
+ "approveWithdrawalRequest": {
+  "body": [
+   "requestId"
+  ],
+  "codes": [
+   "403",
+   "404",
+   "409",
+   "500"
+  ]
+ },
+ "rejectWithdrawalRequest": {
+  "body": [
+   "requestId",
+   "reason"
+  ],
+  "codes": [
+   "403",
+   "404",
+   "409",
+   "500"
+  ]
+ },
+ "getPendingWithdrawalRequests": {
+  "codes": [
+   "500"
+  ]
+ }
+}

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'https://cash-app-api.up.railway.app/api';
+const API_BASE = import.meta.env.VITE_API_URL || 'https://cash-app-apis.up.railway.app/api';
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -21,9 +21,12 @@ api.interceptors.request.use((config) => {
 export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   verifyPhone: (data) => api.post('/auth/verify-phone', data),
+  resendVerification: (data) => api.post('/auth/resend-verification', data),
   login: (data) => api.post('/auth/login', data),
   getProfile: () => api.get('/auth/profile'),
-  updateProfile: (data) => api.put('/auth/profile', data)
+  updateProfile: (data) => api.put('/auth/profile', data),
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  resetPassword: (data) => api.post('/auth/reset-password', data)
 };
 
 export const transactionAPI = {
@@ -31,7 +34,12 @@ export const transactionAPI = {
   withdraw: (data) => api.post('/transactions/withdraw', data),
   getTransactions: () => api.get('/transactions/transactions'),
   getStats: () => api.get('/transactions/stats'),
-  getUserInfo: (phoneNumber) => api.get(`/transactions/user-info/${phoneNumber}`)
+  getUserInfo: (phoneNumber) => api.get(`/transactions/user-info/${phoneNumber}`),
+  getAgentInfo: (agentId) => api.get(`/transactions/agent-info/${agentId}`),
+  getWithdrawalQuote: (amount, forPhone) =>
+    api.get('/transactions/withdrawal-quote', { params: { amount, forPhone } }),
+  getSendQuote: (amount, recipientPhone) =>
+    api.get('/transactions/send-quote', { params: { amount, recipientPhone } })
 };
 
 export const adminAPI = {

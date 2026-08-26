@@ -1,0 +1,234 @@
+.container {
+  max-width: 430px;
+  margin: 0 auto;
+  background: #E8F7F0;
+  min-height: 100vh;
+  font-family: 'Inter Variable', 'Inter', Arial, sans-serif;
+  padding-bottom: 80px;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 18px 0 18px;
+}
+.avatar {
+  font-size: 1.719rem;
+  color: #bdbdbd;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px #e0e0e0;
+}
+.headerIcons {
+  display: flex;
+  gap: 18px;
+}
+.icon {
+  font-size: 1.094rem;
+  color: #bdbdbd;
+  cursor: pointer;
+}
+.balanceCard {
+  background: linear-gradient(90deg, #E8F7F0 0%, #E8F7F0 100%);
+  border-radius: 18px;
+  margin: 18px;
+  padding: 22px 18px 18px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+}
+.balanceInfo {
+  display: flex;
+  flex-direction: column;
+}
+.balanceLabel {
+  color: #34C88E;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+.balanceAmount {
+  font-size: 1.594rem;
+  font-weight: 700;
+  color: #222;
+}
+.currency {
+  font-size: 0.844rem;
+  color: #34C88E;
+}
+.depositBtn {
+  background: #34C88E;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #00A86B33;
+}
+.actions {
+  display: flex;
+  justify-content: space-between;
+  margin: 0 18px 18px 18px;
+  gap: 10px;
+}
+.actionBtn {
+  flex: 1;
+  background: #fff;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 0 8px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 11px;
+  color: #34C88E;
+  font-weight: 500;
+  gap: 6px;
+  box-shadow: 0 2px 8px #E8F7F044;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.actionBtn:hover {
+  background: #E8F7F0;
+}
+.section {
+  margin: 0 18px 18px 18px;
+}
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.seeAll {
+  color: #34C88E;
+  font-size: 11px;
+  text-decoration: none;
+}
+.movers {
+  display: flex;
+  gap: 12px;
+}
+.moverCard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  
+}
+.moverIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.906rem;
+  margin-bottom: 6px;
+}
+.moverInfo {
+  text-align: center;
+}
+.moverPrice {
+  font-size: 11px;
+  color: #222;
+  font-weight: 600;
+}
+.moverChangeUp {
+  color: #16A34A;
+  font-size: 11px;
+  font-weight: 500;
+}
+.moverChangeDown {
+  color: #DC2626;
+  font-size: 11px;
+  font-weight: 500;
+}
+.watchlist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.watchCard {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+}
+.cryptoIcon {
+  font-size: 1.594rem;
+}
+.watchInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.cryptoName {
+  font-size: 11px;
+  font-weight: 600;
+  color: #222;
+}
+.cryptoSymbol {
+  color: #34C88E;
+  font-size: 11px;
+  margin-left: 4px;
+}
+.cryptoPrice {
+  font-size: 11px;
+  color: #222;
+}
+.cryptoChangeUp {
+  color: #16A34A;
+  font-size: 11px;
+  font-weight: 600;
+}
+.cryptoChangeDown {
+  color: #DC2626;
+  font-size: 11px;
+  font-weight: 600;
+}
+.bottomNav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #E8F7F0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 64px;
+  z-index: 100;
+  box-shadow: 0 -2px 8px #E8F7F044;
+}
+.navBtn {
+  background: none;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 1rem;
+  color: #34C88E;
+  font-weight: 500;
+  gap: 2px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.navBtn.active, .navBtn:focus {
+  color: #34C88E;
+}

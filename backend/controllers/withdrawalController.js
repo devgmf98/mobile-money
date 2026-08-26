@@ -1,80 +1,64 @@
 import { Op } from 'sequelize';
+import { phoneVariants } from '../utils/helpers.js';
+import { quoteWithdrawal } from '../utils/commission.js';
 import sequelize from '../config/database.js';
 import User from '../models/User.js';
 import WithdrawalRequest from '../models/WithdrawalRequest.js';
 import Transaction from '../models/Transaction.js';
 import Notification from '../models/Notification.js';
-import WithdrawalCommissionTier from '../models/WithdrawalCommissionTier.js';
 import { generateTransactionId } from '../utils/helpers.js';
 import { sendSMS } from '../utils/sms.js';
 import { getIO } from '../utils/socket.js';
 
 export const requestWithdrawalFromUser = async (req, res) => {
+      // DEBUG: Print all user phone numbers in DB
+      const allUsers = await User.findAll({ attributes: ['id', 'phone'] });
+      console.log('DEBUG: All user phones in DB:', allUsers.map(u => u.phone));
+    // AGENT WITHDRAWAL LOGIC: Agent sends pull request to user using user phone number. AgentId is always the requesting agent's userId. User must approve for funds to transfer.
   try {
+    // 1. Extract agent and user info
     const { userPhone, amount } = req.body;
     const agentId = req.userId;
-
     const agent = await User.findByPk(agentId);
     if (!agent || agent.role !== 'agent') {
       return res.status(400).json({ message: 'Only agents can request withdrawals' });
     }
 
-    const user = await User.findOne({ where: { phone: userPhone } });
+    // 2. Normalize and search user by phone
+    let user = null;
+    for (const variant of phoneVariants(userPhone)) {
+      user = await User.findOne({ where: { phone: variant } });
+      if (user) break;
+    }
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // 3. Validate amount and user balance
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
       return res.status(400).json({ message: 'Invalid amount' });
     }
+    // 4. Calculate commissions — shared with the quote the user is shown
+    const q = await quoteWithdrawal(parsedAmount);
 
-    if (user.balance < parsedAmount) {
-      return res.status(400).json({ message: 'User has insufficient balance' });
-    }
-
-    // Get commission — use tiered commission
-    let agentCommissionPercent = 0;
-    let companyCommissionPercent = 0;
-
-    try {
-      const applicableTier = await WithdrawalCommissionTier.findOne({
-        where: {
-          minAmount: { [Op.lte]: parsedAmount },
-          maxAmount: { [Op.gte]: parsedAmount }
-        },
-        order: [['minAmount', 'ASC']]
+    /* Approval debits amount + both commissions, so the request has to be
+       affordable on that basis. Checking the bare amount here let an agent
+       create a request the user could never approve — it failed later with a
+       409 instead of being refused up front. */
+    if (parseFloat(user.balance) < q.totalDebit) {
+      return res.status(400).json({
+        message: 'User has insufficient balance',
+        required: q.totalDebit,
+        available: parseFloat(user.balance),
       });
-
-      if (applicableTier) {
-        agentCommissionPercent = parseFloat(applicableTier.agentPercent) || 0;
-        companyCommissionPercent = parseFloat(applicableTier.companyPercent) || 0;
-      } else {
-        // Only use defaults if no tiered commission record exists at all
-        // Default tiered commission for withdrawals: ranges
-        const defaultTiers = [
-          { minAmount: 0, maxAmount: 99, agentPercent: 0, companyPercent: 0 },
-          { minAmount: 100, maxAmount: 499, agentPercent: 1, companyPercent: 0.5 },
-          { minAmount: 500, maxAmount: 999, agentPercent: 1.5, companyPercent: 0.5 },
-          { minAmount: 1000, maxAmount: Infinity, agentPercent: 2, companyPercent: 1 }
-        ];
-        const applicableTier = defaultTiers
-          .find(t => (parseFloat(t.minAmount) || 0) <= parsedAmount && parsedAmount <= (parseFloat(t.maxAmount) || Infinity));
-        
-        if (applicableTier) {
-          agentCommissionPercent = applicableTier.agentPercent || 0;
-          companyCommissionPercent = applicableTier.companyPercent || 0;
-        }
-      }
-      // If tieredDoc exists but has empty withdrawalTiers array, commission remains 0 (no commission)
-    } catch (err) {
-      console.error('Failed to fetch tiered commission for withdrawal:', err);
     }
+    const agentCommissionPercent = q.agentPercent;
+    const companyCommissionPercent = q.companyPercent;
+    const agentCommissionAmount = q.agentCommission;
+    const companyCommissionAmount = q.companyCommission;
 
-    const agentCommissionAmount = parseFloat(((parsedAmount * agentCommissionPercent) / 100).toFixed(2)) || 0;
-    const companyCommissionAmount = parseFloat(((parsedAmount * companyCommissionPercent) / 100).toFixed(2)) || 0;
-
-    // Create withdrawal request (pending user approval)
+    // 5. Create withdrawal request (pending user approval)
     const request = await WithdrawalRequest.create({
       agentId: agentId,
       userId: user.id,
@@ -86,22 +70,20 @@ export const requestWithdrawalFromUser = async (req, res) => {
       status: 'pending'
     });
 
-    // Notify user of withdrawal request
+    // 6. Notify user of withdrawal request
     const totalCost = parsedAmount + agentCommissionAmount + companyCommissionAmount;
-    const notification = await Notification.create({
+    await Notification.create({
       recipientId: user.id,
       title: 'Withdrawal Request',
       message: `Agent ${agent.name} requested SSP ${parsedAmount} withdrawal. Total cost: SSP ${totalCost.toFixed(2)} (includes SSP ${agentCommissionAmount.toFixed(2)} agent fee + SSP ${companyCommissionAmount.toFixed(2)} service fee)`,
       type: 'withdrawal_request',
       relatedTransactionId: request.id
     });
-
     try {
       await sendSMS(user.phone, `MoneyPay: Agent ${agent.name} requested SSP ${parsedAmount} withdrawal. Total cost: SSP ${totalCost.toFixed(2)}. Please approve or reject.`);
-    } catch (err) {
-      console.error('SMS failed:', err);
-    }
+    } catch (err) {}
 
+    // 7. Respond with request info
     res.json({
       message: 'Withdrawal request created',
       request: {

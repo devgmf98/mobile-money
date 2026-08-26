@@ -1,0 +1,298 @@
+/* ==========================================================================
+   Money Exchange
+   Page-specific pieces only; card, buttons, form fields come from
+   design-system.css and the dropdowns from components/Select.jsx.
+   ========================================================================== */
+
+.exchange-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+@keyframes mx-spin { to { transform: rotate(360deg); } }
+.money-exchange .spin { animation: mx-spin 0.9s linear infinite; }
+
+.setup-links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 6px;
+}
+
+/* ---------- layout -------------------------------------------------------- */
+.exchange-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 18px;
+  align-items: start;
+}
+
+/* ---------- converter panel ---------------------------------------------- */
+.converter-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  border-radius: 16px;
+  background: linear-gradient(150deg, #087443 0%, #00A86B 100%);
+  box-shadow: 0 10px 30px rgba(8, 116, 67, 0.22);
+}
+
+.conv-field { display: flex; flex-direction: column; gap: 8px; }
+
+.conv-field label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* the Select sits on a green ground here, so it needs its own treatment */
+.conv-select .ui-select-trigger {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.conv-select .ui-select-trigger:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.conv-select .ui-select-caret { color: rgba(255, 255, 255, 0.9); }
+
+.conv-select .ui-select-trigger:focus-visible,
+.conv-select.is-open .ui-select-trigger {
+  border-color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.28);
+}
+
+/* the popup itself stays on a white surface for readability */
+.conv-select .ui-select-list {
+  background: #FFFFFF;
+  border-color: #D1F0E3;
+}
+
+/* ---------- amount / result ---------------------------------------------- */
+.conv-amount,
+.conv-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.conv-amount input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 21px;
+  font-weight: 700;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+}
+
+.conv-amount input:focus { outline: none; }
+.conv-amount input::placeholder { color: rgba(255, 255, 255, 0.6); font-weight: 600; }
+.conv-amount input::-webkit-outer-spin-button,
+.conv-amount input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.conv-amount input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+
+.conv-result-value {
+  flex: 1;
+  min-width: 0;
+  font-size: 21px;
+  font-weight: 700;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.conv-result.is-error { border-color: rgba(255, 255, 255, 0.5); }
+
+.conv-code {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.24);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #FFFFFF;
+}
+
+/* ---------- swap ---------------------------------------------------------- */
+.conv-swap {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.2s ease;
+}
+
+.conv-swap:hover { background: rgba(255, 255, 255, 0.32); transform: rotate(180deg); }
+.conv-swap:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 2px; }
+
+/* ---------- summary ------------------------------------------------------- */
+.exchange-rows { margin: 4px 0 0; }
+
+.exchange-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid #EEF2F6;
+}
+
+.exchange-row:last-child { border-bottom: none; }
+
+.exchange-row dt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.exchange-row dt svg { color: var(--primary); flex-shrink: 0; }
+
+.exchange-row dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.exchange-row dd.is-total { font-size: 15.5px; color: var(--primary-dark); }
+.exchange-row .unit { font-size: 11.5px; font-weight: 600; color: var(--text-light); }
+.exchange-row .muted { font-weight: 500; color: var(--text-light); font-size: 12px; }
+
+.pair-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #E8F7F0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.pair-tag em {
+  font-style: normal;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+.exchange-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.conv-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #FEE2E2;
+  font-size: 12px;
+  color: #B91C1C;
+}
+
+.save-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.save-note.is-success { color: var(--success, #16A34A); }
+.save-note.is-error { color: var(--error, #DC2626); }
+
+/* ---------- rate details -------------------------------------------------- */
+.rate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.rate-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #F8FAFC;
+}
+
+.rate-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.rate-value {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.rate-value svg { color: var(--primary); }
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .exchange-row { border-bottom-color: #14532D; }
+[data-theme="dark"] .exchange-row dd { color: #E2E8F0; }
+[data-theme="dark"] .exchange-row dd.is-total { color: #34C88E; }
+[data-theme="dark"] .pair-tag { background: #05512F; color: #A9EBD1; }
+[data-theme="dark"] .rate-tile { background: #0F172A; border-color: #14532D; }
+[data-theme="dark"] .rate-value { color: #34C88E; }
+[data-theme="dark"] .conv-error { background: #4C1D1D; color: #FCA5A5; }
+[data-theme="dark"] .conv-select .ui-select-list { background: #1E293B; border-color: #14532D; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 900px) {
+  .exchange-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .converter-panel { padding: 18px; }
+  .conv-amount input,
+  .conv-result-value { font-size: 17.5px; }
+}

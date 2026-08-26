@@ -1,14 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
 import { useAuthStore } from '../context/store';
 import { authAPI } from '../utils/api';
 import '../styles/profile.css';
+import '../styles/profile-flow.css';
+import { Camera, Check, Folder, Hourglass, Moon, Settings, Sun, Upload, User, X } from 'lucide-react';
+
+/* Avatar encoding. At module scope so both the file-upload and selfie paths
+   read the same values regardless of declaration order inside the component. */
+const AVATAR_PX = 512;
+const AVATAR_QUALITY = 0.85;
 
 export default function Profile() {
   const user = useAuthStore((state) => state.user);
   const setTheme = useAuthStore((state) => state.setTheme);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const storeTheme = useAuthStore((state) => state.theme);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,6 +32,13 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('info');
+  const [showCameraModal, setShowCameraModal] = useState(false);
+  const [cameraRunning, setCameraRunning] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const streamRef = useRef(null);
   const navigate = useNavigate();
   const logout = useAuthStore((state) => state.logout);
 
@@ -71,7 +87,7 @@ export default function Profile() {
     try {
       const { data } = await authAPI.updateProfile({ autoAdminCashout: checked });
       if (data) {
-        useAuthStore.setState({ user: data });
+        updateUser(data);
       }
 
       const status = checked ? 'ON' : 'OFF';
@@ -105,14 +121,14 @@ export default function Profile() {
 
       // Show toast for theme changes
       if (typeof formData.theme !== 'undefined' && formData.theme !== user?.theme) {
-        const themeLabel = formData.theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
+        const themeLabel = formData.theme === 'dark' ? 'Dark Mode' : 'Light Mode';
         setToastMessage(`Theme changed to ${themeLabel}`);
         setToastType('success');
       }
       
       // API returns updated user object - sync both store and form state
       if (data) {
-        useAuthStore.setState({ user: data });
+        updateUser(data);
         if (data.theme) {
           setTheme(data.theme);
         }
@@ -138,12 +154,12 @@ export default function Profile() {
     try {
       const { data } = await authAPI.updateProfile({ theme: newTheme });
       if (data) {
-        useAuthStore.setState({ user: data });
+        updateUser(data);
         if (data.theme) setTheme(data.theme);
         setFormData((prev) => ({ ...prev, theme: data.theme || newTheme }));
       }
 
-      const themeLabel = newTheme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode';
+      const themeLabel = newTheme === 'dark' ? 'Dark Mode' : 'Light Mode';
       setToastMessage(`Theme changed to ${themeLabel}`);
       setToastType('success');
     } catch (err) {
@@ -153,18 +169,358 @@ export default function Profile() {
     }
   };
 
+  // Leaving the page with the modal open previously left the camera running —
+  // nothing stopped the tracks on unmount.
+  useEffect(() => () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
+  const startCamera = async () => {
+    try {
+      setShowCameraModal(true);
+      setCameraRunning(false); // Reset first
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+
+      // Track the stream before anything else can fail. Previously this lived
+      // inside the `if (videoRef.current)` branch, so when that branch was
+      // skipped the camera stayed on with no way to stop it.
+      streamRef.current = stream;
+
+      // The modal renders in the commit triggered above, so by the time this
+      // await resolves the element exists; the rAF is a belt-and-braces retry.
+      const attach = () => {
+        const el = videoRef.current;
+        if (!el) {
+          requestAnimationFrame(attach);
+          return;
+        }
+        el.srcObject = stream;
+        el.onloadedmetadata = () => {
+          el.play()
+            .then(() => setCameraRunning(true))
+            .catch((err) => {
+              console.error('Failed to play video:', err);
+              setToastMessage('Could not start the camera preview.');
+              setToastType('error');
+            });
+        };
+      };
+      attach();
+    } catch (err) {
+      console.error('Failed to access camera:', err);
+      setToastMessage('Unable to access camera. Please check permissions.');
+      setToastType('error');
+      setShowCameraModal(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.onloadedmetadata = null;
+      videoRef.current.srcObject = null;
+    }
+    setCameraRunning(false);
+    setShowCameraModal(false);
+  };
+
+  const takeSelfie = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    try {
+      const context = canvasRef.current.getContext('2d');
+      const videoWidth = videoRef.current.videoWidth;
+      const videoHeight = videoRef.current.videoHeight;
+
+      // Same treatment as an uploaded file: center-crop to a square at 512px.
+      // This was 100x100 at quality 0.1, and scaled to fit rather than
+      // cropping, so a 4:3 camera produced a 100x75 image in a round frame.
+      const side = Math.min(videoWidth, videoHeight);
+      const sx = (videoWidth - side) / 2;
+      const sy = (videoHeight - side) / 2;
+      const target = Math.min(AVATAR_PX, side);
+
+      canvasRef.current.width = target;
+      canvasRef.current.height = target;
+      context.imageSmoothingQuality = 'high';
+      context.drawImage(videoRef.current, sx, sy, side, side, 0, 0, target, target);
+
+      const blob = await new Promise((resolve, reject) => {
+        canvasRef.current?.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error('Failed to capture the photo'))),
+          'image/jpeg',
+          AVATAR_QUALITY
+        );
+      });
+
+      await uploadProfileImage(blob, 'selfie.jpg');
+      stopCamera();
+    } catch (err) {
+      console.error('Failed to take selfie:', err);
+      setToastMessage('Failed to capture selfie');
+      setToastType('error');
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setToastMessage('Please select a valid image file');
+        setToastType('error');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setToastMessage('Image must be less than 10MB');
+        setToastType('error');
+        return;
+      }
+      // Compress the image before uploading
+      compressAndUpload(file);
+    }
+  };
+
+  /* Compress once, to a square avatar.
+
+     This previously scaled to 100x100 at quality 0.1, then re-compressed to
+     80x80 at 0.05 if the result still exceeded 50KB — which produced a blurry
+     thumbnail. That was a workaround for a small database column; the column
+     is now LONGTEXT and the server accepts 100MB bodies, so neither limit
+     applies. 512px at 0.85 gives a crisp avatar in roughly 30-120KB.
+
+     It also center-crops to a square: the old code scaled to fit, so a
+     landscape photo became a short wide image that the round frame squashed. */
+  const compressAndUpload = async (file) => {
+    setUploadingImage(true);
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Could not read that file'));
+        reader.readAsDataURL(file);
+      });
+
+      const img = await new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('That file is not a readable image'));
+        image.src = dataUrl;
+      });
+
+      // center-crop the largest square the source allows
+      const side = Math.min(img.width, img.height);
+      const sx = (img.width - side) / 2;
+      const sy = (img.height - side) / 2;
+      const target = Math.min(AVATAR_PX, side);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = target;
+      canvas.height = target;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas is unavailable');
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, target, target);
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error('Could not encode the image'))),
+          'image/jpeg',
+          AVATAR_QUALITY);
+      });
+
+      await uploadProfileImage(blob, file.name || 'profile.jpg');
+    } catch (err) {
+      console.error('Failed to process image:', err);
+      setToastMessage(err.message || 'Failed to process image');
+      setToastType('error');
+      setUploadingImage(false);
+    }
+  };
+
+  const uploadProfileImage = async (blob, fileName) => {
+    setUploadingImage(true);
+
+    try {
+      // Convert blob to base64 string
+      const base64String = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result;
+          if (typeof result === 'string') {
+            resolve(result);
+          } else {
+            reject(new Error('Failed to read file as string'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(blob);
+      });
+
+      // Sanity ceiling only. The column is LONGTEXT and the server accepts
+      // 100MB bodies, so this exists to catch a pathological encode, not to
+      // force the image smaller — the old 100KB gate rejected any usable photo.
+      if (base64String.length > 4 * 1024 * 1024) {
+        setUploadingImage(false);
+        setToastMessage('That image is too large even after compression. Try another photo.');
+        setToastType('error');
+        return;
+      }
+
+      const { data } = await authAPI.updateProfile({ profileImage: base64String });
+      
+      if (data) {
+        updateUser(data);
+        setFormData((prev) => ({ ...prev, profileImage: data.profileImage }));
+      }
+
+      setToastMessage('Profile picture updated successfully!');
+      setToastType('success');
+    } catch (err) {
+      console.error('Failed to upload profile image:', err);
+      
+      let errorMsg = 'Failed to upload profile picture';
+      if (err.response?.status === 413) {
+        errorMsg = '413 Payload Too Large: Server limit exceeded';
+      } else if (err.response?.status === 400 || err.response?.data?.message?.includes('data too long')) {
+        errorMsg = err.response?.data?.message || 'The server rejected that image.';
+      } else if (err.response?.data?.message) {
+        errorMsg = err.response.data.message;
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      setToastMessage(errorMsg);
+      setToastType('error');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   return (
     <>
     <div className="profile-container">
       <div className="profile-header">
-        <h1>👤 My Profile</h1>
+        <h1>My Profile</h1>
         <p className="text-muted">Manage your account information</p>
       </div>
 
       {error && <div className="alert alert-danger">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
 
+      {/* Camera Modal */}
+      {showCameraModal && (
+        <div className="camera-modal-overlay">
+          <div className="camera-modal">
+            <div className="camera-modal-header">
+              <h3><Camera size={18} /> Take Selfie</h3>
+              <button 
+                type="button" 
+                className="camera-modal-close"
+                onClick={stopCamera}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="camera-modal-body">
+              {/* The video must be mounted BEFORE the stream arrives: srcObject
+                  is assigned to this ref, and the ref only exists once it is
+                  rendered. Gating it on cameraRunning — which is itself only
+                  set from the element's onloadedmetadata — deadlocked, leaving
+                  a permanently black modal. */}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="camera-video"
+              />
+              {!cameraRunning && (
+                <div className="camera-starting">Starting camera…</div>
+              )}
+            </div>
+            <div className="camera-modal-actions">
+              <button 
+                type="button"
+                className="btn btn-primary"
+                onClick={takeSelfie}
+                disabled={!cameraRunning || uploadingImage}
+              >
+                {uploadingImage ? <Hourglass size={18} /> : <Camera size={18} />} {uploadingImage ? 'Uploading...' : 'Capture & Upload'}
+              </button>
+              <button 
+                type="button"
+                className="btn btn-outline"
+                onClick={stopCamera}
+                disabled={uploadingImage}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+
       <div className="profile-grid grid-2">
+        {/* Profile Picture Section */}
+        <div className="card">
+          <div className="card-header">
+            <h3><Camera size={18} /> Profile Picture</h3>
+          </div>
+          <div className="card-body profile-picture-section">
+            <div className="profile-picture-container">
+              <div className="profile-picture-display">
+                {formData.profileImage ? (
+                  <img 
+                    src={formData.profileImage} 
+                    alt="Profile" 
+                    className="profile-picture-img"
+                  />
+                ) : (
+                  <div className="profile-picture-placeholder">
+                    <span className="placeholder-icon"><User size={28} /></span>
+                    <p>No photo yet</p>
+                  </div>
+                )}
+              </div>
+              <div className="profile-picture-actions">
+                <button 
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage ? <><Upload size={18} /> Uploading...</> : <><Folder size={18} /> Choose from Files</>}
+                </button>
+                <button 
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={startCamera}
+                  disabled={uploadingImage}
+                >
+                  <Camera size={18} /> Take Selfie
+                </button>
+                <input 
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  style={{ display: 'none' }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
         <div className="card">
           <div className="card-header">
             <h3>Account Information</h3>
@@ -236,7 +592,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="card">
+        <div className="card span-2">
           <div className="card-header">
             <h3>Account Details</h3>
           </div>
@@ -250,7 +606,7 @@ export default function Profile() {
               <span className="detail-label">Verification Status</span>
               <span className="detail-value">
                 {user?.isVerified ? (
-                  <span className="badge badge-success">✓ Verified</span>
+                  <span className="badge badge-success"><Check size={18} /> Verified</span>
                 ) : (
                   <span className="badge badge-warning">Pending</span>
                 )}
@@ -276,7 +632,7 @@ export default function Profile() {
             {user?.role === 'agent' && user?.agentId && (
               <div className="detail-item">
                 <span className="detail-label">Agent ID</span>
-                <span className="detail-value" style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '16px' }}>
+                <span className="detail-value" style={{ fontFamily: 'monospace', fontWeight: 'bold', fontSize: '14.5px' }}>
                   {user.agentId}
                 </span>
               </div>
@@ -294,7 +650,7 @@ export default function Profile() {
 
       <div className="card mt-4">
         <div className="card-header">
-          <h3>⚙️ Account Settings</h3>
+          <h3><Settings size={18} /> Account Settings</h3>
         </div>
         <div className="card-body">
           <div className="settings-list">
@@ -342,22 +698,41 @@ export default function Profile() {
                 <h4>Display Mode</h4>
                 <p className="text-muted">Choose between light and dark mode for your dashboard</p>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <label className="switch" style={{ marginRight: '10px' }}>
+              <div className="theme-toggle-row">
+                {/* the inline gap:12px plus a marginRight:10px on the label put
+                    22px between the track and its text */}
+                <label className="switch">
                   <input
                     type="checkbox"
-                    checked={formData.theme === 'dark'}
+                    checked={storeTheme === 'dark'}
                     onChange={async (e) => {
                       const newTheme = e.target.checked ? 'dark' : 'light';
+                      setTheme(newTheme); // optimistic; reconciled on response
                       setFormData((prev) => ({ ...prev, theme: newTheme }));
                       await handleThemeToggle(newTheme);
                     }}
                   />
                   <span className="slider"></span>
                 </label>
-                <span style={{ fontSize: '14px' }}>{formData.theme === 'dark' ? '🌙 Dark Mode' : '☀️ Light Mode'}</span>
+                <span className="theme-toggle-label">
+                  {storeTheme === 'dark'
+                    ? <><Moon size={15} /> Dark Mode</>
+                    : <><Sun size={15} /> Light Mode</>}
+                </span>
               </div>
             </div>
+            {/* Mobile Logout Button */}
+            {typeof window !== 'undefined' && window.innerWidth <= 768 && (
+              <div className="setting-item">
+                <button
+                  className="btn btn-outline btn-danger"
+                  style={{ width: '100%', marginTop: 12 }}
+                  onClick={() => { logout(); navigate('/login'); }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

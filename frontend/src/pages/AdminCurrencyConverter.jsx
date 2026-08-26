@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../utils/api';
 import '../styles/layout.css';
+import { ArrowRight, ArrowRightLeft, ArrowUpDown, ChartColumn, CircleCheck, CircleDollarSign, Link2, Wallet, Wrench, Zap } from 'lucide-react';
 
 export default function AdminCurrencyConverter() {
   const [currencies, setCurrencies] = useState([]);
@@ -309,7 +310,7 @@ export default function AdminCurrencyConverter() {
   return (
     <div className="page-container">
       <div className="page-header">
-        <h1>💱 Currency Converter</h1>
+        <h1><ArrowRightLeft size={18} /> Currency Converter</h1>
         <p>Convert between configured currencies. Choose a mode that matches the transaction:
           <strong> "User Buys Target"</strong> means the user will receive the target currency.
           <strong> "User Sells Target"</strong> means the user sends the source currency.
@@ -319,16 +320,16 @@ export default function AdminCurrencyConverter() {
       {/* Price Mode Selector */}
       <div className="card" style={{marginBottom: 24}}>
         <div style={{display: 'flex', gap: 16, alignItems: 'center'}}>
-          <label style={{fontWeight: 600, fontSize: 14}}>Transaction Mode:</label>
+          <label style={{fontWeight: 600, fontSize: 12.5}}>Transaction Mode:</label>
             <select
               value={priceMode}
               onChange={(e) => setPriceMode(e.target.value)}
-              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e0e0e0', fontSize: 14, cursor: 'pointer' }}
+              style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #e0e0e0', fontSize: 12.5, cursor: 'pointer' }}
             >
               <option value="buying">Buying</option>
               <option value="selling">Selling</option>
             </select>
-            <span style={{ fontSize: 12, color: '#555', marginLeft: 'auto' }}>
+            <span style={{ fontSize: 11, color: '#555', marginLeft: 'auto' }}>
               {priceMode === 'buying' && 'Using platform selling rate for source and buying rate for target (you receive target).'}
               {priceMode === 'selling' && 'Using platform buying rate for source and selling rate for target (you send source).'}
             </span>
@@ -348,7 +349,7 @@ export default function AdminCurrencyConverter() {
               >
                 <option value="">Select currency</option>
                 {currencies.map(c => (
-                  <option key={c._id} value={(c.code||'').toUpperCase()}>
+                  <option key={c.id} value={(c.code||'').toUpperCase()}>
                     {(c.code||'').toUpperCase()} — {c.name}
                   </option>
                 ))}
@@ -360,7 +361,7 @@ export default function AdminCurrencyConverter() {
             <div style={{marginTop:8, display:'flex', gap:8, alignItems:'center'}}>
               {usedPairState && usedPairState.pair ? (
                 <>
-                  <div style={{fontSize:12, color:'#666'}}>From</div>
+                  <div style={{fontSize: 11, color:'#666'}}>From</div>
                   <div style={{fontWeight:700}}>{(usedPairState.pair.fromCode || '').toUpperCase()}</div>
                   <div style={{marginLeft:'auto', display:'flex', gap:8}}>
                     <span className="price-badge buying-badge">Buy {formatPairValue(usedPairState.pair, 'buyingPrice', usedPairState.inverse)}</span>
@@ -384,7 +385,7 @@ export default function AdminCurrencyConverter() {
           </div>
 
           <button className="converter-swap-btn" onClick={swap} title="Swap currencies">
-            <span>⇅</span>
+            <span><ArrowUpDown size={18} /></span>
           </button>
 
           <div className="converter-output-section">
@@ -397,7 +398,7 @@ export default function AdminCurrencyConverter() {
               >
                 <option value="">Select currency</option>
                 {currencies.map(c => (
-                  <option key={c._id} value={(c.code||'').toUpperCase()}>
+                  <option key={c.id} value={(c.code||'').toUpperCase()}>
                     {(c.code||'').toUpperCase()} — {c.name}
                   </option>
                 ))}
@@ -409,8 +410,8 @@ export default function AdminCurrencyConverter() {
             <div style={{marginTop:8, display:'flex', gap:8, alignItems:'center'}}>
               {usedPairState && usedPairState.pair ? (
                 <>
-                  <div style={{fontSize:12, color:'#666'}}>Pair:</div>
-                  <div style={{fontWeight:700}}>{usedPairState.pair.fromCode} → {usedPairState.pair.toCode} {usedPairState.inverse ? '(inverse)' : ''}</div>
+                  <div style={{fontSize: 11, color:'#666'}}>Pair:</div>
+                  <div style={{fontWeight:700}}>{usedPairState.pair.fromCode} <ArrowRight size={18} /> {usedPairState.pair.toCode} {usedPairState.inverse ? '(inverse)' : ''}</div>
                   <div style={{marginLeft:'auto', display:'flex', gap:8}}>
                     <span className="price-badge buying-badge">Buy {formatPairValue(usedPairState.pair, 'buyingPrice', usedPairState.inverse)}</span>
                     <span className="price-badge selling-badge">Sell {formatPairValue(usedPairState.pair, 'sellingPrice', usedPairState.inverse)}</span>
@@ -428,7 +429,7 @@ export default function AdminCurrencyConverter() {
               <span className="converter-code">{to}</span>
               {/* Human-friendly calculation summary */}
               {debugData && (
-                <div style={{marginTop: 8, fontSize: 12, color: '#333'}}>
+                <div style={{marginTop: 8, fontSize: 11, color: '#333'}}>
                   <div><strong>Rates used:</strong></div>
                   <div style={{marginTop:4}}>
                     <span style={{display:'inline-block', minWidth:220}}>
@@ -451,8 +452,8 @@ export default function AdminCurrencyConverter() {
         {/* Info Cards */}
         <div className="converter-info-grid">
           <div className="info-card">
-            <div className="info-icon">📊</div>
-            <h3>{priceMode === 'buying' ? '💰 Buying Rate' : '💸 Selling Rate'}</h3>
+            <div className="info-icon"><ChartColumn size={28} /></div>
+            <h3>{priceMode === 'buying' ? <><Wallet size={18} /> Buying Rate</> : <><CircleDollarSign size={18} /> Selling Rate</>}</h3>
             <p className="info-value">
               1 {from} = <span className="highlight">{rateDisplay}</span> {to}
             </p>
@@ -463,7 +464,7 @@ export default function AdminCurrencyConverter() {
           </div>
 
           <div className="info-card">
-            <div className="info-icon">💰</div>
+            <div className="info-icon"><Wallet size={28} /></div>
             <h3>You Send</h3>
             <p className="info-value">
               <span className="highlight">{amount}</span> {from}
@@ -471,11 +472,11 @@ export default function AdminCurrencyConverter() {
           </div>
 
           <div className="info-card">
-            <div className="info-icon">🔗</div>
+            <div className="info-icon"><Link2 size={28} /></div>
             <h3>Pair Used</h3>
             {usedPairState && usedPairState.pair ? (
-              <div style={{fontSize:13}}>
-                <div style={{fontWeight:700}}>{usedPairState.pair.fromCode} → {usedPairState.pair.toCode} {usedPairState.inverse ? '(inverse)' : ''}</div>
+              <div style={{fontSize: 11.5}}>
+                <div style={{fontWeight:700}}>{usedPairState.pair.fromCode} <ArrowRight size={18} /> {usedPairState.pair.toCode} {usedPairState.inverse ? '(inverse)' : ''}</div>
                 <div style={{marginTop:6}}>
                   <div>Type: {usedPairState.pair.priceType || 'fixed'}</div>
                   <div>Buy: {usedPairState.pair.buyingPrice ?? '—'} &nbsp; Sell: {usedPairState.pair.sellingPrice ?? '—'}</div>
@@ -488,16 +489,16 @@ export default function AdminCurrencyConverter() {
 
           <div className="info-card">
             <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-              <h3 style={{margin: 0}}>🔧 Debug</h3>
+              <h3 style={{margin: 0}}><Wrench size={18} /> Debug</h3>
               <button
                 onClick={() => setShowDebug(s => !s)}
-                style={{padding: '6px 8px', fontSize: 12, cursor: 'pointer', borderRadius: 6}}
+                style={{padding: '6px 8px', fontSize: 11, cursor: 'pointer', borderRadius: 6}}
               >
                 {showDebug ? 'Hide' : 'Show'}
               </button>
             </div>
             {showDebug && (
-              <div style={{marginTop: 8, fontSize: 12}}>
+              <div style={{marginTop: 8, fontSize: 11}}>
                 <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-word', background: '#f6f6f6', padding: 8, borderRadius: 6}}>
                   {debugData ? JSON.stringify(debugData, null, 2) : 'No debug data yet'}
                 </pre>
@@ -506,7 +507,7 @@ export default function AdminCurrencyConverter() {
           </div>
 
           <div className="info-card">
-            <div className="info-icon">✅</div>
+            <div className="info-icon"><CircleCheck size={28} /></div>
             <h3>You Receive</h3>
             <p className="info-value">
               <span className="highlight">{formattedResult}</span> {to}
@@ -514,8 +515,8 @@ export default function AdminCurrencyConverter() {
           </div>
 
           <div className="info-card">
-            <div className="info-icon">⚡</div>
-            <h3>{priceMode === 'buying' ? '💰 Buying Mode' : '💸 Selling Mode'}</h3>
+            <div className="info-icon"><Zap size={28} /></div>
+            <h3>{priceMode === 'buying' ? <><Wallet size={18} /> Buying Mode</> : <><CircleDollarSign size={18} /> Selling Mode</>}</h3>
             <p className="info-value">
               <span className="highlight">
                 {priceMode === 'buying' && 'Buying'}
@@ -543,7 +544,7 @@ export default function AdminCurrencyConverter() {
             </thead>
             <tbody>
               {currencies.map(c => (
-                <tr key={c._id}>
+                <tr key={c.id}>
                   <td><strong>{c.code}</strong></td>
                   <td>{c.name}</td>
                   <td><span className="price-badge buying-badge">{c.buyingPrice ?? '—'}</span></td>

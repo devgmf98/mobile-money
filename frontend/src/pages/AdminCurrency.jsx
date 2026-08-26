@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Coins, DollarSign, Hash, Pencil, Plus, RefreshCw, Tag, Trash2, X } from 'lucide-react';
 import { adminAPI } from '../utils/api';
 import Toast from '../components/Toast';
+import '../styles/admin-currency.css';
 
 export default function AdminCurrency() {
   const [currencies, setCurrencies] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [editing, setEditing] = useState(null);
   const [toast, setToast] = useState(null);
 
-  // Form states
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [symbol, setSymbol] = useState('');
-  const [exchangeRate, setExchangeRate] = useState('1');
-  const [tier, setTier] = useState('');
-  const [countries, setCountries] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -31,216 +31,228 @@ export default function AdminCurrency() {
 
   useEffect(() => { load(); }, []);
 
-  const handleEdit = (curr) => {
-    setEditingId(curr._id);
-    setName(curr.name);
-    setCode(curr.code);
-    setSymbol(curr.symbol || '');
-    setExchangeRate(String(curr.exchangeRate || 1));
-    setTier(curr.tier || '');
-    setCountries((curr.countries || []).join(', '));
-  };
-
-  const handleCancel = () => {
-    setEditingId(null);
-    resetForm();
-  };
-
   const resetForm = () => {
+    setEditing(null);
     setName('');
     setCode('');
     setSymbol('');
-    setExchangeRate('1');
-    setTier('');
-    setCountries('');
   };
+
+  const handleEdit = (curr) => {
+    setEditing(curr);
+    setName(curr.name || '');
+    setCode(curr.code || '');
+    setSymbol(curr.symbol || '');
+  };
+
+  // Warn before the server rejects it, rather than after.
+  const duplicate = useMemo(() => {
+    const c = code.trim().toUpperCase();
+    if (!c) return null;
+    return currencies.find(x => (x.code || '').toUpperCase() === c && x.id !== editing?.id) || null;
+  }, [code, currencies, editing]);
+
+  const canSave = code.trim().length >= 2 && name.trim().length > 0 && !duplicate && !saving;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !code) {
-      setToast({ type: 'error', message: 'Name and code are required' });
-      return;
-    }
+    if (!canSave) return;
 
+    setSaving(true);
     try {
-      const payload = {
-        name,
-        code,
-        symbol,
-        exchangeRate: Number(exchangeRate) || 1,
-        tier,
-        countries: countries.split(',').map(c => c.trim()).filter(c => c)
-      };
+      const payload = { name: name.trim(), code: code.trim().toUpperCase(), symbol: symbol.trim() };
 
-      if (editingId) {
-        await adminAPI.updateCurrency(editingId, payload);
-        setToast({ type: 'success', message: 'Currency updated' });
+      if (editing) {
+        await adminAPI.updateCurrency(editing.id, payload);
+        setToast({ type: 'success', message: payload.code + ' updated' });
       } else {
         await adminAPI.createCurrency(payload);
-        setToast({ type: 'success', message: 'Currency created' });
+        setToast({ type: 'success', message: payload.code + ' created' });
       }
 
       resetForm();
-      setEditingId(null);
       await load();
     } catch (err) {
       console.error(err);
       setToast({ type: 'error', message: err?.response?.data?.message || 'Operation failed' });
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this currency?')) return;
+  const handleDelete = async (curr) => {
+    if (!window.confirm('Delete ' + curr.code + '? Transactions already using it are not affected.')) return;
+    setDeletingId(curr.id);
     try {
-      await adminAPI.deleteCurrency(id);
-      setToast({ type: 'success', message: 'Currency deleted' });
+      await adminAPI.deleteCurrency(curr.id);
+      setToast({ type: 'success', message: 'Deleted ' + curr.code });
+      if (editing?.id === curr.id) resetForm();
       await load();
     } catch (err) {
       console.error(err);
-      setToast({ type: 'error', message: 'Failed to delete' });
+      setToast({ type: 'error', message: err?.response?.data?.message || 'Failed to delete' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <h2>Currency Exchange Rate</h2>
+    <div className="page-container currency-page">
+      <div className="page-header currency-header">
+        <div>
+          <h1>Currencies</h1>
+          <p>Define the currencies available across transfers, top-ups and exchanges.</p>
+        </div>
+        <button className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
+          <RefreshCw size={15} className={loading ? 'spin' : ''} /> Refresh
+        </button>
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
-        {/* Form */}
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <h3>{editingId ? 'Edit Currency' : 'Add Currency'}</h3>
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Name *</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., US Dollar"
-                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Code *</label>
-              <input
-                type="text"
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="e.g., USD"
-                maxLength="3"
-                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Symbol</label>
-              <input
-                type="text"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value)}
-                placeholder="e.g., $"
-                maxLength="5"
-                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Exchange Rate</label>
-              <input
-                type="number"
-                value={exchangeRate}
-                onChange={(e) => setExchangeRate(e.target.value)}
-                placeholder="1"
-                step="0.01"
-                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Tier</label>
-              <input
-                type="text"
-                value={tier}
-                onChange={(e) => setTier(e.target.value)}
-                placeholder="e.g., Tier 1, Africa, etc."
-                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 600 }}>Countries (comma-separated)</label>
-              <textarea
-                value={countries}
-                onChange={(e) => setCountries(e.target.value)}
-                placeholder="e.g., USA, Canada, Mexico"
-                rows="3"
-                style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '6px' }}
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>
-                {editingId ? 'Update' : 'Create'}
+      {/* create / edit */}
+      <div className="card">
+        <div className="card-header">
+          <h3>
+            {editing ? <><Pencil size={18} /> Edit Currency</> : <><Plus size={18} /> Add a Currency</>}
+          </h3>
+        </div>
+        <div className="card-body">
+          {editing && (
+            <div className="editing-banner">
+              <span><Pencil size={14} /> Editing <strong>{editing.code}</strong></span>
+              <button type="button" className="btn btn-outline btn-sm" onClick={resetForm}>
+                <X size={14} /> Cancel
               </button>
-              {editingId && (
-                <button type="button" className="btn btn-outline" onClick={handleCancel} style={{ flex: 1 }}>
-                  Cancel
-                </button>
-              )}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="form-row currency-form-row">
+              <div className="form-group">
+                <label htmlFor="cu-code"><Hash size={14} /> Code</label>
+                <input
+                  id="cu-code"
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  placeholder="USD"
+                  maxLength={4}
+                  autoComplete="off"
+                  spellCheck="false"
+                />
+                {duplicate
+                  ? <small className="is-invalid">{duplicate.code} already exists.</small>
+                  : <small className="field-hint">ISO code, 2-4 letters.</small>}
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="cu-name"><Tag size={14} /> Name</label>
+                <input
+                  id="cu-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="US Dollar"
+                  autoComplete="off"
+                />
+                <small className="field-hint">Shown wherever the currency is listed.</small>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="cu-symbol"><DollarSign size={14} /> Symbol</label>
+                <input
+                  id="cu-symbol"
+                  type="text"
+                  value={symbol}
+                  onChange={(e) => setSymbol(e.target.value)}
+                  placeholder="$"
+                  maxLength={5}
+                  autoComplete="off"
+                />
+                <small className="field-hint">Optional. Falls back to the code.</small>
+              </div>
+            </div>
+
+            <div className="currency-form-footer">
+              <div className="currency-preview" aria-live="polite">
+                <span className="preview-label">Preview</span>
+                <span className="preview-chip">
+                  <span className="preview-code">{code.trim() || 'CODE'}</span>
+                  <span className="preview-sym">{symbol.trim() || code.trim() || '-'}</span>
+                  <span className="preview-name">{name.trim() || 'Currency name'}</span>
+                </span>
+              </div>
+
+              <button type="submit" className="btn btn-primary" disabled={!canSave}>
+                {saving
+                  ? 'Saving...'
+                  : editing
+                    ? <><Pencil size={15} /> Update Currency</>
+                    : <><Plus size={15} /> Create Currency</>}
+              </button>
             </div>
           </form>
         </div>
+      </div>
 
-        {/* List */}
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-          <h3>Currencies</h3>
+      {/* list */}
+      <div className="card">
+        <div className="card-header">
+          <h3><Coins size={18} /> Currencies <span className="count-pill">{currencies.length}</span></h3>
+        </div>
+        <div className="card-body">
           {loading ? (
-            <div>Loading...</div>
+            <div className="empty-state">
+              <span className="empty-icon"><RefreshCw size={22} className="spin" /></span>
+              <h3>Loading currencies...</h3>
+            </div>
           ) : currencies.length === 0 ? (
-            <div style={{ color: '#666' }}>No currencies yet</div>
+            <div className="empty-state">
+              <span className="empty-icon"><Coins size={22} /></span>
+              <h3>No currencies yet</h3>
+              <p>Add your first currency above to start recording transfers and exchanges.</p>
+            </div>
           ) : (
-            <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
-              {currencies.map(curr => (
-                <div
-                  key={curr._id}
-                  style={{
-                    padding: '12px',
-                    border: '1px solid #eee',
-                    borderRadius: '6px',
-                    marginBottom: '8px',
-                    background: editingId === curr._id ? '#f0f9ff' : '#fff'
-                  }}
-                >
-                  <div style={{ fontWeight: 600 }}>
-                    {curr.name} ({curr.code}) {curr.symbol && `${curr.symbol}`}
-                  </div>
-                  <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
-                    Rate: {curr.exchangeRate} {curr.tier && `| Tier: ${curr.tier}`}
-                  </div>
-                  {curr.countries?.length > 0 && (
-                    <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '4px' }}>
-                      Countries: {curr.countries.join(', ')}
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    <button
-                      onClick={() => handleEdit(curr)}
-                      className="btn btn-primary"
-                      style={{ padding: '4px 8px', fontSize: '0.85rem' }}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(curr._id)}
-                      className="btn btn-delete"
-                      style={{ padding: '4px 8px', fontSize: '0.85rem' }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="table-wrap">
+              <table className="table currency-table">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th className="num">Symbol</th>
+                    <th className="right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currencies.map(curr => (
+                    <tr key={curr.id} className={editing?.id === curr.id ? 'is-editing' : ''}>
+                      <td><span className="badge badge-primary">{curr.code}</span></td>
+                      <td><span className="currency-name">{curr.name}</span></td>
+                      <td className="num"><span className="currency-symbol">{curr.symbol || '-'}</span></td>
+                      <td className="right">
+                        <div className="row-actions">
+                          <button
+                            className="icon-btn"
+                            onClick={() => handleEdit(curr)}
+                            aria-label={'Edit ' + curr.code}
+                            title="Edit"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            className="icon-btn is-danger"
+                            onClick={() => handleDelete(curr)}
+                            disabled={deletingId === curr.id}
+                            aria-label={'Delete ' + curr.code}
+                            title="Delete"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

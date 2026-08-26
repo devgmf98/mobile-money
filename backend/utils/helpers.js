@@ -49,3 +49,21 @@ export const reverseGeocode = async (latitude, longitude) => {
   }
 };
 
+
+/* Numbers are stored inconsistently (+211…, 211…, 0…, bare local), so every
+   lookup has to try the same set of variants or the same person resolves on
+   one screen and not another. */
+export const phoneVariants = (raw) => {
+  const normalized = (raw || '').trim();
+  const digits = normalized.replace(/(?!^\+)\D/g, '');
+  const tries = [normalized, digits, digits.startsWith('211') ? '+' + digits : digits];
+  if (digits && !digits.startsWith('211')) tries.push('+211' + digits);
+  /* Locally people write 0912345002 for +211912345002, so the national
+     trunk zero has to come off before the country code goes on — without
+     this the same person fails to resolve when typed the local way. */
+  if (digits.startsWith('0')) {
+    const local = digits.replace(/^0+/, '');
+    if (local) tries.push('+211' + local, '211' + local, local);
+  }
+  return [...new Set(tries.filter(Boolean))];
+};

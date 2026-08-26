@@ -1,27 +1,259 @@
-.push-form {
+/* ==========================================================================
+   Admin Push Money
+   Page-specific pieces only; card, form fields and buttons come from
+   design-system.css. Selectors are scoped to .push-money-page — all CSS in
+   this app is bundled globally, so unscoped rules leak into every page.
+   ========================================================================== */
+
+.pm-header {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 480px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.push-form input {
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 14px;
+.push-money-page .pm-card { max-width: 760px; }
+
+.push-money-page .form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.push-form label {
-  font-size: 13px;
+.push-money-page .form-group label svg { color: var(--primary); flex-shrink: 0; }
+
+.push-money-page .pm-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11.5px;
   color: var(--text-light);
 }
 
-.push-form .btn {
-  margin-top: 8px;
-  width: 160px;
+.push-money-page .pm-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--error, #DC2626);
 }
 
+.push-money-page .pm-error svg { flex-shrink: 0; }
+
+/* ---------- alerts -------------------------------------------------------- */
+.pm-alert {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pm-alert svg { flex-shrink: 0; }
+.pm-alert.is-error { background: #FEF2F2; border-color: #FECACA; color: #991B1B; }
+.pm-alert.is-success { background: #E8F7F0; border-color: #A9EBD1; color: #065F46; }
+
+/* ---------- sender -> recipient ------------------------------------------- */
+.push-money-page .pm-flow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.pm-party {
+  position: relative;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--light, #E8F7F0);
+}
+
+.pm-party .form-group { margin-bottom: 0; }
+
+.pm-party-tag {
+  display: inline-block;
+  margin-bottom: 9px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pm-party-tag.is-to { background: var(--primary-dark, #087443); }
+
+.pm-swap {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.pm-swap:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.pm-swap:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ---------- amount -------------------------------------------------------- */
+.push-money-page .pm-amount-group { margin-top: 18px; }
+
+.pm-amount-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  overflow: hidden;
+}
+
+.pm-amount-field:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.pm-currency {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-light);
+  border-right: 1px solid var(--border);
+}
+
+/* the wrapper owns the frame, so the input inside is bare */
+.push-money-page .pm-amount-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.push-money-page .pm-amount-field input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ---------- summary ------------------------------------------------------- */
+.pm-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--light, #E8F7F0);
+}
+
+.pm-summary-route {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.pm-summary-route svg { color: var(--primary); flex-shrink: 0; }
+
+.pm-chip {
+  padding: 4px 11px;
+  border-radius: 999px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-summary-amount {
+  font-size: 15.5px;
+  font-weight: 800;
+  color: var(--primary-dark);
+}
+
+/* ---------- actions ------------------------------------------------------- */
+.pm-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.push-money-page .pm-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+.push-money-page .pm-note svg { flex-shrink: 0; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 720px) {
+  .push-money-page .pm-flow { grid-template-columns: 1fr; }
+  .pm-swap { justify-self: center; margin: -2px 0 0; transform: rotate(90deg); }
+  .pm-actions { align-items: stretch; }
+  .push-money-page .pm-actions .btn { width: 100%; justify-content: center; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .push-money-page .pm-party { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .push-money-page .pm-swap { background: #0F172A; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .push-money-page .pm-amount-field { background: #0F172A; border-color: #14532D; }
+[data-theme="dark"] .push-money-page .pm-currency { border-right-color: #14532D; }
+[data-theme="dark"] .push-money-page .pm-summary { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .push-money-page .pm-chip { background: #0F172A; border-color: #14532D; color: #E2E8F0; }
+[data-theme="dark"] .push-money-page .pm-summary-amount { color: #A9EBD1; }
+[data-theme="dark"] .pm-alert.is-success { background: #05512F; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .pm-alert.is-error { background: #450A0A; border-color: #7F1D1D; color: #FCA5A5; }
+
+/* ==========================================================================
+   Load-bearing for OTHER pages — do not move or scope without checking.
+   .alert-success / .alert-danger are used by 13 components (Login, Register,
+   Profile, SendMoney, Withdraw, QRScan, AdminTopup, AdminUsers and more) and
+   are defined in six stylesheets. These copies are bundled last for some of
+   those pages, so deleting them here silently restyles all of them.
+   Kept verbatim from the original file.
+   ========================================================================== */
 .alert-success {
   background: #e6ffed;
   padding: 10px 12px;
@@ -35,3 +267,56 @@
   border-radius: 6px;
   color: #a61b1b;
 }
+
+/* Resolved sender under the FROM field. A push applies immediately with no
+   confirmation step, so whose wallet is about to be debited — and whether it
+   holds enough — has to be visible before the button is pressed. */
+.pm-lookup {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-lookup.is-error {
+  font-weight: 600;
+  color: var(--error, #DC2626);
+}
+
+.pm-lookup-found {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.pm-lookup-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-dark, #16302B);
+}
+
+.pm-lookup-balance {
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-dark, #005C2E);
+  font-variant-numeric: tabular-nums;
+}
+
+.pm-hint.is-error {
+  font-weight: 600;
+  color: var(--error, #DC2626);
+}
+
+[data-theme="dark"] .pm-lookup { color: #9FB3AB; }
+[data-theme="dark"] .pm-lookup-found { background: rgba(0, 0, 0, 0.22); }
+[data-theme="dark"] .pm-lookup-name { color: #E6F2EC; }
+[data-theme="dark"] .pm-lookup-balance { color: #34D399; }

@@ -1,0 +1,254 @@
+/* ==========================================================================
+   Notifications — redesigned
+
+   Adds All/Unread tabs, a mark-all action, per-type icon tones and relative
+   timestamps. Scoped to .nt-page.
+   ========================================================================== */
+
+.nt-page { max-width: 860px; margin: 0 auto; }
+
+.nt-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ---------- tabs ---------------------------------------------------------- */
+.nt-page .nt-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nt-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface, #FFFFFF);
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.nt-tab:hover { border-color: var(--primary); color: var(--primary-dark); }
+
+.nt-tab.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.nt-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.nt-tab.is-active .nt-count {
+  background: rgba(255, 255, 255, 0.24);
+  color: #FFFFFF;
+}
+
+/* ---------- list ---------------------------------------------------------- */
+.nt-page .nt-card { overflow: hidden; }
+.nt-page .nt-body { margin: 0 -20px -20px; padding: 0; }
+
+.nt-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nt-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.16s ease;
+}
+
+.nt-row:last-child { border-bottom: none; }
+.nt-row:hover { background: var(--light, #E8F7F0); }
+
+/* unread carries a left rule as well as the dot, so it does not rest on
+   colour alone */
+.nt-row.is-unread {
+  background: #F7FDFA;
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.nt-row.is-unread:hover { background: var(--light, #E8F7F0); }
+
+/* ---------- type icon ----------------------------------------------------- */
+.nt-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 11px;
+}
+
+.nt-icon.tone-info { background: #DCF3F4; color: #0E7C86; }
+.nt-icon.tone-warning { background: #FEF3C7; color: #B45309; }
+.nt-icon.tone-primary { background: #E8F7F0; color: #00A86B; }
+.nt-icon.tone-success { background: #DCFCE7; color: #16A34A; }
+.nt-icon.tone-muted { background: #F1F5F9; color: #475569; }
+
+/* ---------- content ------------------------------------------------------- */
+.nt-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nt-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.nt-dot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.nt-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+}
+
+.nt-type {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--border);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.nt-page .nt-message {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-light);
+  overflow-wrap: anywhere;
+}
+
+.nt-time {
+  font-size: 11.5px;
+  color: var(--text-light);
+  opacity: 0.85;
+}
+
+/* ---------- actions ------------------------------------------------------- */
+.nt-actions {
+  display: inline-flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.nt-actions button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.nt-actions button:hover:not(:disabled) {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.nt-actions button.is-danger { color: #DC2626; }
+
+.nt-actions button.is-danger:hover:not(:disabled) {
+  background: #DC2626;
+  border-color: #DC2626;
+  color: #FFFFFF;
+}
+
+.nt-actions button:disabled { opacity: 0.5; cursor: not-allowed; }
+.nt-actions button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---------- empty --------------------------------------------------------- */
+.nt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 46px 20px;
+  text-align: center;
+}
+
+.nt-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary);
+}
+
+.nt-empty h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+.nt-empty p { margin: 0; font-size: 12px; color: var(--text-light); }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 520px) {
+  .nt-row { padding: 13px 14px; gap: 11px; }
+  .nt-type { display: none; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .nt-tab { background: #1E293B; border-color: #14532D; color: #94A3B8; }
+[data-theme="dark"] .nt-count { background: #05512F; color: #A9EBD1; }
+[data-theme="dark"] .nt-row:hover { background: #0F172A; }
+[data-theme="dark"] .nt-row.is-unread { background: #0B1F17; }
+[data-theme="dark"] .nt-row.is-unread:hover { background: #0F172A; }
+[data-theme="dark"] .nt-title { color: #E2E8F0; }
+[data-theme="dark"] .nt-type { background: #0F172A; color: #94A3B8; }
+[data-theme="dark"] .nt-icon.tone-info { background: #0B3B40; color: #5EEAD4; }
+[data-theme="dark"] .nt-icon.tone-warning { background: #422006; color: #FCD34D; }
+[data-theme="dark"] .nt-icon.tone-primary { background: #05512F; color: #34C88E; }
+[data-theme="dark"] .nt-icon.tone-success { background: #14532D; color: #4ADE80; }
+[data-theme="dark"] .nt-icon.tone-muted { background: #0F172A; color: #94A3B8; }
+[data-theme="dark"] .nt-actions button { background: #1E293B; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .nt-actions button.is-danger { color: #FCA5A5; }
+[data-theme="dark"] .nt-empty h3 { color: #E2E8F0; }
+[data-theme="dark"] .nt-empty-icon { background: #05512F; color: #A9EBD1; }

@@ -1,0 +1,408 @@
+/* Pull Money from User — the agent-side request flow.
+   Same two-step card language as the customer withdraw page, so the two sides
+   of one transaction look like one product. Everything is scoped to .pm-page;
+   the old markup leaned on send-money.css, which meant a change here moved the
+   Send Money page too. */
+
+.pm-page .pm-header { margin-bottom: 4px; }
+
+.pm-page .pm-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+}
+
+.pm-page .pm-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-page .pm-grid {
+  display: grid;
+  gap: var(--page-gutter, 16px);
+}
+
+.pm-page .pm-card { margin: 0; }
+
+.pm-page .pm-card .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pm-page .pm-card .card-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.pm-page .pm-card .card-header h3 svg { color: var(--primary, #007A3D); }
+
+.pm-page .pm-step {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+/* ---- search row: the button sits beside the field, not across the page ---- */
+.pm-page .pm-search {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.pm-page .pm-search .form-group {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.pm-page .pm-search .pm-search-btn {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 104px;
+}
+
+@media screen and (max-width: 520px) {
+  .pm-page .pm-search { flex-direction: column; align-items: stretch; }
+  .pm-page .pm-search .pm-search-btn { width: 100%; }
+}
+
+/* ---- the resolved customer ---- */
+.pm-page .pm-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--primary-light, #A7E0C4);
+  border-radius: 12px;
+  background: var(--primary-surface, #F0FAF4);
+}
+
+.pm-page .pm-avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary, #007A3D);
+  color: #fff;
+  font-weight: 700;
+}
+
+.pm-page .pm-user-detail { min-width: 0; }
+
+.pm-page .pm-user-name {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-page .pm-user-phone {
+  display: block;
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-page .pm-user-balance {
+  margin-left: auto;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.pm-page .pm-user-balance span {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-page .pm-user-balance strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-dark, #005C2E);
+}
+
+.pm-page .pm-empty {
+  margin: 12px 0 0;
+  padding: 12px;
+  border: 1px dashed var(--border, #E3EAE7);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--text-light, #5B6B66);
+  text-align: center;
+}
+
+/* ---- amount ---- */
+.pm-page .pm-amount-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  overflow: hidden;
+}
+
+.pm-page .pm-amount-field:focus-within {
+  border-color: var(--primary, #007A3D);
+  box-shadow: 0 0 0 3px rgba(0, 122, 61, 0.12);
+}
+
+.pm-page .pm-amount-field.is-invalid {
+  border-color: var(--error, #DC2626);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.10);
+}
+
+.pm-page .pm-currency {
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-light, #5B6B66);
+  background: var(--surface-2, #F7FAF9);
+  border-right: 1px solid var(--border, #E3EAE7);
+}
+
+.pm-page .pm-amount-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.pm-page .pm-amount-field input:focus { border: none; box-shadow: none; }
+
+.pm-page .pm-quick {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pm-page .pm-quick button {
+  width: 100%;
+  min-height: 0;
+  padding: 8px 4px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-dark, #005C2E);
+  cursor: pointer;
+}
+
+.pm-page .pm-quick button:hover:not(:disabled) {
+  border-color: var(--primary, #007A3D);
+  background: var(--primary-surface, #F0FAF4);
+}
+
+/* Without this a clicked button keeps the browser focus ring and reads as a
+   selected state, even though these are one-shot actions with nothing to
+   select. :focus-visible still shows a ring for keyboard users. */
+.pm-page .pm-quick button:focus { outline: none; }
+
+.pm-page .pm-quick button:focus-visible {
+  outline: 2px solid var(--primary, #007A3D);
+  outline-offset: 2px;
+}
+
+.pm-page .pm-quick button:active:not(:disabled) {
+  border-color: var(--primary, #007A3D);
+  background: var(--primary-surface, #F0FAF4);
+}
+
+.pm-page .pm-quick button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---- commission breakdown ----
+   Three figures matter and they are not equal: the cash handed over, what the
+   agent earns, and what the customer is charged. Flat rows made them read as
+   one undifferentiated list, so the total is lifted onto its own band and the
+   earning line is tinted. */
+.pm-page .pm-fees {
+  margin-top: 18px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  overflow: hidden;
+}
+
+.pm-page .pm-fees h4 {
+  margin: 0;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+  background: var(--surface-2, #F7FAF9);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-page .pm-fee-list { padding: 14px 16px; }
+
+.pm-page .pm-fee-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-page .pm-fee-row + .pm-fee-row { margin-top: 10px; }
+
+.pm-page .pm-fee-row > span:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pm-page .pm-fee-row.is-earning {
+  font-weight: 600;
+  color: var(--primary-dark, #005C2E);
+}
+
+/* The total is what the customer is actually asked to approve, so it gets its
+   own band rather than another row in the list. */
+.pm-page .pm-fee-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px;
+  border-top: 1px solid var(--border, #E3EAE7);
+  background: var(--primary-surface, #F0FAF4);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+}
+
+.pm-page .pm-fee-total > span:last-child {
+  font-variant-numeric: tabular-nums;
+  color: var(--primary-dark, #005C2E);
+}
+
+.pm-page .pm-fee-note {
+  margin: 0;
+  padding: 10px 16px 12px;
+  border-top: 1px dashed var(--border, #E3EAE7);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-page .pm-error {
+  display: block;
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error, #DC2626);
+}
+
+.pm-page .pm-hint {
+  display: block;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+/* The submit button was sitting flush against the hint above it. */
+.pm-page .btn-send-pull-request { margin-top: 18px; }
+
+/* ---- how it works ---- */
+.pm-page .pm-steps {
+  margin-top: var(--page-gutter, 16px);
+  padding: 12px 14px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+}
+
+.pm-page .pm-steps h4 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+}
+
+.pm-page .pm-steps ol {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+.pm-page .pm-steps li + li { margin-top: 4px; }
+
+/* ---- dark ---- */
+[data-theme="dark"] .pm-page .pm-title { color: #E6F2EC; }
+[data-theme="dark"] .pm-page .pm-sub,
+[data-theme="dark"] .pm-page .pm-hint,
+[data-theme="dark"] .pm-page .pm-fee-row,
+[data-theme="dark"] .pm-page .pm-fee-note,
+[data-theme="dark"] .pm-page .pm-steps ol,
+[data-theme="dark"] .pm-page .pm-user-phone { color: #9FB3AB; }
+
+[data-theme="dark"] .pm-page .pm-user {
+  border-color: rgba(0, 180, 100, 0.35);
+  background: rgba(0, 180, 100, 0.10);
+}
+[data-theme="dark"] .pm-page .pm-user-name,
+[data-theme="dark"] .pm-page .pm-fee-total,
+[data-theme="dark"] .pm-page .pm-steps h4 { color: #E6F2EC; }
+[data-theme="dark"] .pm-page .pm-user-balance strong,
+[data-theme="dark"] .pm-page .pm-fee-row.is-earning { color: #34D399; }
+
+[data-theme="dark"] .pm-page .pm-fees,
+[data-theme="dark"] .pm-page .pm-steps,
+[data-theme="dark"] .pm-page .pm-amount-field {
+  border-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .pm-page .pm-fee-total {
+  border-top-color: rgba(255, 255, 255, 0.10);
+  background: rgba(0, 180, 100, 0.12);
+}
+[data-theme="dark"] .pm-page .pm-fee-total > span:last-child { color: #34D399; }
+[data-theme="dark"] .pm-page .pm-fees h4 {
+  border-bottom-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.05);
+}
+[data-theme="dark"] .pm-page .pm-fee-note { border-top-color: rgba(255, 255, 255, 0.10); }
+[data-theme="dark"] .pm-page .pm-currency {
+  background: rgba(255, 255, 255, 0.06);
+  border-right-color: rgba(255, 255, 255, 0.10);
+  color: #9FB3AB;
+}
+[data-theme="dark"] .pm-page .pm-quick button {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #34D399;
+}
+[data-theme="dark"] .pm-page .pm-empty {
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #9FB3AB;
+}

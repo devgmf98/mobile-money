@@ -11,7 +11,7 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  animation: fadeIn 0.3s ease-in-out;
+  
 }
 
 @keyframes fadeIn {
@@ -31,19 +31,10 @@
   max-height: 90vh;
   overflow-y: auto;
   width: 95%;
-  animation: slideUp 0.3s ease-in-out;
+  
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
+@keyframes slideUp { from { opacity: 0; } to { opacity: 1; } }
 
 .print-receipt-header {
   display: flex;
@@ -51,13 +42,13 @@
   align-items: center;
   padding: 20px;
   border-bottom: 1px solid #eee;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6FDCB0 0%, #00A86B 100%);
   color: white;
 }
 
 .print-receipt-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 16.5px;
   font-weight: 600;
 }
 
@@ -65,7 +56,7 @@
   background: none;
   border: none;
   color: white;
-  font-size: 24px;
+  font-size: 19px;
   cursor: pointer;
   padding: 0;
   width: 32px;
@@ -89,13 +80,13 @@
   text-align: center;
   margin-bottom: 15px;
   padding-bottom: 12px;
-  border-bottom: 2px solid #667eea;
+  border-bottom: 2px solid #6FDCB0;
 }
 
 .receipt-logo h1 {
   margin: 0;
-  font-size: 24px;
-  color: #667eea;
+  font-size: 19px;
+  color: #64748B;
 }
 
 .receipt-section {
@@ -103,7 +94,7 @@
 }
 
 .receipt-section h3 {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #333;
   text-transform: uppercase;
@@ -117,7 +108,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 4px 0;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .receipt-row .label {
@@ -136,35 +127,35 @@
 }
 
 .receipt-row.amount-row {
-  background: #f8f9fa;
+  background: #E8F7F0;
   padding: 8px;
   margin: 6px -8px;
   border-radius: 4px;
 }
 
 .receipt-row.amount-row .label {
-  font-size: 13px;
+  font-size: 11.5px;
 }
 
 .receipt-row.amount-row .amount {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  color: #2563eb;
+  color: #00A86B;
 }
 
 .status-completed {
-  color: #10b981;
+  color: #16A34A;
   font-weight: 600;
 }
 
 .status-pending {
-  color: #f59e0b;
+  color: #F59E0B;
   font-weight: 600;
 }
 
 .status-failed,
 .status-cancelled {
-  color: #ef4444;
+  color: #DC2626;
   font-weight: 600;
 }
 
@@ -190,7 +181,7 @@
   gap: 10px;
   padding: 20px;
   border-top: 1px solid #eee;
-  background: #f8f9fa;
+  background: #E8F7F0;
 }
 
 .print-receipt-actions .btn {
@@ -200,17 +191,17 @@
   border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s, opacity 0.2s, filter 0.2s;
 }
 
 .print-receipt-actions .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6FDCB0 0%, #00A86B 100%);
   color: white;
 }
 
 .print-receipt-actions .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.4);
 }
 
 .print-receipt-actions .btn-outline {
@@ -220,7 +211,7 @@
 }
 
 .print-receipt-actions .btn-outline:hover {
-  background: #f8f9fa;
+  background: #E8F7F0;
   border-color: #999;
 }
 
@@ -278,7 +269,7 @@
     padding: 8px 10px !important;
     text-align: left !important;
     font-weight: bold !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
     border: 1px solid #000 !important;
     line-height: 1.4 !important;
   }
@@ -287,7 +278,7 @@
     display: table-cell !important;
     padding: 8px 10px !important;
     border: 1px solid #000 !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
     color: #000 !important;
     font-weight: 500 !important;
     line-height: 1.4 !important;
@@ -315,16 +306,20 @@
     background: #f9f9f9 !important;
   }
 
+  /* print drops background fills, so emphasise with rules and weight */
   .receipt-table tr.total-row {
-    background: #000 !important;
-    color: #fff !important;
+    background: transparent !important;
     font-weight: bold !important;
   }
 
   .receipt-table tr.total-row td {
-    color: #fff !important;
-    border-color: #000 !important;
-    background: #000 !important;
+    background: transparent !important;
+    color: #000 !important;
+    font-weight: bold !important;
+    font-size: 12px !important;
+    padding: 11px 10px !important;
+    border-top: 2pt solid #000 !important;
+    border-bottom: 2pt solid #000 !important;
   }
 
   .receipt-section {
@@ -342,7 +337,7 @@
 
   .receipt-row {
     padding: 4px 0;
-    font-size: 12px;
+    font-size: 11px;
     display: block !important;
     visibility: visible !important;
   }
@@ -370,30 +365,7 @@
 }
 
 /* Native print fallback styles */
-@media print {
-  body.printing-receipt * {
-    visibility: hidden;
-  }
-  
-  body.printing-receipt .print-receipt-modal,
-  body.printing-receipt .print-receipt-modal * {
-    visibility: visible;
-  }
-  
-  body.printing-receipt .print-receipt-overlay {
-    position: static;
-    background: white;
-  }
-  
-  body.printing-receipt .print-receipt-modal {
-    position: static;
-    box-shadow: none;
-    max-width: none;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-  }
-}
+
 
 /* Responsive */
 @media (max-width: 600px) {
@@ -429,7 +401,7 @@
     max-height: 95vh;
     border-radius: 12px;
     box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
-    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
     transition: transform 0.3s ease;
   }
 
@@ -439,66 +411,52 @@
 
   .print-receipt-header {
     padding: 20px 24px;
-    animation: slideInDown 0.4s ease-out 0.1s both;
+    
   }
 
   .print-receipt-header h2 {
-    font-size: 20px;
-    animation: fadeIn 0.4s ease-out 0.2s both;
+    font-size: 16.5px;
+    
   }
 
   .print-receipt-content {
     padding: 24px;
-    animation: fadeInUp 0.5s ease-out 0.3s both;
+    
   }
 
   .receipt-section {
     margin-bottom: 20px;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.4s);
+    
+    
   }
 
   .receipt-section h3 {
-    font-size: 16px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.5s);
+    font-size: 13.5px;
+    
+    
   }
 
   .receipt-row {
     padding: 10px 0;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.05s + 0.6s);
+    
+    
   }
 
   .receipt-row .label {
-    font-size: 14px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.05s + 0.7s);
+    font-size: 12px;
+    
+    
   }
 
   .receipt-row .value {
-    font-size: 14px;
-    animation: slideInRight 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.05s + 0.8s);
+    font-size: 12px;
+    
+    
   }
 
   .print-receipt-actions {
     padding: 20px 24px;
-    animation: slideInUp 0.4s ease-out 0.5s both;
-  }
-
-  .btn {
-    padding: 10px 16px;
-    font-size: 14px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    animation: bounceIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.6s);
-  }
-
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    
   }
 }
 
@@ -513,7 +471,7 @@
     max-height: 92vh;
     border-radius: 14px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
     transition: transform 0.3s ease;
   }
 
@@ -523,66 +481,52 @@
 
   .print-receipt-header {
     padding: 24px 28px;
-    animation: slideInDown 0.4s ease-out 0.1s both;
+    
   }
 
   .print-receipt-header h2 {
-    font-size: 22px;
-    animation: fadeIn 0.4s ease-out 0.2s both;
+    font-size: 17.5px;
+    
   }
 
   .print-receipt-content {
     padding: 28px;
-    animation: fadeInUp 0.5s ease-out 0.3s both;
+    
   }
 
   .receipt-section {
     margin-bottom: 24px;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.4s);
+    
+    
   }
 
   .receipt-section h3 {
-    font-size: 17px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.5s);
+    font-size: 14.5px;
+    
+    
   }
 
   .receipt-row {
     padding: 12px 0;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.04s + 0.6s);
+    
+    
   }
 
   .receipt-row .label {
-    font-size: 15px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.04s + 0.7s);
+    font-size: 12.5px;
+    
+    
   }
 
   .receipt-row .value {
-    font-size: 15px;
-    animation: slideInRight 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.04s + 0.8s);
+    font-size: 12.5px;
+    
+    
   }
 
   .print-receipt-actions {
     padding: 24px 28px;
-    animation: slideInUp 0.4s ease-out 0.5s both;
-  }
-
-  .btn {
-    padding: 11px 18px;
-    font-size: 15px;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    animation: bounceIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.6s);
-  }
-
-  .btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+    
   }
 }
 
@@ -597,7 +541,7 @@
     max-height: 90vh;
     border-radius: 16px;
     box-shadow: 0 25px 70px rgba(0, 0, 0, 0.35);
-    animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
     transition: transform 0.4s ease;
   }
 
@@ -607,139 +551,277 @@
 
   .print-receipt-header {
     padding: 28px 32px;
-    animation: slideInDown 0.4s ease-out 0.1s both;
+    
   }
 
   .print-receipt-header h2 {
-    font-size: 24px;
-    animation: fadeIn 0.4s ease-out 0.2s both;
+    font-size: 19px;
+    
   }
 
   .print-receipt-content {
     padding: 32px;
-    animation: fadeInUp 0.5s ease-out 0.3s both;
+    
   }
 
   .receipt-section {
     margin-bottom: 28px;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.4s);
+    
+    
   }
 
   .receipt-section h3 {
-    font-size: 18px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.5s);
+    font-size: 14.5px;
+    
+    
   }
 
   .receipt-row {
     padding: 14px 0;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.03s + 0.6s);
+    
+    
   }
 
   .receipt-row .label {
-    font-size: 16px;
-    animation: slideInLeft 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.03s + 0.7s);
+    font-size: 13.5px;
+    
+    
   }
 
   .receipt-row .value {
-    font-size: 16px;
-    animation: slideInRight 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.03s + 0.8s);
+    font-size: 13.5px;
+    
+    
   }
 
   .print-receipt-actions {
     padding: 28px 32px;
-    animation: slideInUp 0.4s ease-out 0.5s both;
-  }
-
-  .btn {
-    padding: 12px 20px;
-    font-size: 16px;
-    border-radius: 12px;
-    transition: all 0.4s ease;
-    animation: bounceIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.6s);
-  }
-
-  .btn:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    
   }
 }
 
 /* Additional Keyframe Animations */
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+@keyframes slideInDown { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes fadeInUp { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInUp { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInLeft { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes slideInRight { from { opacity: 0; } to { opacity: 1; } }
+
+@keyframes bounceIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ==========================================================================
+   Total row — on screen
+   The .total-row rules lived only inside @media print, so in the receipt
+   modal the total looked identical to every other line. Give it the same
+   emphasis on screen, using the brand green rather than print's solid black.
+   ========================================================================== */
+
+.receipt-table tr.total-row td {
+  background: var(--primary, #00A86B);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 14px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-top: 2px solid var(--primary-dark, #087443);
+  border-bottom: none;
+}
+
+.receipt-table tr.total-row td strong {
+  color: #FFFFFF;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.receipt-table tr.total-row td:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.receipt-table tr.total-row td:last-child {
+  border-radius: 0 8px 8px 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* the amount column generally, so figures line up */
+.receipt-table .amount-cell {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .receipt-table tr.total-row td {
+  background: var(--primary-dark, #087443);
+  border-top-color: #14532D;
+}
+
+/* ==========================================================================
+   Receipt card — on-screen polish
+   ========================================================================== */
+
+.print-receipt-modal {
+  border-radius: 16px;
+  overflow: hidden;                 /* header corners follow the card */
+}
+
+.print-receipt-modal .receipt-content {
+  max-height: calc(90vh - 74px - 76px);   /* header + action bar */
+  overflow-y: auto;
+  padding: 22px 24px;
+}
+
+.print-receipt-header {
+  padding: 18px 22px;
+}
+
+.receipt-logo {
+  padding-bottom: 14px;
+  margin-bottom: 6px;
+  border-bottom: 2px solid var(--primary, #00A86B);
+}
+
+.receipt-logo h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 18.5px;
+  font-weight: 800;
+  color: var(--primary-dark, #087443);
+}
+
+.receipt-section { margin-bottom: 18px; }
+
+.receipt-section h3 {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-light, #64748B);
+  padding-bottom: 7px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #EEF2F6;
+}
+
+.receipt-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 0;
+  font-size: 12.5px;
+}
+
+.receipt-row .label { color: var(--text-light, #64748B); white-space: nowrap; }
+
+.receipt-row .value {
+  font-weight: 600;
+  color: var(--text, #1E293B);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* amount table */
+.receipt-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+}
+
+.receipt-table thead th {
+  padding: 8px 12px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-light, #64748B);
+  background: #F8FAFC;
+  text-align: left;
+  border-bottom: 1px solid #EEF2F6;
+}
+
+.receipt-table thead th:first-child { border-radius: 8px 0 0 0; }
+.receipt-table thead th:last-child { border-radius: 0 8px 0 0; text-align: right; }
+
+.receipt-table tbody td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #F1F5F9;
+  color: var(--text, #1E293B);
+}
+
+.receipt-table tbody tr:last-child td { border-bottom: none; }
+
+.receipt-footer {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed #D1F0E3;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-light, #64748B);
+}
+
+/* action bar */
+.receipt-actions {
+  display: flex;
+  gap: 10px;
+  padding: 16px 22px;
+  border-top: 1px solid var(--border, #D1F0E3);
+  background: #F8FAFC;
+  flex-wrap: wrap;
+}
+
+.receipt-actions .btn { flex: 1; min-width: 130px; }
+
+[data-theme="dark"] .receipt-actions { background: #0F172A; border-top-color: #14532D; }
+[data-theme="dark"] .receipt-table thead th { background: #0F172A; }
+[data-theme="dark"] .receipt-table tbody td { border-bottom-color: #14532D; color: #E2E8F0; }
+[data-theme="dark"] .receipt-row .value { color: #E2E8F0; }
+
+
+/* smaller, tighter action buttons — the receipt bar holds four of them */
+.receipt-actions .btn {
+  padding: 7px 12px;
+  font-size: 12px;
+  gap: 6px;
+  border-radius: 8px;
+  min-width: 112px;
+}
+
+.receipt-actions .btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 600px) {
+  .receipt-actions .btn {
+    font-size: 11.5px;
+    padding: 7px 10px;
+    min-width: 0;
   }
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* receipt brand logo (on screen) */
+.receipt-logo-img {
+  height: 44px;
+  width: auto;
+  max-width: 70%;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@media (max-width: 600px) {
+  .receipt-logo-img { height: 36px; }
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* the logo artwork is dark navy, so keep it on a light plate in dark mode */
+[data-theme="dark"] .receipt-logo-img {
+  background: #FFFFFF;
+  border-radius: 8px;
+  padding: 5px 9px;
 }

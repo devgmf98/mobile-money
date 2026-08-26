@@ -1,475 +1,342 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../context/store';
-import PrintReceipt from '../components/PrintReceipt';
-import { transactionAPI, withdrawalAPI } from '../utils/api';
-import { Line, Doughnut } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
-import Footer from '../components/Footer';
-import '../styles/dashboard.css';
-import '../styles/agent-dashboard.css';
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, Filler);
+import { transactionAPI } from '../utils/api';
+import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, CreditCard, Files, Hand, Inbox, Landmark, RefreshCw, Smartphone, Upload, Wallet } from 'lucide-react';
+import styles from './AgentDashboard.module.css';
+import { txLabel } from '../data/transactionTypes';
 
 export default function AgentDashboard() {
-  const user = useAuthStore((state) => state.user);
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuthStore();
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1032px)').matches);
+  const [stats, setStats] = useState({
+    totalSent: 0,
+    totalReceived: 0,
+    commissionEarned: 0
+  });
   const [transactions, setTransactions] = useState([]);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Handle window resize for responsive design
+  // matchMedia only fires when the breakpoint is actually crossed. The old
+  // resize handler ran on every resize tick and read window.innerWidth, which
+  // forces a synchronous layout each time, then set state at the same rate.
   useEffect(() => {
-    const fetchStats = async () => {
+    const mq = window.matchMedia('(max-width: 1032px)');
+    const onChange = (e) => setIsMobile(e.matches);
+    // addListener is the pre-Safari-14 spelling
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange);
+      else mq.removeListener(onChange);
+    };
+  }, []);
+
+  // Fetch stats and transactions
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const { data } = await transactionAPI.getStats();
-        setStats(data);
+        setLoading(true);
+        const [statsRes, txRes] = await Promise.all([
+          transactionAPI.getStats(),
+          transactionAPI.getTransactions()
+        ]);
+        
+        if (statsRes.data) {
+          setStats(statsRes.data);
+        }
+        if (txRes.data) {
+          setTransactions(txRes.data.slice(0, 10)); // Last 10 transactions
+        }
       } catch (error) {
-        console.error('Failed to fetch agent stats:', error);
+        console.error('Error fetching dashboard data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchTransactions = async () => {
-      try {
-        const { data } = await transactionAPI.getTransactions();
-        setTransactions(data || []);
-      } catch (err) {
-        console.error('Failed to fetch transactions:', err);
-      }
-    };
+    if (user?.id) {
+      fetchData();
+    }
+  }, [user]);
 
-    fetchStats();
-    fetchTransactions();
-
-    // Refresh stats when the current user's balance updates via socket bridge
-    const handleUserUpdated = (e) => {
-      try {
-        const updated = e?.detail;
-        if (updated && updated._id === user?._id) {
-          // re-fetch stats when this agent's balance changed
-          fetchStats();
-        }
-      } catch (err) {
-        console.error('Failed handling mpay:user-updated event', err);
-      }
-    };
-
-    window.addEventListener('mpay:user-updated', handleUserUpdated);
-
-    return () => {
-      window.removeEventListener('mpay:user-updated', handleUserUpdated);
-    };
-  }, []);
-
-  // Derived list: recent money received (transfers only where current user is receiver)
-  const receivedList = transactions
-    .filter((tx) => tx.receiver && tx.receiver._id && tx.receiver._id.toString() === user?._id?.toString() && tx.status === 'completed' && tx.type === 'transfer')
-    .slice(0, 5);
-
-  // Recent withdrawals involving this agent (either as receiver or sender)
-  const recentWithdrawals = transactions
-    .filter((tx) => (tx.type === 'user_withdraw' || tx.type === 'withdrawal') && (tx.sender?._id?.toString() === user?._id?.toString() || tx.receiver?._id?.toString() === user?._id?.toString()))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5);
-
-  // Recent pulls (user_withdraw type only)
-  const recentPulls = transactions
-    .filter((tx) => tx.type === 'user_withdraw' && (tx.sender?._id?.toString() === user?._id?.toString() || tx.receiver?._id?.toString() === user?._id?.toString()))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5);
-
-  // Recent pure withdrawals (withdraw type only, excluding user_withdraw)
-  const pureWithdrawals = transactions
-    .filter((tx) => tx.type === 'user_withdraw' && (tx.sender?._id?.toString() === user?._id?.toString() || tx.receiver?._id?.toString() === user?._id?.toString()))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5);
-
-  // Agent cash out money (agent_cash_out_money type where current user is the sender)
-  const adminCashOut = transactions
-    .filter((tx) => tx.type === 'agent_cash_out_money' && tx.sender?._id?.toString() === user?._id?.toString())
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5);
-
-  const chartData = {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-    datasets: [
-      {
-        label: 'Handled (SSP)',
-        data: [2000, 3000, 2500, 4000],
-        borderColor: '#2563eb',
-        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-        tension: 0.4,
-        fill: true
-      }
-    ]
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value || 0);
   };
 
-  const doughnutData = {
-    labels: ['Transfers', 'Withdrawals', 'Fees'],
-    datasets: [
-      {
-        data: [50, 40, 10],
-        backgroundColor: ['#2563eb', '#f59e0b', '#10b981'],
-        borderColor: '#fff',
-        borderWidth: 2
-      }
-    ]
+  /* Same helpers the user dashboard's Recent Transactions table uses, so both
+     tables read a transaction the same way. A transaction is outgoing if it is
+     typed 'sent' or this account is the sender. */
+  const isOutgoing = (tx) => tx.type === 'sent' || tx.senderId === user?.id;
+
+  const txDate = (v) => (v
+    ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'N/A');
+
+  const txAmount = (tx) =>
+    (isOutgoing(tx) ? '-' : '+') + 'SSP ' + formatCurrency(tx.amount);
+
+  const handleNavigate = (path) => {
+    window.location.href = path;
   };
 
+  if (!user) {
+    return <div>Loading...</div>;
+  }
+
+  // Mobile View
+  if (isMobile) {
+    return (
+      <div className={styles.container}>
+        {/* Balance Card */}
+        <div className={styles.balanceCard}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+            <span className={styles.balanceLabel}>My Balance</span>
+            <CreditCard style={{ height: 32, width: 48, color: '#fff' }} />
+          </div>
+          <span className={styles.balanceAmount} style={{ fontSize: '1.97rem', letterSpacing: '2px', margin: '18px 0 8px 0', color: '#fff' }}>
+            {user && user.balance !== undefined && user.balance !== null
+              ? `${(parseFloat(user.balance) || 0).toFixed(2)}`
+              : '0.00'}
+            <span className={styles.currency} style={{ color: '#fff', marginLeft: 8 }}>SSP</span>
+          </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: 16 }}>
+            <span style={{ fontSize: '1rem', letterSpacing: '2px', opacity: 0.85 }}>**** **** **** {user?.agentId?.slice(-4) || '5678'}</span>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className={styles.actions}>
+          <button 
+            className={styles.actionBtn}
+            onClick={() => handleNavigate('/agent/send-money')}
+          >
+            <span><Upload size={18} /></span>
+            <span>Send Money</span>
+          </button>
+          <button 
+            className={styles.actionBtn}
+            onClick={() => handleNavigate('/agent/receive')}
+          >
+            <span>�</span>
+            <span>Receive</span>
+          </button>
+          <button 
+            className={styles.actionBtn}
+            onClick={() => handleNavigate('/agent/pull-from-user')}
+          >
+            <span><RefreshCw size={18} /></span>
+            <span>Pull from User</span>
+          </button>
+          <button 
+            className={styles.actionBtn}
+            onClick={() => handleNavigate('/agent/transactions')}
+          >
+            <span><ChartColumn size={18} /></span>
+            <span>Transactions</span>
+          </button>
+        </div>
+
+        {/* History Section */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3>Statistics</h3>
+          </div>
+          <div className={styles.statsGrid}>
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Money Sent</div>
+              <div className={styles.statValue}>SSP {formatCurrency(stats.totalSent)}</div>
+            </div>
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Money Received</div>
+              <div className={styles.statValue}>SSP {formatCurrency(stats.totalReceived)}</div>
+            </div>
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Commission Earned</div>
+              <div className={styles.statValue}>SSP {formatCurrency(stats.commissionEarned)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Transactions */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h3>Recent Transactions</h3>
+            <a href="/agent/transactions" className={styles.seeAllLink}>See all</a>
+          </div>
+          {loading ? (
+            <div className={styles.loadingText}>Loading transactions...</div>
+          ) : transactions.length > 0 ? (
+            <div className={styles.transactionsList}>
+              {transactions.map(tx => (
+                <div key={tx.id} className={styles.transactionItem}>
+                  <div className={styles.txHeader}>
+                    <span className={styles.txType}>
+                      {tx.type === 'send' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />} {tx.type === 'send' ? 'Sent to' : 'Received from'}
+                    </span>
+                    <span className={styles.txAmount}>
+                      {tx.type === 'send' ? '-' : '+'}{formatCurrency(tx.amount)}
+                    </span>
+                  </div>
+                  <div className={styles.txDetails}>
+                    <span className={styles.txName}>{tx.recipientName || tx.senderName}</span>
+                    <span className={styles.txDate}>
+                      {new Date(tx.createdAt).toLocaleDateString('en-PH')}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={styles.loadingText}>No transactions yet</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Desktop View
   return (
-    <>
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div>
-          <h1>Welcome, Agent {user?.name}! 👋</h1>
-          <p className="text-muted">Agent Dashboard — manage withdrawals and transactions</p>
-          {user?.currentLocation && (
-            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
-              📍 {user.currentLocation.city}, {user.currentLocation.country}
-            </p>
-          )}
-          {user?.role === 'agent' && (
-            <div style={{ marginTop: 8 }}>
-              <span className={`badge ${user?.autoAdminCashout ? 'badge-success' : 'badge-secondary'}`}>
-                Admin Cash-Out approval: {user?.autoAdminCashout ? 'On' : 'Off'}
-              </span>
+          <h1>Welcome, {user?.name}! <Hand size={18} /></h1>
+          <p className="text-muted">Your Agent Dashboard</p>
+        </div>
+      </div>
+
+      <div className="dashboard-grid grid-4 user-stats">
+        <div className="stat-card balance-card">
+          <div className="stat-icon balance tone-primary"><Wallet size={28} /></div>
+          <div className="stat-content wallet-content-fix">
+            <p className="stat-label">My Wallet</p>
+            <h3 className="stat-value">
+              {user && user.balance !== undefined && user.balance !== null
+                ? `SSP ${(parseFloat(user.balance) || 0).toFixed(2)}`
+                : 'SSP 0.00'}
+            </h3>
+            <p className="balance-sub">Available Balance</p>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon sent tone-error"><Upload size={28} /></div>
+          <div className="stat-content">
+            <p className="stat-label">Money Sent</p>
+            <h3 className="stat-value">SSP {formatCurrency(stats.totalSent)}</h3>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon received tone-success"><Inbox size={28} /></div>
+          <div className="stat-content">
+            <p className="stat-label">Money Received</p>
+            <h3 className="stat-value">SSP {formatCurrency(stats.totalReceived)}</h3>
+          </div>
+        </div>
+
+        <div className="stat-card total-tx">
+          <div className="stat-icon transactions tone-dark"><ChartColumn size={28} /></div>
+          <div className="stat-content">
+            <p className="stat-label">Commission Earned</p>
+            <h3 className="stat-value">SSP {formatCurrency(stats.commissionEarned)}</h3>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Transactions — the data was already being fetched for the
+          mobile view; the desktop view simply never rendered it. */}
+      <div className="card mt-4 recent-tx-card">
+        <div className="card-header flex-between">
+          <h3><Clock size={18} /> Recent Transactions</h3>
+          <a href="/agent/transactions" className="recent-tx-all">See all</a>
+        </div>
+        <div className="card-body">
+          {loading ? (
+            <p className="recent-tx-empty">Loading transactions…</p>
+          ) : transactions.length === 0 ? (
+            <div className="recent-tx-empty-state">
+              <span className="recent-tx-empty-icon"><Files size={22} /></span>
+              <h4>No transactions yet</h4>
+              <p>Money you send or receive will appear here.</p>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table className="table recent-tx-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Reference</th>
+                    <th>Date</th>
+                    <th className="right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transactions.slice(0, 5).map((tx, idx) => (
+                    <tr key={tx.transactionId || idx}>
+                      <td>
+                        <span className="recent-tx-type">
+                          <span className={'recent-tx-dir ' + (isOutgoing(tx) ? 'is-out' : 'is-in')}>
+                            {isOutgoing(tx) ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+                          </span>
+                          {txLabel(tx, isOutgoing(tx))}
+                        </span>
+                      </td>
+                      <td><span className="recent-tx-ref">{tx.transactionId || '—'}</span></td>
+                      <td><span className="recent-tx-date">{txDate(tx.createdAt)}</span></td>
+                      <td className="right">
+                        <span className={'recent-tx-amount ' + (isOutgoing(tx) ? 'is-out' : 'is-in')}>
+                          {txAmount(tx)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
       </div>
 
-      <div className="dashboard-grid grid-3">
-        <div className="stat-card balance-card">
-          <div className="stat-icon balance">💰</div>
-          <div className="stat-content">
-            <p className="stat-label">My Wallet</p>
-            <h3 className="stat-value">SSP {Math.max(0, (user?.balance || 0) - (stats?.pendingAgentCommission || 0) - (stats?.pendingCompanyCommission || 0)).toFixed(2)}</h3>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon sent">📤</div>
-          <div className="stat-content">
-            <p className="stat-label">Money Sent</p>
-            <h3 className="stat-value">SSP {(Number(stats?.transfersSentAmount) || 0).toFixed(2)}</h3>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon received">📥</div>
-          <div className="stat-content">
-            <p className="stat-label">Withdrawn</p>
-            <h3 className="stat-value">SSP {(Number(stats?.withdrawalsCompletedAmount) || 0).toFixed(2)}</h3>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon commission">💎</div>
-          <div className="stat-content">
-            <p className="stat-label">Commission Earned</p>
-            <h3 className="stat-value">SSP {(Number(stats?.commissionEarned) || 0).toFixed(2)}</h3>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon pulled">🤝</div>
-          <div className="stat-content">
-            <p className="stat-label">Pulled Money</p>
-            <h3 className="stat-value">SSP {stats?.pullsReceivedAmount?.toFixed(2) || '0.00'}</h3>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon received">📨</div>
-          <div className="stat-content">
-            <p className="stat-label">Money Received</p>
-            <h3 className="stat-value">SSP {stats?.transfersReceivedAmount?.toFixed(2) || '0.00'}</h3>
-          </div>
-        </div>
-      </div>
-
-      <div className="charts-grid grid-2">
-        <div className="card">
-          <div className="card-header">
-            <h3>Activity</h3>
-          </div>
-          <div className="card-body">
-            {loading ? (
-              <p className="text-center text-muted">Loading chart...</p>
-            ) : (
-              <Line data={chartData} options={{ responsive: true, maintainAspectRatio: true }} />
-            )}
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header">
-            <h3>Transaction Types</h3>
-          </div>
-          <div className="card-body">
-            {loading ? (
-              <p className="text-center text-muted">Loading chart...</p>
-            ) : (
-              <div style={{ maxHeight: '2000px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <Doughnut data={doughnutData} options={{ responsive: true, maintainAspectRatio: false }} />
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="card mt-4">
+      {/* Quick Actions */}
+      <div className="card">
         <div className="card-header flex-between">
           <h3>Quick Actions</h3>
         </div>
         <div className="card-body">
           <div className="actions-grid">
             <a href="/agent/send-money" className="action-card">
-              <div className="action-icon">📤</div>
+              <div className="action-icon tone-primary"><Upload size={28} /></div>
               <h4>Send Money</h4>
-              <p>Transfer to another user</p>
+              <p>Transfer to users</p>
             </a>
-            <a href="/agent/withdraw" className="action-card">
-              <div className="action-icon">💵</div>
-              <h4>Withdraw</h4>
-              <p>Cash out to agent</p>
+            <a href="/agent/receive" className="action-card">
+              <div className="action-icon tone-success"><Landmark size={28} /></div>
+              <h4>Receive</h4>
+              <p>Show your QR code</p>
+            </a>
+            <a href="/agent/scan" className="action-card">
+              <div className="action-icon tone-info"><Smartphone size={28} /></div>
+              <h4>Scan</h4>
+              <p>Scan QR codes</p>
+            </a>
+            <a href="/agent/pull-from-user" className="action-card">
+              <div className="action-icon tone-info"><RefreshCw size={28} /></div>
+              <h4>Pull from User</h4>
+              <p>Request money</p>
             </a>
             <a href="/agent/transactions" className="action-card">
-              <div className="action-icon">📋</div>
+              <div className="action-icon tone-dark"><ChartColumn size={28} /></div>
               <h4>Transactions</h4>
               <p>View history</p>
-            </a>
-            <a href="/agent/profile" className="action-card">
-              <div className="action-icon">👤</div>
-              <h4>Profile</h4>
-              <p>Manage account</p>
             </a>
           </div>
         </div>
       </div>
 
-      <div className="card mt-4">
-        <div className="card-header">
-          <h3>Recent Pulls</h3>
-        </div>
-        <div className="card-body">
-          {recentPulls.length === 0 ? (
-            <p className="text-muted">No recent pulls</p>
-          ) : (
-            <div className="table-responsive">
-              <table className="withdrawals-table">
-                <thead>
-                  <tr>
-                    <th>User/Agent</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Agent Comm</th>
-                    <th>Company Comm</th>
-                    <th>Status</th>
-                    <th>Date & Time</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPulls.map((w) => (
-                    <tr key={w._id || w.id}>
-                      <td>{w.type === 'user_withdraw' ? (w.sender?.name || w.sender?.phone || 'User') : (w.receiver?.name || w.receiver?.phone || 'Agent')}</td>
-                      <td>{w.type === 'user_withdraw' ? 'Pulled from user' : 'Withdrawal'}</td>
-                      <td>SSP {(parseFloat(w.amount) || 0).toFixed(2)}</td>
-                      <td>SSP {((parseFloat(w.agentCommission) ?? parseFloat(w.commission) ?? 0)).toFixed(2)}</td>
-                      <td>SSP {(parseFloat(w.companyCommission) ?? 0).toFixed(2)}</td>
-                      <td><span className={`badge badge-${w.status === 'completed' ? 'success' : w.status === 'pending' ? 'warning' : 'danger'}`}>{w.status}</span></td>
-                      <td>{new Date(w.createdAt).toLocaleString()}</td>
-                      <td style={{ display: 'flex', gap: '4px' }}>
-                        <a href={`/agent/transactions?id=${w._id}`} className="view-btn">View</a>
-                        <button
-                          onClick={() => setSelectedTransaction(w)}
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            background: '#f0f0f0',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }}
-                        >
-                          🖨️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="card mt-4">
-        <div className="card-header">
-          <h3>Recent Withdrawals</h3>
-        </div>
-        <div className="card-body">
-          {pureWithdrawals.length === 0 ? (
-            <p className="text-muted">No recent withdrawals</p>
-          ) : (
-            <div className="table-responsive">
-              <table className="withdrawals-table">
-                <thead>
-                  <tr>
-                    <th>Agent</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Date & Time</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pureWithdrawals.map((w) => (
-                    <tr key={w._id || w.id}>
-                      <td>{w.sender?.name || w.sender?.phone || 'Agent'}</td>
-                      <td>Withdrawal</td>
-                      <td>SSP {(parseFloat(w.amount) || 0).toFixed(2)}</td>
-                      <td><span className={`badge badge-${w.status === 'completed' ? 'success' : w.status === 'pending' ? 'warning' : 'danger'}`}>{w.status}</span></td>
-                      <td>{new Date(w.createdAt).toLocaleString()}</td>
-                      <td style={{ display: 'flex', gap: '4px' }}>
-                        <a href={`/agent/transactions?id=${w._id}`} className="view-btn">View</a>
-                        <button
-                          onClick={() => setSelectedTransaction(w)}
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            background: '#f0f0f0',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }}
-                        >
-                          🖨️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="card mt-4">
-        <div className="card-header">
-          <h3>Agent Cash Out Money</h3>
-        </div>
-        <div className="card-body">
-          {adminCashOut.length === 0 ? (
-            <p className="text-muted">No agent cash out transactions</p>
-          ) : (
-            <div className="table-responsive">
-              <table className="withdrawals-table">
-                <thead>
-                  <tr>
-                    <th>Admin</th>
-                    <th>Transaction ID</th>
-                    <th>Description</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Date & Time</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {adminCashOut.map((w) => (
-                    <tr key={w._id || w.id}>
-                      <td>{w.receiver?.name || w.receiver?.phone || 'Admin'}</td>
-                      <td>{w.transactionId || 'N/A'}</td>
-                      <td>{w.description || 'No description'}</td>
-                      <td>SSP {(parseFloat(w.amount) || 0).toFixed(2)}</td>
-                      <td><span className={`badge badge-${w.status === 'completed' ? 'success' : w.status === 'pending' ? 'warning' : 'danger'}`}>{w.status}</span></td>
-                      <td>{new Date(w.createdAt).toLocaleString()}</td>
-                      <td style={{ display: 'flex', gap: '4px' }}>
-                        <a href={`/agent/transactions?id=${w._id}`} className="view-btn">View</a>
-                        <button
-                          onClick={() => setSelectedTransaction(w)}
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            background: '#f0f0f0',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }}
-                        >
-                          🖨️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="card mt-4">
-        <div className="card-header">
-          <h3>Recent Money Received</h3>
-        </div>
-        <div className="card-body">
-          {receivedList.length === 0 ? (
-            <p className="text-muted">No recent incoming transactions</p>
-          ) : (
-            <div className="table-responsive">
-              <table className="received-table">
-                <thead>
-                  <tr>
-                    <th>Sender</th>
-                    <th>Type</th>
-                    <th>Amount</th>
-                    <th>Date & Time</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {receivedList.map((tx) => (
-                    <tr key={tx._id}>
-                      <td>{tx.sender?.name || tx.sender?.phone || 'Unknown'}</td>
-                      <td>{tx.type === 'user_withdraw' ? 'Pulled from user' : 'Transfer'}</td>
-                      <td>SSP {(parseFloat(tx.amount) || 0).toFixed(2)}</td>
-                      <td>{new Date(tx.createdAt).toLocaleString()}</td>
-                      <td style={{ display: 'flex', gap: '4px' }}>
-                        <a href={`/agent/transactions?id=${tx._id}`} className="view-btn">View</a>
-                        <button
-                          onClick={() => setSelectedTransaction(tx)}
-                          style={{
-                            padding: '4px 8px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            background: '#f0f0f0',
-                            border: '1px solid #ddd',
-                            borderRadius: '4px'
-                          }}
-                        >
-                          🖨️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </div>
-      {selectedTransaction && (
-        <PrintReceipt
-          transaction={selectedTransaction}
-          onClose={() => setSelectedTransaction(null)}
-        />
-      )}
     </div>
-    <Footer />
-    </>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminAPI } from '../utils/api';
 import Footer from '../components/Footer';
 import '../styles/admin-users.css';
+import { Ban, Banknote, CircleCheck } from 'lucide-react';
 
 export default function AdminUsers() {
   const navigate = useNavigate();
@@ -134,7 +135,7 @@ export default function AdminUsers() {
                             onClick={() => navigate('/admin/topup', { state: { phone: user.phone } })}
                             title="Topup"
                           >
-                            💵
+                            <Banknote size={18} />
                           </button>
                           {user.isSuspended ? (
                             <button 
@@ -142,7 +143,7 @@ export default function AdminUsers() {
                               onClick={() => handleUnsuspend(user.id)}
                               title="Unsuspend"
                             >
-                              ✅
+                              <CircleCheck size={18} />
                             </button>
                           ) : (
                             <button 
@@ -150,7 +151,7 @@ export default function AdminUsers() {
                               onClick={() => handleSuspend(user.id)}
                               title="Suspend"
                             >
-                              🚫
+                              <Ban size={18} />
                             </button>
                           )}
                         </div>

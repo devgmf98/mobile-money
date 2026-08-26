@@ -1,0 +1,422 @@
+/* ==========================================================================
+   User dashboard — Recent Transactions
+
+   Scoped to .recent-tx-card so nothing leaks into other pages; card, table
+   and table-wrap come from design-system.css.
+   ========================================================================== */
+
+.recent-tx-card .card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recent-tx-card .card-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recent-tx-card .card-header h3 svg { color: var(--primary); flex-shrink: 0; }
+
+.recent-tx-all {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-dark, #087443);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.recent-tx-all:hover { text-decoration: underline; }
+
+/* ---------- rows --------------------------------------------------------- */
+.recent-tx-table th.right,
+.recent-tx-table td.right { text-align: right; }
+
+.recent-tx-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.recent-tx-dir {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+}
+
+/* direction is carried by the icon and the +/- sign, not colour alone */
+.recent-tx-dir.is-out { background: #FEE2E2; color: #DC2626; }
+.recent-tx-dir.is-in { background: #DCFCE7; color: #16A34A; }
+
+.recent-tx-ref {
+  font-size: 12px;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.recent-tx-date {
+  font-size: 12px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.recent-tx-amount {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.recent-tx-amount.is-out { color: #DC2626; }
+.recent-tx-amount.is-in { color: #16A34A; }
+
+/* ---------- empty / loading ---------------------------------------------- */
+.recent-tx-empty {
+  margin: 0;
+  padding: 18px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.recent-tx-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 26px 16px;
+  text-align: center;
+}
+
+.recent-tx-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary);
+}
+
+.recent-tx-empty-state h4 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.recent-tx-empty-state p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 720px) {
+  .recent-tx-table .recent-tx-ref { display: none; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .recent-tx-type { color: #E2E8F0; }
+[data-theme="dark"] .recent-tx-empty-state h4 { color: #E2E8F0; }
+[data-theme="dark"] .recent-tx-dir.is-out { background: #450A0A; color: #FCA5A5; }
+[data-theme="dark"] .recent-tx-dir.is-in { background: #14532D; color: #4ADE80; }
+[data-theme="dark"] .recent-tx-amount.is-out { color: #FCA5A5; }
+[data-theme="dark"] .recent-tx-amount.is-in { color: #4ADE80; }
+[data-theme="dark"] .recent-tx-empty-icon { background: #05512F; color: #A9EBD1; }
+[data-theme="dark"] .recent-tx-all { color: #A9EBD1; }
+
+/* ==========================================================================
+   Wallet card — the hero tile
+
+   Balance is the number the dashboard leads with, so it spans two columns of
+   the 4-up row and carries a larger icon and value than the other stats.
+
+   These live here rather than in dashboard.css, which has ~20 .balance-card
+   rules but is imported by nothing, so none of them ever applied.
+   ========================================================================== */
+
+/* All four tiles share one row: the wallet takes 1.5fr, the rest 1fr each.
+   `grid-column: span 2` made it half the row and pushed a fourth card onto a
+   second row. .user-stats marks the wallet-hero stat row — the user AND agent
+   dashboards both carry it. It exists because .dashboard-container is shared
+   with the admin dashboard, which has eight flat tiles and must not get this
+   treatment. */
+.dashboard-grid.grid-4.user-stats {
+  /* four equal columns: the wallet is set apart by height and treatment, not
+     width. The shared .dashboard-grid.grid-4 uses auto-fill/minmax(275px),
+     which yields three columns here and wraps the fourth onto its own row. */
+  /* the wallet takes a wider column; the other three stay equal. All four
+     still fit one row — the shared .grid-4 auto-fill rule is what used to
+     wrap the fourth tile, and this overrides it at (0,3,0). */
+  grid-template-columns: 1.5fr 1fr 1fr;
+  /* natural heights, so the taller wallet card does not stretch its siblings */
+  align-items: start;
+}
+
+.dashboard-grid.grid-4 .stat-card.balance-card {
+  align-items: center;
+  /* white on #00A86B is 3.08:1 — fine for the large value but below 4.5:1
+     for the small label, so the gradient sits in the darker brand greens
+     (5.85:1 to 7.68:1 against white) */
+  background: linear-gradient(135deg, #065F46 0%, #087443 100%);
+  border-color: transparent;
+}
+
+/* on the green panel the plate and text go white */
+.dashboard-grid .stat-card.balance-card .stat-icon {
+  width: 62px;
+  height: 62px;
+  min-width: 62px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #FFFFFF;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-label {
+  color: #FFFFFF;
+  min-height: 0;          /* the alignment shim the other tiles need */
+  margin-bottom: 6px;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-value {
+  font-size: 24px;
+  color: #FFFFFF;
+}
+
+.dashboard-grid .stat-card.balance-card:hover {
+  border-color: transparent;
+  
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid .stat-card.balance-card .stat-value { font-size: 20px; }
+  .dashboard-grid .stat-card.balance-card .stat-icon { width: 54px; height: 54px; min-width: 54px; }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid.grid-4.user-stats { grid-template-columns: 1.35fr 1fr 1fr; }
+}
+
+@media (max-width: 780px) {
+  .dashboard-grid.grid-4.user-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .dashboard-grid.grid-4.user-stats { grid-template-columns: 1fr; }
+}
+
+[data-theme="dark"] .dashboard-grid .stat-card.balance-card .stat-value,
+[data-theme="dark"] .dashboard-grid .stat-card.balance-card .stat-label {
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Wallet card — stronger differentiation
+
+   Colour alone was not enough of a signal, so the hero tile also differs in
+   shape and typography: a round white icon plate against the others' tinted
+   squircles, a decorative bloom and a heavier value. (It carried a lifted
+   shadow too until card shadows were removed app-wide.)
+   ========================================================================== */
+
+.dashboard-grid.grid-4 .stat-card.balance-card {
+  position: relative;
+  overflow: hidden;
+  
+}
+
+/* soft light bloom, purely decorative */
+.dashboard-grid.grid-4 .stat-card.balance-card::after {
+  content: '';
+  position: absolute;
+  right: -48px;
+  top: -64px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.10);
+  pointer-events: none;
+}
+
+/* round, solid white plate — the other tiles use tinted squircles */
+.dashboard-grid .stat-card.balance-card .stat-icon {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: #065F46;
+  
+}
+
+.dashboard-grid .stat-card.balance-card .stat-content {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-label {
+  font-size: 11px;
+  letter-spacing: 1.1px;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-value {
+  font-size: 26.5px;
+  letter-spacing: -0.8px;
+  line-height: 1.1;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid .stat-card.balance-card .stat-value { font-size: 22px; }
+}
+
+/* ==========================================================================
+   The three secondary tiles share one height
+
+   "SSP 0.00" could wrap to a second line in these narrow columns while
+   "0" never can, so Money Sent and Total Received rendered a line taller
+   than Total Transactions. overflow-wrap:anywhere (needed for the wide
+   admin tiles) is what allowed the break.
+   ========================================================================== */
+
+.dashboard-grid.grid-4.user-stats .stat-card:not(.balance-card) {
+  min-height: 92px;
+  /* .dashboard-grid .stat-card sets height:100%, which resolves against the
+     grid ROW — and the row is as tall as the 190px wallet card, so these
+     stretched to match. height:auto restores their natural size; center then
+     sits them mid-row against the taller wallet rather than at the top. */
+  height: auto;
+  align-self: center;
+}
+
+.dashboard-grid.grid-4.user-stats .stat-card:not(.balance-card) .stat-value {
+  /* one line always: the full figure is in the title attribute and on the
+     Transactions page, so an ellipsis here loses nothing */
+  overflow-wrap: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* the label keeps its two-line shim so all three labels reserve the same
+   height whether or not they wrap */
+
+/* ==========================================================================
+   Wallet card — hero treatment from the reference design
+   ========================================================================== */
+
+.dashboard-grid.grid-4 .stat-card.balance-card {
+  min-height: 146px;
+  gap: 20px;
+  padding: 22px;
+  border-radius: 20px;
+}
+
+/* dotted motif, lower-left */
+.dashboard-grid.grid-4 .stat-card.balance-card::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  width: 120px;
+  height: 78px;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1.6px, transparent 1.6px);
+  background-size: 11px 11px;
+  pointer-events: none;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-icon {
+  width: 74px;
+  height: 74px;
+  min-width: 74px;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.dashboard-grid .stat-card.balance-card .stat-value {
+  font-size: 28px;
+  letter-spacing: -0.9px;
+}
+
+.dashboard-grid .stat-card.balance-card .balance-sub {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid.grid-4 .stat-card.balance-card { min-height: 134px; padding: 18px; gap: 16px; }
+  .dashboard-grid .stat-card.balance-card .stat-icon { width: 78px; height: 78px; min-width: 78px; }
+  .dashboard-grid .stat-card.balance-card .stat-icon svg { width: 32px; height: 32px; }
+  .dashboard-grid .stat-card.balance-card .stat-value { font-size: 27.5px; }
+}
+
+@media (max-width: 640px) {
+  .dashboard-grid.grid-4 .stat-card.balance-card { min-height: 0; }
+  .dashboard-grid .stat-card.balance-card::before { display: none; }
+}
+
+/* ==========================================================================
+   Dashboard spacing inside the user shell
+
+   .dashboard-container carries padding:30px for the admin shell. The user
+   shell used to add its own on .layout-body, so the two stacked; this reset
+   the inner one. .layout-body is now padding:0, so the container stays at 0
+   and the inset lives on the cards instead — see below.
+   ========================================================================== */
+
+.layout-body .dashboard-container {
+  padding: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* The card margins that inset this page are no longer declared here — they
+   come from the app-wide page-inset block at the end of design-system.css,
+   which applies the same treatment to every page in both shells. */
+
+.layout-body .dashboard-grid {
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.layout-body .dashboard-container > .dashboard-header {
+  margin-bottom: 16px;
+}
+
+.layout-body .charts-grid,
+.layout-body .dashboard-container > .card {
+  margin-bottom: 16px;
+}
+
+/* ==========================================================================
+   Total Transactions — its own row
+
+   The wallet and the two money figures share the top row; the transaction
+   count sits under them, held to the first column so it does not stretch the
+   full width. Its left edge lines up with the wallet card above it, which
+   reads as deliberate rather than as a tile that happened to wrap.
+
+   At the 2-column and 1-column breakpoints below, column 1 is simply the
+   left-hand (or only) track, so this stays correct without an override.
+   ========================================================================== */
+
+.dashboard-grid.grid-4.user-stats .stat-card.total-tx {
+  grid-column: 1 / 2;
+}

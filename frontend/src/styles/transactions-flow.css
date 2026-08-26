@@ -1,0 +1,340 @@
+/* ==========================================================================
+   Transaction History — redesigned
+
+   Replaces a list built from inline styles (grey #f0f0f0 buttons, a hand-rolled
+   search input) with a toolbar, summary strip and structured rows.
+   Scoped to .tx-page.
+   ========================================================================== */
+
+.tx-page { max-width: 1000px; margin: 0 auto; }
+
+.tx-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+/* ---------- summary ------------------------------------------------------- */
+.tx-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.tx-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface, #FFFFFF);
+  min-width: 128px;
+}
+
+.tx-summary-item span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.tx-summary-item strong {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.tx-summary-item strong.is-in { color: #16A34A; }
+.tx-summary-item strong.is-out { color: #DC2626; }
+
+/* ---------- toolbar ------------------------------------------------------- */
+.tx-page .tx-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tx-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+}
+
+.tx-search:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.tx-search > svg { color: var(--text-light); flex-shrink: 0; }
+
+.tx-page .tx-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  padding: 0;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.tx-page .tx-search input:focus { outline: none; box-shadow: none; }
+
+.tx-search button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tx-page .tx-toolbar select {
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface, #FFFFFF);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tx-page .tx-toolbar select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+/* ---------- list ---------------------------------------------------------- */
+/* rows carry their own borders and a hover background, so the card has to clip
+   them or the first and last row bleed past its rounded corners */
+.tx-page .tx-card { overflow: hidden; }
+
+/* .card has 20px padding; pull the list back out so row separators span the
+   full card width, then give rows the same 20px so their content still lines
+   up with the header above. */
+.tx-page .tx-body { margin: 0 -20px -20px; padding: 0; }
+
+.tx-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tx-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.16s ease;
+}
+
+.tx-row:last-child { border-bottom: none; }
+.tx-row:hover { background: var(--light, #E8F7F0); }
+
+.tx-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 11px;
+}
+
+.tx-icon.is-out { background: #FEE2E2; color: #DC2626; }
+.tx-icon.is-in { background: #DCFCE7; color: #16A34A; }
+
+.tx-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tx-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tx-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-light);
+  min-width: 0;
+}
+
+.tx-ref {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 210px;
+}
+
+.tx-dot { opacity: 0.5; }
+
+.tx-page .tx-when {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.tx-page .tx-when span { font-size: 11px; opacity: 0.8; }
+
+.tx-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.tx-amount {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tx-amount.is-out { color: #DC2626; }
+.tx-amount.is-in { color: #16A34A; }
+
+.tx-status {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.tx-status.is-success { background: #DCFCE7; color: #166534; }
+.tx-status.is-warning { background: #FEF3C7; color: #92400E; }
+.tx-status.is-danger { background: #FEE2E2; color: #991B1B; }
+.tx-status.is-muted { background: #F1F5F9; color: #475569; }
+
+/* ---------- row actions --------------------------------------------------- */
+.tx-page .tx-actions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.tx-page .tx-actions button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface, #FFFFFF);
+  color: var(--primary-dark);
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.tx-page .tx-actions button:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.tx-page .tx-actions button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---------- empty --------------------------------------------------------- */
+.tx-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 46px 20px;
+  text-align: center;
+}
+
+.tx-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary);
+}
+
+.tx-empty h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text); }
+.tx-empty p { margin: 0; font-size: 12px; color: var(--text-light); }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 820px) {
+  .tx-row {
+    grid-template-columns: auto 1fr auto;
+    row-gap: 10px;
+  }
+
+  /* date drops under the title; amount and actions keep the right edge */
+  .tx-page .tx-when {
+    grid-column: 2;
+    grid-row: 2;
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .tx-right { grid-column: 3; grid-row: 1; }
+  .tx-page .tx-actions { grid-column: 3; grid-row: 2; }
+}
+
+@media (max-width: 520px) {
+  .tx-ref { max-width: 130px; }
+  .tx-summary-item { flex: 1; min-width: 104px; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .tx-summary-item { background: #1E293B; border-color: #14532D; }
+[data-theme="dark"] .tx-summary-item strong { color: #E2E8F0; }
+[data-theme="dark"] .tx-search { background: #0F172A; border-color: #14532D; }
+[data-theme="dark"] .tx-page .tx-search input { color: #E2E8F0; }
+[data-theme="dark"] .tx-page .tx-toolbar select { background: #0F172A; border-color: #14532D; color: #E2E8F0; }
+[data-theme="dark"] .tx-row:hover { background: #0F172A; }
+[data-theme="dark"] .tx-title { color: #E2E8F0; }
+[data-theme="dark"] .tx-icon.is-out { background: #450A0A; color: #FCA5A5; }
+[data-theme="dark"] .tx-icon.is-in { background: #14532D; color: #4ADE80; }
+[data-theme="dark"] .tx-amount.is-out { color: #FCA5A5; }
+[data-theme="dark"] .tx-amount.is-in { color: #4ADE80; }
+[data-theme="dark"] .tx-status.is-success { background: #14532D; color: #86EFAC; }
+[data-theme="dark"] .tx-status.is-warning { background: #422006; color: #FCD34D; }
+[data-theme="dark"] .tx-status.is-danger { background: #450A0A; color: #FCA5A5; }
+[data-theme="dark"] .tx-status.is-muted { background: #0F172A; color: #94A3B8; }
+[data-theme="dark"] .tx-page .tx-actions button { background: #1E293B; border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .tx-empty h3 { color: #E2E8F0; }
+[data-theme="dark"] .tx-empty-icon { background: #05512F; color: #A9EBD1; }

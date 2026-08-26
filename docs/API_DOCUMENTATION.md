@@ -1,1363 +1,1058 @@
-# MoneyPay API Documentation
+# MoneyPay API Reference
 
-## Base URL
-```
-Development: http://localhost:5000/api
-Production: https://your-domain.com/api
-```
+Complete reference for the MoneyPay backend — 71 endpoints across five routers, plus the Socket.IO channel. Every JSON example below is a real request or response captured against a running server, not an illustration.
 
-## Authentication
-
-All protected endpoints require a Bearer token in the Authorization header:
-
-```
-Authorization: Bearer <your_jwt_token>
-```
-
-## Response Format
-
-### Success Response
-```json
-{
-  "message": "Operation successful",
-  "data": {},
-  "transaction": {},
-  "user": {},
-  "users": [],
-  "transactions": []
-}
-```
-
-### Error Response
-```json
-{
-  "message": "Error description"
-}
-```
+- **Base URL:** `http://localhost:8080/api` (the port comes from `PORT` in `.env`; the code falls back to `5000` if it is unset)
+- **Health check:** `GET /api/health` — the only unauthenticated endpoint outside `/api/auth`
+- **Content type:** `application/json` for every request with a body
 
 ---
 
-## 🔐 Authentication Endpoints
+## Authentication
 
-### Register User
+All protected endpoints expect a bearer token:
+
 ```
-POST /auth/register
-Content-Type: application/json
+Authorization: Bearer <jwt>
+```
 
+The token is issued by `POST /api/auth/login` and carries `{ userId, role }`. Three guards run in front of the routes:
+
+| Guard | Rejects with | When |
+|---|---|---|
+| `authMiddleware` | `401 No token provided` / `401 Invalid token` | Token missing, malformed, or expired |
+| `adminMiddleware` | `403 Admin access required` | Caller's role is not `admin` |
+| `notSuspended` | `403` | The account is flagged `isSuspended` |
+
+Roles are `user`, `agent`, and `admin`.
+
+**Unverified accounts cannot sign in.** Login returns `403` with `needsVerification: true` and the account's phone, so the client can route the person to phone verification rather than showing a dead end. **Admins are exempt** — an account created with `role: "admin"` is created already verified and never receives an SMS code, because it is provisioned through the API rather than self-signup.
+
+---
+
+## Conventions
+
+**Errors** are always `{ "message": "..." }` with an HTTP status:
+
+```json
+{ "message": "You can't send money to this person" }
+```
+
+| Code | Meaning |
+|---|---|
+| `400` | Validation failure — missing field, bad amount, disallowed transfer pairing |
+| `401` | Missing or invalid token |
+| `403` | Authenticated but not permitted (wrong role, suspended, unverified) |
+| `404` | User, agent, request, or record not found |
+| `409` | State conflict — request already handled, or balance changed since it was raised |
+| `500` | Unhandled server error; the message carries the underlying error text |
+
+**Phone numbers** are accepted in any of these forms and resolved to the stored value by a shared helper (`utils/helpers.js → phoneVariants`):
+
+```
++211912345678    211912345678    912345678    0912345678    0912 345 678
+```
+
+The national trunk zero is stripped before the country code is applied, so `0912345678` and `+211912345678` resolve to the same account.
+
+**Money** is stored as SQL `DECIMAL` and therefore arrives from Sequelize as a **string** — note `"amount": "100.00"` rather than `100.00` in the transaction examples below. Coerce before arithmetic or formatting. Computed figures (quotes, stats) come back as numbers.
+
+---
+
+## Commission model
+
+Two independent tier tables price transfers. Both are admin-editable; when a table has no row covering the amount, the hardcoded fallbacks in `utils/commission.js` apply.
+
+**Withdrawal tiers** (`WithdrawalCommissionTier`) — used for cash-outs *and* for user→agent sends. Two commissions: the agent's cut and the company's fee. Fallback when no row matches:
+
+| Amount | Agent | Company |
+|---|---|---|
+| 0 – 99 | 0% | 0% |
+| 100 – 499 | 1% | 0.5% |
+| 500 – 999 | 1.5% | 0.5% |
+| 1000+ | 2% | 1% |
+
+**Send-money tiers** (`SendMoneyCommissionTier`) — used for user→user and agent→user. Company fee only. Fallback when no row matches:
+
+| Amount | Company |
+|---|---|
+| 0 – 99 | 0% |
+| 100 – 499 | 1% |
+| 500 – 999 | 2% |
+| 1000+ | 3% |
+
+**Fees are charged on top of the amount.** The sender is debited `amount + fees`; the recipient always receives the full `amount`. On a withdrawal the agent receives `amount + agentCommission`; the company keeps `companyCommission`.
+
+This matters for any "send everything" control: `balance ÷ (1 + rate)` is **wrong**, because the rate changes by tier and the result lands in a higher bracket whose larger fee no longer fits. Use the `maxAmount` returned by the quote endpoints, which the server solves across all tiers.
+
+---
+
+## Who may pay whom
+
+`sendMoney` enforces this matrix (`transferAllowed` in `transactionController.js`):
+
+| Sender → Recipient | Allowed | Tier used |
+|---|---|---|
+| user → user | yes | send-money |
+| user → agent | yes | **withdrawal** (it is a cash-out in all but name) |
+| agent → user | yes | send-money |
+| agent → agent | **no** | — agents settle through an admin |
+| anyone → admin | **no** | — |
+
+Rejections return `400` with a message naming the reason.
+
+---
+
+# Auth — `/api/auth`
+
+### `POST /register`
+Creates an account. Sends a 6-digit SMS code valid 10 minutes — **except for admins**, who are created verified and receive no code.
+
+**`role` is optional and defaults to `"user"`** — that is why the first example
+below omits it. Pass `"agent"` or `"admin"` to create those instead. The four
+fields shown are the only required ones for every role.
+
+```json
+// request — a normal user. No role field: it defaults to "user".
 {
-  "name": "John Doe",
-  "email": "john@example.com",
-  "phone": "+211912345678",
-  "password": "securepassword",
-  "role": "user",  // "user", "agent", or "admin"
-  "agentId": "123456"  // optional, auto-generated for agents
+  "name": "Gabriel Francis",
+  "email": "gabriel@example.com",
+  "phone": "+211912399537",
+  "password": "secret123"
 }
+```
 
-Response:
+```json
+// 201
 {
   "message": "User registered. Please verify your phone number.",
-  "userId": 1,
-  "phone": "+211912345678",
+  "userId": 24,
+  "phone": "+211912302002",
+  "isVerified": false,
   "agentId": null,
   "adminId": null
 }
 ```
 
-### Verify Phone
-```
-POST /auth/verify-phone
-Content-Type: application/json
-
+```json
+// request — an agent
 {
-  "phone": "+211912345678",
-  "code": "123456"
-}
-
-Response:
-{
-  "message": "Phone verified successfully"
+  "name": "Agent Solo",
+  "email": "agent@example.com",
+  "phone": "+211912301235",
+  "password": "secret123",
+  "role": "agent"
 }
 ```
 
-### Login
-```
-POST /auth/login
-Content-Type: application/json
-
+```json
+// 201 — isVerified false: an agent still verifies by SMS.
+// A 6-digit agentId is generated unless you supply one.
 {
-  "email": "john@example.com",
-  "password": "securepassword",
-  "latitude": 4.85,  // optional
-  "longitude": 31.6  // optional
+  "message": "User registered. Please verify your phone number.",
+  "userId": 25,
+  "phone": "+211912302003",
+  "isVerified": false,
+  "agentId": 112914,
+  "adminId": null
 }
+```
 
-Response:
+```json
+// request — an admin, created through the API
 {
-  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "name": "Juba Admin",
+  "email": "admin@example.com",
+  "phone": "+211912300777",
+  "password": "secret123",
+  "role": "admin"
+}
+```
+
+```json
+// 201 — isVerified is TRUE: no SMS code, sign in straight away
+{
+  "message": "Admin registered. You can sign in now.",
+  "userId": 23,
+  "phone": "+211912302001",
+  "isVerified": true,
+  "agentId": null,
+  "adminId": 214712
+}
+```
+
+**400** when the email or phone is already registered.
+
+`isVerified` in the response tells you whether the account can sign in yet:
+
+| Role | `isVerified` | SMS code sent | Can sign in immediately |
+|---|---|---|---|
+| `user` | `false` | yes | no — must verify first |
+| `agent` | `false` | yes | no — must verify first |
+| `admin` | **`true`** | **no** | **yes** |
+
+The phone is stored exactly as sent — normalise it client-side, or the account will be created under an unexpected form.
+
+### `POST /verify-phone`
+
+```json
+// request
+{ "phone": "0912399537", "code": "652975" }
+```
+
+```json
+// 200
+{ "message": "Phone verified successfully" }
+```
+
+**400** invalid or expired code · **404** no account with that number. The code is cleared on success, so it cannot be replayed.
+
+### `POST /resend-verification`
+Issues a fresh code and invalidates the previous one.
+
+```json
+// request
+{ "phone": "0912399537" }
+```
+
+```json
+// 200 — the same answer whether or not the number exists,
+// so this cannot be used to discover registered numbers
+{ "message": "If that number needs verification, a new code has been sent." }
+```
+
+### `POST /login`
+
+Credentials go in **either** an `Authorization: Basic` header **or** the JSON
+body. The header wins when both are present.
+
+**Basic Auth** — in Postman, pick *Authorization → Basic Auth* and fill in
+Username = the email, Password = the password. No body needed at all:
+
+```
+POST /api/auth/login
+Authorization: Basic YmFzaWNkZW1vQGV4YW1wbGUuY29tOnNlY3JldDEyMw==
+```
+
+The header value is `base64(email + ":" + password)`. With curl:
+
+```bash
+curl -u "gabriel@example.com:secret123" -X POST http://localhost:8080/api/auth/login
+```
+
+Only the first colon separates the two, so a password may contain colons.
+
+**JSON body** — still supported, and what the web app uses:
+
+```json
+// request — only email and password are required
+{
+  "email": "gabriel@example.com",
+  "password": "secret123"
+}
+```
+
+```json
+// request — optional: where the sign-in happened
+{
+  "email": "gabriel@example.com",
+  "password": "secret123",
+  "latitude": 4.85165,
+  "longitude": 31.58247
+}
+```
+
+**You almost never send `latitude` / `longitude` yourself.** The web app reads them
+from the browser's geolocation API and passes them through, so the account's
+"last seen" location can be recorded. From Postman, or any client without a
+location, just leave them out — login behaves identically.
+
+The server ignores them unless *both* are present. If they are absent and the
+account has `adminLocationConsent` set, it falls back to an IP lookup instead.
+
+```json
+// 200
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "user": {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+211912345678",
+    "id": 6,
+    "name": "Gabriel Francis",
+    "email": "gabriel@example.com",
+    "phone": "+211912399537",
     "role": "user",
-    "balance": 5000,
-    "isVerified": true,
-    "agentId": null,
-    "adminId": null,
-    "autoAdminCashout": false,
-    "adminLocationConsent": false,
-    "theme": "light",
-    "currentLocation": null
+    "balance": 9388
   }
 }
 ```
 
-### Get Profile
+```json
+// 401
+{ "message": "Invalid credentials" }
 ```
-GET /auth/profile
-Authorization: Bearer <token>
 
-Response:
+```json
+// 400 — no credentials in either place
+{ "message": "Provide credentials in an Authorization: Basic header, or as email and password in the body." }
+```
+
+```json
+// 403 — never verified; send them to the verification step, not an error screen
 {
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "phone": "+211912345678",
-  "balance": 5000,
+  "message": "Please verify your phone number before signing in.",
+  "needsVerification": true,
+  "phone": "+211912399537"
+}
+```
+
+```json
+// 403 — suspended
+{ "message": "Your account has been suspended. Please contact customer care to restore access." }
+```
+
+`latitude` and `longitude` are optional. Admins sign in here too — there is no separate admin login; the client routes on `user.role`.
+
+### `POST /forgot-password`
+
+```json
+// request
+{ "email": "gabriel@example.com" }
+```
+
+### `POST /reset-password`
+
+```json
+// request
+{ "email": "gabriel@example.com", "code": "418203", "password": "newsecret123" }
+```
+
+**400** invalid or expired code.
+
+### `GET /profile` · auth
+Returns the caller's own record.
+
+```json
+// 200 (profileImage truncated — it is a full base64 data URI)
+{
+  "id": 6,
+  "name": "Gabriel Francis",
+  "email": "gabriel@example.com",
+  "phone": "+211912399537",
+  "balance": 9388,
+  "autoAdminCashout": false,
   "role": "user",
   "isVerified": true,
   "isSuspended": false,
-  "agentId": null,
-  "adminId": null,
-  "createdAt": "2024-01-15T10:30:00Z"
+  "verificationCode": "652975",
+  "verificationExpiry": "2026-08-24T11:10:06.000Z",
+  "profileImage": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAA..."
 }
 ```
 
-### Update Profile
-```
-PUT /auth/profile
-Authorization: Bearer <token>
-Content-Type: application/json
+> **Note:** this response includes a live `verificationCode`. See [known issues](#known-issues).
 
+### `PUT /profile` · auth
+Only supplied fields change.
+
+```json
+// request
+{ "name": "Gabriel F.", "theme": "dark", "autoAdminCashout": true }
+```
+
+Accepts `name`, `profileImage`, `idNumber`, `autoAdminCashout`, `theme`.
+
+### `GET /check-balance?phone=0912399537` · auth
+
+```json
+// 200
 {
-  "name": "John Doe",
-  "profileImage": "base64_image_data",
-  "idNumber": "ID123456"
-}
-
-Response:
-{
-  "id": 1,
-  "name": "John Doe",
-  "email": "john@example.com",
-  "profileImage": "url_to_image"
+  "id": 6,
+  "name": "Gabriel Francis",
+  "phone": "+211912399537",
+  "balance": 9388,
+  "isVerified": true,
+  "isSuspended": false
 }
 ```
 
-### Check Balance
-```
-GET /auth/check-balance
-Authorization: Bearer <token>
-
-Response:
-{
-  "balance": 5000
-}
-```
+**400** phone missing · **403** account suspended · **404** not found.
 
 ---
 
-## 💳 Transaction Endpoints
+# Transactions — `/api/transactions`
 
-### Send Money
-```
-POST /transactions/send-money
-Authorization: Bearer <token>
-Content-Type: application/json
+### `POST /send-money` · auth · notSuspended
+The tier used depends on the recipient's role — see [who may pay whom](#who-may-pay-whom).
 
+```json
+// request
 {
-  "recipientPhone": "+211987654321",
-  "amount": 1000,
-  "description": "Payment for service"
+  "recipientPhone": "+211912399506",
+  "amount": 700,
+  "description": "Rent share"
 }
+```
 
-Response:
+```json
+// 200
 {
   "message": "Money sent successfully",
   "transaction": {
-    "id": 1,
-    "transactionId": "TXN202401001",
-    "amount": 1000,
-    "recipient": "+211987654321",
+    "transactionId": "TXN554091116",
+    "amount": 700,
+    "type": "transfer",
     "status": "completed"
   }
 }
-
-Error Cases:
-- 400: "Insufficient balance"
-- 404: "Recipient not found"
-- 400: "You can't send money to this person" (sending to agent/admin as user)
 ```
 
-### Withdraw Money
-```
-POST /transactions/withdraw
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "agentId": "123456",
-  "amount": 5000
-}
-
-Response:
-{
-  "message": "Withdrawal initiated",
-  "transaction": {
-    "id": 2,
-    "transactionId": "TXN202401002",
-    "amount": 5000
-  }
-}
-
-Error Cases:
-- 400: "Insufficient balance"
-- 404: "Agent not found"
+```json
+// 400 — the pairing is refused (agent→agent, or anyone→admin)
+{ "message": "You can't send money to this person" }
 ```
 
-### Get Transactions
+```json
+// 400 — the balance does not cover amount + fees
+{ "message": "Insufficient balance" }
 ```
-GET /transactions/transactions
-Authorization: Bearer <token>
 
-Response:
+**404** recipient not found.
+
+### `POST /withdraw` · auth · notSuspended
+Cash-out through an agent. Debits `amount + agentCommission + companyCommission` from the user; credits `amount + agentCommission` to the agent.
+
+```json
+// request — agentId is the agent's 6-digit badge ID, not their database id
+{ "agentId": "471542", "amount": 500 }
+```
+
+**400** invalid amount, insufficient balance, or the ID does not belong to an agent · **404** agent not found.
+
+### `GET /transactions` · auth
+The caller's transactions, newest first, with `sender` and `receiver` attached.
+
+```json
+// 200 — one element of the array
 [
   {
-    "id": 1,
-    "transactionId": "TXN202401001",
-    "senderId": 1,
-    "receiverId": 2,
-    "amount": 1000,
-    "type": "transfer",
+    "id": 19,
+    "transactionId": "TXN265771339",
+    "senderId": 2,
+    "receiverId": 6,
+    "amount": "100.00",
+    "type": "topup",
     "status": "completed",
-    "description": "Payment for service",
-    "senderBalance": 4000,
-    "receiverBalance": 6000,
-    "companyCommission": 30,
-    "companyCommissionPercent": 3,
-    "createdAt": "2024-01-15T10:30:00Z",
-    "sender": {
-      "name": "John Doe",
-      "phone": "+211912345678"
-    },
-    "receiver": {
-      "name": "Jane Smith",
-      "phone": "+211987654321"
-    }
+    "description": null,
+    "commission": "0.00",
+    "commissionPercent": "0.00",
+    "agentCommission": "0.00",
+    "agentCommissionPercent": "0.00",
+    "companyCommission": "0.00",
+    "companyCommissionPercent": "0.00",
+    "receiverCredit": null,
+    "currencyCode": null,
+    "currencySymbol": null,
+    "exchangeRate": "1.0000000000",
+    "toCurrencyCode": null,
+    "convertedAmount": null,
+    "exchangeMode": null,
+    "currencyTier": null,
+    "senderBalance": "0.00",
+    "receiverBalance": "9388.00",
+    "senderLocation": "\"{\\\"latitude\\\":4.85165,\\\"longitude\\\":31.58247,\\\"city\\\":\\\"Juba\\\",\\\"country\\\":\\\"South Sudan\\\"}\"",
+    "receiverLocation": null,
+    "createdAt": "2026-08-26T12:44:25.000Z",
+    "updatedAt": "2026-08-26T12:44:25.000Z",
+    "sender":   { "name": "Juba Admin", "phone": "+211921371414", "role": "admin" },
+    "receiver": { "name": "Gabriel Francis", "phone": "+211912399537", "role": "user" }
   }
 ]
 ```
 
-### Get Transaction Stats
-```
-GET /transactions/stats
-Authorization: Bearer <token>
+Two traps in that payload, both real:
 
-Response:
+- **`senderLocation` is a JSON string, sometimes double-encoded** — note the escaped quotes. Reading `.city` off it gives `undefined`. Parse it (twice if needed) before use.
+- **`exchangeRate` defaults to `"1.0000000000"` on every row**, including transfers and top-ups. It does not indicate a currency conversion; check `type === "money_exchange"` or `toCurrencyCode` instead.
+
+### `GET /stats` · auth
+
+```json
+// 200
 {
-  "totalTransactions": 25,
-  "totalSent": 15000,
-  "totalReceived": 8000,
-  "pendingAgentCommission": 150,
-  "pendingCompanyCommission": 450
+  "totalTransactions": 4,
+  "totalSent": 800,
+  "totalReceived": 200,
+  "withdrawalsCompletedCount": 0,
+  "withdrawalsCompletedAmount": 0,
+  "transfersCompletedCount": 0,
+  "transfersCompletedAmount": 0,
+  "transfersSentCount": 0,
+  "transfersSentAmount": 0,
+  "commissionEarned": 0,
+  "pullsReceivedAmount": 0,
+  "transfersReceivedAmount": 0,
+  "pendingAgentCommission": 0,
+  "pendingCompanyCommission": 0
 }
 ```
 
-### Get User Info
-```
-GET /transactions/user-info/:phoneNumber
-Authorization: Bearer <token>
+### `GET /user-info/:phoneNumber` · auth
 
-Response:
+```json
+// 200
 {
-  "id": 2,
-  "name": "Jane Smith",
-  "phone": "+211987654321"
+  "id": 6,
+  "name": "Gabriel Francis",
+  "phone": "+211912399537",
+  "balance": 9388,
+  "email": "gabriel@example.com",
+  "role": "user",
+  "isVerified": true,
+  "isSuspended": false
 }
+```
+
+**404** not found.
+
+> **Note:** this returns another account's balance and email to any authenticated caller. Its consumers only need name, phone, and role — see [known issues](#known-issues).
+
+### `GET /agent-info/:agentId` · auth
+Resolves an agent by their 6-digit badge ID, so a customer can confirm who they are paying before entering an amount.
+
+```json
+// 200 — deliberately narrower than /user-info: no balance, no email
+{
+  "agentId": "471542",
+  "name": "Agent Solo",
+  "phone": "+211912345002",
+  "isSuspended": false
+}
+```
+
+```json
+// 400
+{ "message": "Agent ID must be 6 digits" }
+```
+
+```json
+// 404 — the same answer whether the ID is unknown or simply not an agent,
+// so IDs cannot be enumerated
+{ "message": "No agent found with that ID" }
+```
+
+### `GET /withdrawal-quote?amount=700` · auth
+Prices a withdrawal using the same code path that charges it.
+
+```json
+// 200
+{
+  "amount": 700,
+  "agentPercent": 1,
+  "companyPercent": 1.5,
+  "agentCommission": 7,
+  "companyCommission": 10.5,
+  "totalFee": 17.5,
+  "totalDebit": 717.5,
+  "maxAmount": 9159.02
+}
+```
+
+`maxAmount` is the largest amount that still fits once fees are added — solved across every tier, then confirmed against a real quote to absorb per-component rounding.
+
+**`&forPhone=+211912399537`** returns the ceiling for *that* account instead of the caller's, so an agent can size a pull against the customer's balance. **Honoured only for `agent` and `admin` callers**; a plain user always gets their own figure, so it cannot be used to probe balances.
+
+Omit `amount` to get just the ceiling:
+
+```json
+// GET /withdrawal-quote  →  200
+{
+  "amount": 0, "agentPercent": 0, "companyPercent": 0,
+  "agentCommission": 0, "companyCommission": 0,
+  "totalFee": 0, "totalDebit": 0,
+  "maxAmount": 9159.02
+}
+```
+
+### `GET /send-quote?amount=700&recipientPhone=…` · auth
+Prices a transfer. Which tier applies depends on the recipient.
+
+```json
+// 200 — recipient is a USER: send-money tier, company fee only
+{
+  "amount": 700,
+  "companyPercent": 2,
+  "companyCommission": 14,
+  "totalFee": 14,
+  "totalDebit": 714,
+  "tier": "send",
+  "recipientRole": "user",
+  "allowed": true,
+  "maxAmount": 9108.73
+}
+```
+
+```json
+// 200 — recipient is an AGENT: withdrawal tier, so an agent leg appears
+{
+  "amount": 700,
+  "agentPercent": 1,
+  "companyPercent": 1.5,
+  "agentCommission": 7,
+  "companyCommission": 10.5,
+  "totalFee": 17.5,
+  "totalDebit": 717.5,
+  "tier": "withdrawal",
+  "recipientRole": "agent",
+  "allowed": true,
+  "maxAmount": 9159.02
+}
+```
+
+`allowed: false` means the pairing is refused, so a form can say so before pricing it. Without `recipientPhone`, the user-to-user rate is quoted.
+
+---
+
+# Withdrawal requests — `/api/withdrawals`
+
+Agent-initiated pulls, which the customer approves on their own device. Every route requires auth and a non-suspended account.
+
+### `POST /request`
+
+```json
+// request
+{ "userPhone": "0912399537", "amount": 500 }
+```
+
+```json
+// 400 — the check uses the FULL cost, matching what approval will charge, so a
+// request that could never be approved is refused up front
+{ "message": "User has insufficient balance", "required": 507.5, "available": 300 }
+```
+
+**404** user not found.
+
+### `POST /approve`
+
+```json
+// request
+{ "requestId": 8 }
+```
+
+```json
+// 409 — the balance moved after the request was raised
+{ "message": "User no longer has sufficient balance", "currentBalance": 200, "required": 507.5 }
+```
+
+**403** not your request · **404** not found · **409** already handled.
+
+### `POST /reject`
+
+```json
+// request
+{ "requestId": 8, "reason": "Customer changed their mind" }
+```
+
+### `GET /pending`
+
+```json
+// 200
+{ "requests": [] }
 ```
 
 ---
 
-## 🔐 Admin Endpoints
+# Notifications — `/api/notifications`
 
-All admin endpoints require `Authorization: Bearer <token>` and admin role.
+### `GET /` · auth
 
-### Commission Management
-
-#### Get Commission
-```
-GET /admin/commission
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "commission": 5
-}
-```
-
-#### Set Commission
-```
-POST /admin/commission
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "commission": 5
-}
-
-Response:
-{
-  "message": "Commission updated successfully"
-}
-```
-
-### User Management
-
-#### Get All Users
-```
-GET /admin/users
-Authorization: Bearer <admin_token>
-
-Response:
+```json
+// 200 — one element of the array
 [
   {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+211912345678",
-    "role": "user",
-    "balance": 5000,
-    "isVerified": true,
-    "isSuspended": false,
-    "agentId": null,
-    "adminId": null,
-    "createdAt": "2024-01-15T10:30:00Z"
+    "id": 34,
+    "recipientId": 6,
+    "title": "Account Topped Up",
+    "message": "Your account has been topped up with SSP 100",
+    "type": "system",
+    "isRead": false,
+    "relatedTransactionId": 19,
+    "createdAt": "2026-08-26T12:44:25.000Z",
+    "updatedAt": "2026-08-26T12:44:25.000Z"
   }
 ]
 ```
 
-#### Suspend User
-```
-POST /admin/suspend-user
-Authorization: Bearer <admin_token>
-Content-Type: application/json
+### `POST /mark-as-read` · auth
 
+```json
+{ "notificationId": 34 }
+```
+
+### `POST /mark-all-as-read` · auth
+No body.
+
+### `DELETE /:notificationId` · auth
+**404** not found.
+
+### `POST /send-to-all` · auth · admin
+
+```json
+{ "title": "Scheduled maintenance", "message": "Service pauses at 22:00.", "type": "system" }
+```
+
+### `POST /send-to-user` · auth · admin
+
+```json
+{ "userId": 6, "title": "Welcome", "message": "Your account is ready.", "type": "system" }
+```
+
+**404** user not found.
+
+---
+
+# Admin — `/api/admin`
+
+Every route below requires auth and a non-suspended account. Except where noted, all require the `admin` role.
+
+## Accounts and directory
+
+### `GET /users`
+All users with balances and roles.
+
+### `GET /user-details?id=6` *or* `?phone=0912399537`
+**400** neither supplied · **404** not found.
+
+### `GET /find-agent?agentId=471542`
+**400** missing · **404** not found.
+
+### `POST /suspend-user` · `POST /unsuspend-user`
+
+```json
+{ "userId": 6 }
+```
+
+Suspension blocks every route guarded by `notSuspended` — effectively all money movement.
+
+### `POST /grant-location`
+No body. Grants location permission to all users in one pass.
+
+## Moving money
+
+### `POST /topup-user`
+Credits a wallet from the admin float.
+
+```json
+{ "userId": 6, "amount": 250, "description": "Cash deposited at branch" }
+```
+
+**400** invalid amount · **404** user not found.
+
+### `POST /push-money`
+Moves funds directly between two wallets. Applied immediately, with no approval step.
+
+```json
+// request
 {
-  "userId": 1
-}
-
-Response:
-{
-  "message": "User suspended"
-}
-```
-
-#### Unsuspend User
-```
-POST /admin/unsuspend-user
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "userId": 1
-}
-
-Response:
-{
-  "message": "User unsuspended"
-}
-```
-
-### Transaction Management
-
-#### Get All Transactions
-```
-GET /admin/transactions
-Authorization: Bearer <admin_token>
-
-Response:
-[
-  {
-    "id": 1,
-    "transactionId": "TXN202401001",
-    "senderId": 1,
-    "receiverId": 2,
-    "amount": 1000,
-    "type": "transfer",
-    "status": "completed",
-    "createdAt": "2024-01-15T10:30:00Z",
-    "sender": {
-      "name": "John Doe",
-      "phone": "+211912345678",
-      "role": "user"
-    },
-    "receiver": {
-      "name": "Jane Smith",
-      "phone": "+211987654321",
-      "role": "user"
-    }
-  }
-]
-```
-
-### Balance Management
-
-#### Topup User Account
-```
-POST /admin/topup-user
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "userId": 1,
-  "amount": 10000,
-  "description": "Admin topup"
-}
-
-Response:
-{
-  "message": "Topup successful",
-  "transaction": {
-    "id": 3,
-    "transactionId": "TXN202401003",
-    "amount": 10000
-  }
+  "fromPhone": "+211912345001",
+  "toPhone": "+211912345002",
+  "amount": 1000
 }
 ```
 
-#### Withdraw from User
+```json
+// 200
+{ "message": "Transfer completed", "transactionId": "TXN222492388" }
 ```
-POST /admin/withdraw-from-user
-Authorization: Bearer <admin_token>
-Content-Type: application/json
 
+**400** same source and destination, invalid amount, or insufficient balance on the source · **404** either account not found.
+
+Recorded as `type: "admin_push"`. When no `description` is supplied, one is generated naming the **acting admin**, so corrections stay attributable:
+
+```
+Refunded by admin (admin@example.com) from +211912399537 to +211912399506
+```
+
+### `POST /withdraw-from-user` · `POST /withdraw-from-agent`
+
+```json
+{ "userId": 6, "amount": 100, "description": "Correction" }
+```
+
+```json
+{ "agentId": "471542", "amount": 100, "description": "Float recall" }
+```
+
+### `POST /request-agent-withdrawal`
+Raises a cash-out request against an agent, which the **agent** approves.
+
+```json
+{ "agentId": "471542", "amount": 300 }
+```
+
+### `POST /approve-withdrawal-request` · `POST /reject-withdrawal-request` · `GET /agent-withdrawal-requests`
+*auth only — no admin role*
+
+These three are the **agent's** side of the flow above and deliberately skip `adminMiddleware`: the agent is the approver.
+
+```json
+{ "requestId": 8 }
+```
+
+```json
+{ "requestId": 8, "reason": "Rejected by agent" }
+```
+
+**403** not your request · **404** not found · **409** already handled.
+
+## Commission settings
+
+### `GET /commission` · *any authenticated caller — no admin role*
+### `POST /commission`
+Retained for compatibility. Changes nothing:
+
+```json
+{ "message": "Commission settings are now managed via Tiered Commissions" }
+```
+
+### `GET /tiered-commission`
+
+```json
+// 200
 {
-  "userId": 1,
-  "amount": 5000,
-  "description": "Admin withdrawal"
-}
-
-Response:
-{
-  "message": "Withdrawal successful",
-  "transaction": {
-    "id": 4,
-    "transactionId": "TXN202401004",
-    "amount": 5000
-  }
-}
-```
-
-#### Push Money Between Users
-```
-POST /admin/push-money
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "fromUserId": 1,
-  "toUserId": 2,
-  "amount": 1000,
-  "description": "Admin transfer"
-}
-
-Response:
-{
-  "message": "Money pushed successfully"
-}
-```
-
-### Agent Management
-
-#### Find Agent by Agent ID
-```
-GET /admin/find-agent?agentId=123456
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "id": 2,
-  "name": "Agent Name",
-  "phone": "+211987654321",
-  "agentId": "123456"
-}
-```
-
-#### Withdraw from Agent
-```
-POST /admin/withdraw-from-agent
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "agentId": "123456",
-  "amount": 5000
-}
-
-Response:
-{
-  "message": "Withdrawal from agent successful"
-}
-```
-
-#### Request Agent Withdrawal
-```
-POST /admin/request-agent-withdrawal
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "agentId": "123456",
-  "amount": 5000
-}
-
-Response:
-{
-  "message": "Agent withdrawal request created"
-}
-```
-
-### Commission Management
-
-#### Get Tiered Commission
-```
-GET /admin/tiered-commission
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "sendMoneyTiers": [
-    {
-      "id": 1,
-      "minAmount": 0,
-      "maxAmount": 99,
-      "companyPercent": 0
-    }
+  "sendTiers": [
+    { "id": 1, "minAmount": "0.00", "maxAmount": "250.00", "companyPercent": "0.00" }
   ],
   "withdrawalTiers": [
-    {
-      "id": 1,
-      "minAmount": 0,
-      "maxAmount": 499,
-      "agentPercent": 5,
-      "companyPercent": 2
-    }
+    { "id": 1, "minAmount": "0.00",   "maxAmount": "250.00",    "agentPercent": "0.00", "companyPercent": "0.00" },
+    { "id": 2, "minAmount": "251.00", "maxAmount": "500.00",    "agentPercent": "0.50", "companyPercent": "1.00" },
+    { "id": 3, "minAmount": "501.00", "maxAmount": "100000.00", "agentPercent": "1.00", "companyPercent": "1.50" }
   ]
 }
 ```
 
-#### Set Send Money Tiers
-```
-POST /admin/tiered-commission/send-money
-Authorization: Bearer <admin_token>
-Content-Type: application/json
+### `POST /tiered-commission` · `POST /tiered-commission/send-money` · `POST /tiered-commission/withdrawal`
 
+```json
+// POST /tiered-commission/withdrawal
+{
+  "withdrawalTiers": [
+    { "minAmount": 0,   "maxAmount": 250,    "agentPercent": 0,   "companyPercent": 0 },
+    { "minAmount": 251, "maxAmount": 500,    "agentPercent": 0.5, "companyPercent": 1 },
+    { "minAmount": 501, "maxAmount": 100000, "agentPercent": 1,   "companyPercent": 1.5 }
+  ]
+}
+```
+
+```json
+// POST /tiered-commission/send-money — no agentPercent on send tiers
 {
   "tiers": [
-    {
-      "minAmount": 0,
-      "maxAmount": 99,
-      "companyPercent": 0
-    },
-    {
-      "minAmount": 100,
-      "maxAmount": 499,
-      "companyPercent": 1
-    }
+    { "minAmount": 0,    "maxAmount": 99,     "companyPercent": 0 },
+    { "minAmount": 100,  "maxAmount": 499,    "companyPercent": 1 },
+    { "minAmount": 500,  "maxAmount": 999,    "companyPercent": 2 },
+    { "minAmount": 1000, "maxAmount": 100000, "companyPercent": 3 }
   ]
 }
+```
 
-Response:
+**400** malformed. `POST /tiered-commission` takes both keys at once.
+
+## Reporting
+
+### `GET /stats`
+Dashboard aggregates.
+
+```json
+// 200 (abridged — usersByRole, transactionsByStatus and
+// myExchangesByCurrency are arrays of grouped rows)
 {
-  "message": "Send money commission tiers updated"
+  "totalUsers": 6,
+  "totalTransactions": 14,
+  "totalVolume": 400,
+  "totalTopupVolume": 0,
+  "totalAdminCashOut": 300,
+  "completedTransactions": 13,
+  "pendingTransactions": 1,
+  "companyBenefits": 13,
+  "usersByRole": [{ "role": "admin", "count": 2 }],
+  "transactionsByStatus": [{ "status": "completed", "count": 13 }],
+  "myExchangesByCurrency": [{ "currency": "USD", "count": 0, "total": 0 }]
 }
 ```
 
-#### Set Withdrawal Tiers
-```
-POST /admin/tiered-commission/withdrawal
-Authorization: Bearer <admin_token>
-Content-Type: application/json
+Three money figures that are easy to confuse:
 
+| Field | Scope | Card |
+|---|---|---|
+| `totalTopupVolume` | Company-wide top-ups — money **in** | Total Cash |
+| `totalVolume` | Company-wide cash-outs — money **out** | Total Cash Out |
+| `totalAdminCashOut` | **The signed-in admin only** — cash-outs where they are the receiver | You Cashed Out |
+
+### `GET /stats/my-cashed-out`
+
+```json
+{ "totalAdminCashOut": 300 }
+```
+
+### `GET /stats/my-commission`
+Commission the caller earned from `admin_state_push` transfers.
+
+### `GET /transactions`
+Every transaction, newest first, with `sender` and `receiver` attached. Same element shape as `GET /transactions/transactions` above.
+
+## State settings
+
+### `GET /state-settings`
+### `POST /state-settings` · `PUT /state-settings/:id`
+
+```json
+{ "name": "JUBA", "commissionPercent": 5 }
+```
+
+### `DELETE /state-settings/:id`
+**400** invalid · **404** not found.
+
+## Admin-to-admin transfers by state
+
+### `POST /send-state`
+
+```json
+// request
 {
-  "tiers": [
-    {
-      "minAmount": 0,
-      "maxAmount": 499,
-      "agentPercent": 5,
-      "companyPercent": 2
-    }
-  ]
-}
-
-Response:
-{
-  "message": "Withdrawal commission tiers updated"
-}
-```
-
-### Admin Stats
-
-#### Get Admin Stats
-```
-GET /admin/stats
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "totalUsers": 250,
-  "totalTransactions": 1500,
-  "totalVolume": 5000000,
-  "completedTransactions": 1450,
-  "pendingTransactions": 50,
-  "usersByRole": [
-    { "role": "user", "count": 200 },
-    { "role": "agent", "count": 40 },
-    { "role": "admin", "count": 10 }
-  ],
-  "totalAdminCashOut": 100000,
-  "companyBenefits": 15000
-}
-```
-
-#### Get My Admin Cash Out
-```
-GET /admin/stats/my-cashed-out
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "totalCashedOut": 50000
+  "toAdminId": 2,
+  "amount": 1000,
+  "stateId": 1,
+  "deductCommissionFromAmount": false,
+  "currencyId": null
 }
 ```
 
-#### Get My Admin Commission
-```
-GET /admin/stats/my-commission
-Authorization: Bearer <admin_token>
+`deductCommissionFromAmount` decides where the state commission comes from:
 
-Response:
+- `true` — you send 100, the receiver gets 95, you keep 5 as commission
+- `false` — you send 100, the receiver gets 100, the commission is added on top and credited to you
+
+Recorded as `type: "admin_state_push"`, `status: "pending"`, with the description `Admin transfer from JUBA`. **400** invalid · **403** not permitted · **404** admin or state not found.
+
+### `GET /send-state/pending` · `GET /send-state/pending/count`
+### `POST /send-state/:id/receive` — the recipient admin confirms; funds settle
+### `POST /send-state/:id/cancel` — the sender withdraws it
+### `POST /send-state/:id/edit`
+
+```json
+{ "description": "Corrected", "amount": 900, "toAdminId": 2, "deductCommissionFromAmount": true }
+```
+
+All four: **403** when the caller is not a party · **404** when it does not exist.
+
+## Currencies and exchange
+
+### `GET /currencies`
+### `POST /currencies` · `PUT /currencies/:id` · `DELETE /currencies/:id`
+
+```json
 {
-  "totalCommission": 2500
-}
-```
-
-### Location Management
-
-#### Grant Location Permission to All Users
-```
-POST /admin/grant-location
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "message": "Location permission granted to all users"
-}
-```
-
-### State Settings (Admin-to-Admin Transfers)
-
-#### Get State Settings
-```
-GET /admin/state-settings
-Authorization: Bearer <admin_token>
-
-Response:
-[
-  {
-    "id": 1,
-    "state": "Central Equatoria",
-    "adminId": "123456",
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
-```
-
-#### Create State Setting
-```
-POST /admin/state-settings
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "state": "Central Equatoria",
-  "adminId": "123456"
-}
-
-Response:
-{
-  "message": "State setting created"
-}
-```
-
-#### Update State Setting
-```
-PUT /admin/state-settings/:id
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "state": "Central Equatoria",
-  "adminId": "123456"
-}
-
-Response:
-{
-  "message": "State setting updated"
-}
-```
-
-#### Delete State Setting
-```
-DELETE /admin/state-settings/:id
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "message": "State setting deleted"
-}
-```
-
-#### Send Money Between Admins by State
-```
-POST /admin/send-state
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "toState": "Central Equatoria",
-  "amount": 10000,
-  "description": "State transfer"
-}
-
-Response:
-{
-  "message": "Money sent to state admin"
-}
-```
-
-#### Get Pending Send by State
-```
-GET /admin/send-state/pending
-Authorization: Bearer <admin_token>
-
-Response:
-[
-  {
-    "id": 1,
-    "fromAdminId": "123456",
-    "toState": "Central Equatoria",
-    "amount": 10000,
-    "status": "pending",
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
-```
-
-#### Get Pending Send by State Count
-```
-GET /admin/send-state/pending/count
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "count": 5
-}
-```
-
-#### Receive Send by State
-```
-POST /admin/send-state/:id/receive
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "message": "State transfer received"
-}
-```
-
-#### Cancel Send by State
-```
-POST /admin/send-state/:id/cancel
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "message": "State transfer cancelled"
-}
-```
-
-#### Edit Send by State
-```
-POST /admin/send-state/:id/edit
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "amount": 15000,
-  "description": "Updated transfer"
-}
-
-Response:
-{
-  "message": "State transfer updated"
-}
-```
-
-### Currency Management
-
-#### Get Currencies
-```
-GET /admin/currencies
-Authorization: Bearer <admin_token>
-
-Response:
-[
-  {
-    "id": 1,
-    "code": "SSP",
-    "name": "South Sudanese Pound",
-    "symbol": "SSP",
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
-```
-
-#### Create Currency
-```
-POST /admin/currencies
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "code": "USD",
   "name": "US Dollar",
-  "symbol": "$"
-}
-
-Response:
-{
-  "message": "Currency created"
-}
-```
-
-#### Update Currency
-```
-PUT /admin/currencies/:id
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
   "code": "USD",
-  "name": "US Dollar",
-  "symbol": "$"
+  "symbol": "$",
+  "countries": "United States",
+  "exchangeRate": 8000,
+  "tier": 1,
+  "buyingPrice": 7950,
+  "sellingPrice": 8050
 }
+```
 
-Response:
+### `GET /exchange-rates?fromCode=SSP&toCode=USD`
+Both query params optional; omit to list all.
+
+### `POST /exchange-rates` · `PUT /exchange-rates/:id` · `DELETE /exchange-rates/:id`
+
+```json
+{ "fromCode": "SSP", "toCode": "USD", "buyingPrice": 8000, "sellingPrice": 8100, "price": 8050 }
+```
+
+### `POST /money-exchange`
+Records a completed exchange.
+
+```json
+// request
 {
-  "message": "Currency updated"
+  "amount": 1600000,
+  "fromCurrency": "SSP",
+  "toCurrency": "USD",
+  "convertedAmount": 200,
+  "rate": 0.000125
 }
 ```
 
-#### Delete Currency
-```
-DELETE /admin/currencies/:id
-Authorization: Bearer <admin_token>
+**201** with the created transaction · **400** invalid.
 
-Response:
-{
-  "message": "Currency deleted"
-}
-```
+### `POST /convert-money-exchange`
+Calculates a conversion **without recording anything**.
 
-### Exchange Rate Management
-
-#### Get Exchange Rates
-```
-GET /admin/exchange-rates
-Authorization: Bearer <admin_token>
-
-Response:
-[
-  {
-    "id": 1,
-    "fromCurrencyId": 1,
-    "toCurrencyId": 2,
-    "buyingPrice": 5800,
-    "sellingPrice": 5700,
-    "createdAt": "2024-01-15T10:30:00Z",
-    "fromCurrency": {
-      "code": "USD",
-      "name": "US Dollar"
-    },
-    "toCurrency": {
-      "code": "SSP",
-      "name": "South Sudanese Pound"
-    }
-  }
-]
+```json
+// request
+{ "amount": 1600000, "fromCurrency": "SSP", "toCurrency": "USD", "priceMode": "buying" }
 ```
 
-#### Create Exchange Rate
-```
-POST /admin/exchange-rates
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "fromCurrencyId": 1,
-  "toCurrencyId": 2,
-  "buyingPrice": 5800,
-  "sellingPrice": 5700
-}
-
-Response:
-{
-  "message": "Exchange rate created"
-}
-```
-
-#### Update Exchange Rate
-```
-PUT /admin/exchange-rates/:id
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "fromCurrencyId": 1,
-  "toCurrencyId": 2,
-  "buyingPrice": 5900,
-  "sellingPrice": 5800
-}
-
-Response:
-{
-  "message": "Exchange rate updated"
-}
-```
-
-#### Delete Exchange Rate
-```
-DELETE /admin/exchange-rates/:id
-Authorization: Bearer <admin_token>
-
-Response:
-{
-  "message": "Exchange rate deleted"
-}
-```
-
-### Money Exchange
-
-#### Create Money Exchange Transaction
-```
-POST /admin/money-exchange
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "fromCurrencyId": 1,
-  "toCurrencyId": 2,
-  "amount": 100,
-  "exchangeRateId": 1
-}
-
-Response:
-{
-  "message": "Money exchange transaction created",
-  "transaction": {
-    "id": 1,
-    "amount": 100,
-    "convertedAmount": 580000,
-    "exchangeRate": 5800
-  }
-}
-```
-
-#### Convert Money Exchange
-```
-POST /admin/convert-money-exchange
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "fromCurrencyId": 1,
-  "toCurrencyId": 2,
-  "amount": 100
-}
-
-Response:
-{
-  "convertedAmount": 580000,
-  "exchangeRate": 5800
-}
-```
-
-### Agent Withdrawal Management
-
-#### Approve Withdrawal Request
-```
-POST /admin/approve-withdrawal-request
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "requestId": 1
-}
-
-Response:
-{
-  "message": "Withdrawal request approved"
-}
-```
-
-#### Reject Withdrawal Request
-```
-POST /admin/reject-withdrawal-request
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "requestId": 1
-}
-
-Response:
-{
-  "message": "Withdrawal request rejected"
-}
-```
-
-#### Get Agent Withdrawal Requests
-```
-GET /admin/agent-withdrawal-requests
-Authorization: Bearer <admin_token>
-
-Response:
-[
-  {
-    "id": 1,
-    "agentId": "123456",
-    "amount": 5000,
-    "status": "pending",
-    "agentCommission": 250,
-    "companyCommission": 100,
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
-```
+`priceMode` is `buying` or `selling`.
 
 ---
 
-## 🔔 Notification Endpoints
+## Transaction types
 
-### Get Notifications
-```
-GET /notifications
-Authorization: Bearer <token>
+| `type` | Label | Raised by |
+|---|---|---|
+| `transfer` | Money Sent / Money Received | `POST /transactions/send-money` |
+| `topup` | Account top-up | `POST /admin/topup-user` |
+| `withdrawal` | Withdrawal | Admin withdrawal from a wallet |
+| `user_withdraw` | Withdrawal | `POST /transactions/withdraw` |
+| `agent_deposit` | Agent deposit | Agent float movement |
+| `agent_cash_out_money` | Agent cash out | Agent → admin cash-out |
+| `admin_push` | **Refunded by admin** | `POST /admin/push-money` |
+| `admin_state_push` | Destination push | `POST /admin/send-state` |
+| `money_exchange` | Money exchange | `POST /admin/money-exchange` |
 
-Response:
-[
-  {
-    "id": 1,
-    "title": "Money Received",
-    "message": "You received SSP 1000 from +211912345678",
-    "type": "transaction",
-    "isRead": false,
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
-```
-
-### Mark as Read
-```
-POST /notifications/mark-as-read
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "notificationId": 1
-}
-
-Response:
-{
-  "id": 1,
-  "isRead": true
-}
-```
-
-### Mark All as Read
-```
-POST /notifications/mark-all-as-read
-Authorization: Bearer <token>
-
-Response:
-{
-  "message": "All notifications marked as read"
-}
-```
-
-### Delete Notification
-```
-DELETE /notifications/:notificationId
-Authorization: Bearer <token>
-
-Response:
-{
-  "message": "Notification deleted"
-}
-```
-
-### Send to All Users (Admin Only)
-```
-POST /notifications/send-to-all
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "title": "System Maintenance",
-  "message": "System will be down for maintenance tonight",
-  "type": "system"
-}
-
-Response:
-{
-  "message": "Notification sent to all users"
-}
-```
-
-### Send to Specific User (Admin Only)
-```
-POST /notifications/send-to-user
-Authorization: Bearer <admin_token>
-Content-Type: application/json
-
-{
-  "userId": 1,
-  "title": "Account Warning",
-  "message": "Unusual activity detected on your account",
-  "type": "alert"
-}
-
-Response:
-{
-  "message": "Notification sent"
-}
-```
+Direction (`Money Sent` vs `Money Received`) is resolved per viewer for `transfer` only; every other type reads the same for both parties.
 
 ---
 
-## 💰 Withdrawal Endpoints
+## Realtime — Socket.IO
 
-### Request Withdrawal
-```
-POST /withdrawals/request
-Authorization: Bearer <token>
-Content-Type: application/json
+The server runs Socket.IO alongside the REST API on the same origin.
 
-{
-  "agentId": "123456",
-  "amount": 5000
-}
+```js
+socket.emit('join-user', 6);          // enter the room user-6
 
-Response:
-{
-  "message": "Withdrawal request submitted"
-}
+socket.on('balance-updated', (p) => { /* { userId: 6, balance: 9388 } */ });
+socket.on('new-notification', (n) => { /* the notification object */ });
+socket.on('transaction-updated', (t) => { /* the transaction object */ });
 ```
 
-### Approve Withdrawal
-```
-POST /withdrawals/approve
-Authorization: Bearer <token>
-Content-Type: application/json
+| Event | Payload | Sent when |
+|---|---|---|
+| `balance-updated` | `{ userId, balance }` | The recipient's wallet changes, so dashboards update without a refetch |
+| `new-notification` | the notification | A notification is created for that user |
+| `transaction-updated` | the transaction | A transaction the user is party to changes state |
 
-{
-  "requestId": 1
-}
-
-Response:
-{
-  "message": "Withdrawal approved"
-}
-```
-
-### Reject Withdrawal
-```
-POST /withdrawals/reject
-Authorization: Bearer <token>
-Content-Type: application/json
-
-{
-  "requestId": 1
-}
-
-Response:
-{
-  "message": "Withdrawal rejected"
-}
-```
-
-### Get Pending Withdrawals
-```
-GET /withdrawals/pending
-Authorization: Bearer <token>
-
-Response:
-[
-  {
-    "id": 1,
-    "userId": 1,
-    "agentId": "123456",
-    "amount": 5000,
-    "status": "pending",
-    "agentCommission": 250,
-    "companyCommission": 100,
-    "createdAt": "2024-01-15T10:30:00Z"
-  }
-]
-```
+**Client → server:** `send-notification` relays a notification; `disconnect` leaves the room.
 
 ---
 
-## 🏥 Health Check
+## Known issues
 
-### Health Check
-```
-GET /health
+Recorded here because they affect anyone integrating against this API.
 
-Response:
-{
-  "status": "OK",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
+**`POST /auth/register` is unauthenticated and accepts `role: "admin"`.** Anyone who can reach the API can create an admin account — and since admins are created pre-verified, that account can sign in immediately. Removing the admin registration page did not change this. Gating the admin path behind `authMiddleware + adminMiddleware` is what would enforce "admins are provisioned by an existing admin".
 
----
+**`GET /auth/profile` returns a live `verificationCode`.** It is the caller's own record, so the blast radius is limited, but an active verification code should not appear in any response.
 
-## 📊 Status Codes
+**`GET /transactions/user-info/:phoneNumber` over-shares.** It returns any account's balance and email to any authenticated caller. Its callers only use name, phone, and role.
 
-| Code | Meaning |
-|------|---------|
-| 200 | OK - Request successful |
-| 201 | Created - Resource created |
-| 400 | Bad Request - Invalid input |
-| 401 | Unauthorized - Token invalid/expired |
-| 403 | Forbidden - Insufficient permissions |
-| 404 | Not Found - Resource not found |
-| 500 | Server Error - Internal error |
+**`sequelize.sync({ alter: true })` runs on every boot.** It adds a fresh `UNIQUE` index to `Users` each time without reusing the previous one. MySQL caps a table at 64 keys, and once reached **the server will not start**, failing with `ER_TOO_MANY_KEYS`. Duplicate indexes can be dropped to recover, but migrations — or `sync()` without `alter` — would end it.
 
----
+**`currencySymbol` stores a currency code, not a symbol** — and across rows it and `currencyCode` are populated in opposite orders, so an SSP amount can be labelled USD. Read `currencyCode` and treat `currencySymbol` as unreliable.
 
-## 🔍 Error Codes
+**`POST /admin/commission` is inert.** It answers `200` and changes nothing. Use the tiered-commission endpoints.
 
-| Error | Meaning |
-|-------|---------|
-| User already exists | Email or phone already registered |
-| Invalid credentials | Email or password incorrect |
-| Insufficient balance | Not enough funds |
-| Recipient not found | Phone number not found |
-| Agent ID already exists | Agent ID taken |
-| You can't send money to this person | User trying to send to agent/admin |
-
----
-
-## 🧪 Testing with cURL
-
-### Register
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "John Doe",
-    "email": "john@example.com",
-    "phone": "+211912345678",
-    "password": "password123",
-    "role": "user"
-  }'
-```
-
-### Login
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "password": "password123"
-  }'
-```
-
-### Send Money
-```bash
-curl -X POST http://localhost:5000/api/transactions/send-money \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "recipientPhone": "+211987654321",
-    "amount": 1000,
-    "description": "Payment"
-  }'
-```
-
-### Get Admin Stats
-```bash
-curl -X GET http://localhost:5000/api/admin/stats \
-  -H "Authorization: Bearer <admin_token>"
-```
-
----
-
-## 📝 Rate Limiting
-
-To prevent abuse, implement rate limiting:
-
-```javascript
-// Add to your Express app
-import rateLimit from 'express-rate-limit';
-
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-
-app.use('/api/', limiter);
-```
-
----
-
-## 🔒 Security Best Practices
-
-1. **Always use HTTPS** in production
-2. **Never expose JWT secrets** in logs or code
-3. **Validate all inputs** on the backend
-4. **Use CORS** properly configured
-5. **Implement rate limiting** to prevent abuse
-6. **Hash passwords** with bcrypt
-7. **Use environment variables** for sensitive data
-8. **Log all admin actions** for auditing
-9. **Implement 2FA** for admin accounts
-10. **Regular security audits** and penetration testing
-
----
-
-## 📞 API Support
-
-For API issues or questions:
-- Check the logs for error messages
-- Review request/response format
-- Verify authentication token validity
-- Ensure all required fields are provided
-- Contact support: support@moneypay.com
-
----
-
-**API Documentation v2.0** - Last Updated: January 2025 ✅
+**Neither cash-out total filters on status.** `totalVolume` and `totalAdminCashOut` count pending and failed cash-outs alongside completed ones.

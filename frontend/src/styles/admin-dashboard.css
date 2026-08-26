@@ -28,7 +28,7 @@
 
 .brand-text h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
 }
 
@@ -39,14 +39,14 @@
 
 .dashboard-header h1 {
   margin-bottom: 5px;
-  font-size: 32px;
+  font-size: 25.5px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--text);
 }
 
 .dashboard-header p {
   color: var(--text-light);
-  font-size: 16px;
+  font-size: 13.5px;
 }
 
 .dashboard-grid {
@@ -80,30 +80,21 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  box-shadow: var(--shadow-sm);
+  
   border: 1px solid var(--border);
   transition: var(--transition);
-  animation: slideUp 0.5s ease-out;
+  
 }
 
 .stat-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-md);
+  
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+@keyframes slideUp { from { opacity: 0; } to { opacity: 1; } }
 
 .stat-icon {
-  font-size: 32px;
+  font-size: 25.5px;
   width: 60px;
   height: 60px;
   display: flex;
@@ -123,8 +114,8 @@
 }
 
 .stat-value {
-  color: var(--dark);
-  font-size: 18px;
+  color: var(--text);
+  font-size: 14.5px;
   font-weight: 700;
 }
 
@@ -169,18 +160,18 @@
 }
 
 .action-icon {
-  font-size: 32px;
+  font-size: 25.5px;
   margin-bottom: 10px;
 }
 
 .action-card h4 {
   margin-bottom: 5px;
-  font-size: 16px;
-  color: var(--dark);
+  font-size: 13.5px;
+  color: var(--text);
 }
 
 .action-card p {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
 }
 
@@ -192,7 +183,7 @@
   background: white;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: var(--shadow-sm);
+  
   border: 1px solid var(--border);
 }
 
@@ -204,8 +195,8 @@
 
 .card-header h3 {
   margin: 0;
-  font-size: 18px;
-  color: var(--dark);
+  font-size: 14.5px;
+  color: var(--text);
 }
 
 .card-body {
@@ -217,7 +208,7 @@
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   background-color: white;
 }
@@ -258,11 +249,11 @@
   .stat-icon {
     width: 50px;
     height: 50px;
-    font-size: 28px;
+    font-size: 22px;
   }
 
   .stat-value {
-    font-size: 20px;
+    font-size: 16.5px;
   }
 }
 
@@ -291,15 +282,15 @@
   .stat-icon {
     width: 45px;
     height: 45px;
-    font-size: 24px;
+    font-size: 19px;
   }
 
   .stat-value {
-    font-size: 18px;
+    font-size: 14.5px;
   }
 
   .stat-label {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .charts-grid {
@@ -316,18 +307,18 @@
   }
 
   .action-icon {
-    font-size: 28px;
+    font-size: 22px;
     margin-bottom: 8px;
   }
 
   .filter-select {
     width: 100%;
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: 11.5px;
   }
 
   .table-responsive {
-    font-size: 13px;
+    font-size: 11.5px;
   }
 
   .action-buttons {
@@ -341,11 +332,11 @@
   }
 
   .dashboard-header h1 {
-    font-size: 20px;
+    font-size: 16.5px;
   }
 
   .dashboard-header p {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .dashboard-grid {
@@ -364,15 +355,15 @@
   .stat-icon {
     width: 40px;
     height: 40px;
-    font-size: 20px;
+    font-size: 16.5px;
   }
 
   .stat-value {
-    font-size: 16px;
+    font-size: 13.5px;
   }
 
   .stat-label {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .actions-grid {
@@ -385,12 +376,12 @@
   }
 
   .action-icon {
-    font-size: 24px;
+    font-size: 19px;
     margin-bottom: 6px;
   }
 
   .action-card h4 {
-    font-size: 13px;
+    font-size: 11.5px;
     margin-bottom: 3px;
   }
 
@@ -401,7 +392,7 @@
   .filter-select {
     width: 100%;
     padding: 8px 8px;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .table-responsive {
@@ -420,621 +411,6 @@
   }
 }
 
-/* Mobile Styles (480px - 768px) */
-@media (min-width: 480px) and (max-width: 768px) {
-  .dashboard-container {
-    padding: 16px;
-    animation: fadeInUp 0.6s ease-out;
-  }
-
-  .dashboard-header {
-    margin-bottom: 25px;
-    animation: slideInDown 0.7s ease-out 0.1s both;
-  }
-
-  .dashboard-brand {
-    gap: 12px;
-    animation: slideInLeft 0.6s ease-out 0.2s both;
-  }
-
-  .brand-logo svg {
-    width: 44px;
-    height: 44px;
-    animation: zoomIn 0.5s ease-out 0.3s both;
-  }
-
-  .brand-text h1 {
-    font-size: 26px;
-    animation: fadeIn 0.6s ease-out 0.4s both;
-  }
-
-  .brand-text .text-muted {
-    animation: fadeIn 0.6s ease-out 0.5s both;
-  }
-
-  .dashboard-header h1 {
-    font-size: 28px;
-    animation: slideInRight 0.6s ease-out 0.3s both;
-  }
-
-  .dashboard-header p {
-    font-size: 15px;
-    animation: fadeIn 0.6s ease-out 0.5s both;
-  }
-
-  .dashboard-grid {
-    gap: 16px;
-    animation: slideInUp 0.6s ease-out 0.4s both;
-  }
-
-  .stat-card {
-    padding: 20px;
-    border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.6s);
-  }
-
-  .stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-  }
-
-  .stat-icon {
-    width: 50px;
-    height: 50px;
-    font-size: 24px;
-    animation: zoomIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.8s);
-  }
-
-  .stat-value {
-    font-size: 22px;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.9s);
-  }
-
-  .stat-label {
-    font-size: 13px;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1s);
-  }
-
-  .actions-grid {
-    gap: 16px;
-    animation: fadeInUp 0.6s ease-out 0.7s both;
-  }
-
-  .action-card {
-    padding: 18px;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.8s);
-  }
-
-  .action-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-  }
-
-  .action-icon {
-    font-size: 28px;
-    animation: bounceIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1s);
-  }
-
-  .action-card h4 {
-    font-size: 15px;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1.1s);
-  }
-
-  .action-card p {
-    font-size: 13px;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1.2s);
-  }
-
-  .filter-select {
-    padding: 10px 12px;
-    font-size: 14px;
-    border-radius: 8px;
-    animation: slideInDown 0.5s ease-out 0.6s both;
-    transition: all 0.3s ease;
-  }
-
-  .filter-select:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .table-responsive {
-    animation: fadeIn 0.5s ease-out 0.8s both;
-  }
-
-  .action-buttons {
-    gap: 8px;
-    animation: bounceIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1s);
-  }
-
-  .action-buttons .btn {
-    border-radius: 8px;
-    transition: all 0.3s ease;
-    animation: bounceIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1.1s);
-  }
-
-  .action-buttons .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  }
-
-  .money-exchange-list {
-    gap: 14px;
-    animation: fadeInUp 0.6s ease-out 0.9s both;
-  }
-
-  .exchange-item {
-    padding: 16px;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    animation: slideInLeft 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1s);
-  }
-
-  .exchange-item:hover {
-    transform: translateX(5px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  }
-}
-
-/* Tablet Styles (834px - 1024px) */
-@media (min-width: 834px) and (max-width: 1024px) {
-  .dashboard-container {
-    padding: 20px;
-    animation: fadeInUp 0.6s ease-out;
-  }
-
-  .dashboard-header {
-    margin-bottom: 30px;
-    animation: slideInDown 0.7s ease-out 0.1s both;
-  }
-
-  .dashboard-brand {
-    gap: 14px;
-    animation: slideInLeft 0.6s ease-out 0.2s both;
-  }
-
-  .brand-logo svg {
-    width: 46px;
-    height: 46px;
-    animation: zoomIn 0.5s ease-out 0.3s both;
-  }
-
-  .brand-text h1 {
-    font-size: 27px;
-    animation: fadeIn 0.6s ease-out 0.4s both;
-  }
-
-  .brand-text .text-muted {
-    animation: fadeIn 0.6s ease-out 0.5s both;
-  }
-
-  .dashboard-header h1 {
-    font-size: 30px;
-    animation: slideInRight 0.6s ease-out 0.3s both;
-  }
-
-  .dashboard-header p {
-    font-size: 16px;
-    animation: fadeIn 0.6s ease-out 0.5s both;
-  }
-
-  .dashboard-grid {
-    gap: 20px;
-    animation: slideInUp 0.6s ease-out 0.4s both;
-  }
-
-  .stat-card {
-    padding: 24px;
-    border-radius: 14px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.6s);
-  }
-
-  .stat-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.18);
-  }
-
-  .stat-icon {
-    width: 52px;
-    height: 52px;
-    font-size: 26px;
-    animation: zoomIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.8s);
-  }
-
-  .stat-value {
-    font-size: 24px;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.9s);
-  }
-
-  .stat-label {
-    font-size: 14px;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1s);
-  }
-
-  .actions-grid {
-    gap: 20px;
-    animation: fadeInUp 0.6s ease-out 0.7s both;
-  }
-
-  .action-card {
-    padding: 20px;
-    border-radius: 14px;
-    transition: all 0.3s ease;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.8s);
-  }
-
-  .action-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  }
-
-  .action-icon {
-    font-size: 30px;
-    animation: bounceIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1s);
-  }
-
-  .action-card h4 {
-    font-size: 16px;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1.1s);
-  }
-
-  .action-card p {
-    font-size: 14px;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1.2s);
-  }
-
-  .filter-select {
-    padding: 11px 14px;
-    font-size: 15px;
-    border-radius: 10px;
-    animation: slideInDown 0.5s ease-out 0.6s both;
-    transition: all 0.3s ease;
-  }
-
-  .filter-select:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
-  }
-
-  .table-responsive {
-    animation: fadeIn 0.5s ease-out 0.8s both;
-  }
-
-  .action-buttons {
-    gap: 10px;
-    animation: bounceIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1s);
-  }
-
-  .action-buttons .btn {
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    animation: bounceIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1.1s);
-  }
-
-  .action-buttons .btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
-  }
-
-  .money-exchange-list {
-    gap: 16px;
-    animation: fadeInUp 0.6s ease-out 0.9s both;
-  }
-
-  .exchange-item {
-    padding: 18px;
-    border-radius: 14px;
-    transition: all 0.3s ease;
-    animation: slideInLeft 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1s);
-  }
-
-  .exchange-item:hover {
-    transform: translateX(8px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  }
-}
-
-/* Laptop Styles (1440px+) */
-@media (min-width: 1440px) {
-  .dashboard-container {
-    padding: 30px;
-    animation: fadeInUp 0.6s ease-out;
-  }
-
-  .dashboard-header {
-    margin-bottom: 40px;
-    animation: slideInDown 0.7s ease-out 0.1s both;
-  }
-
-  .dashboard-brand {
-    gap: 16px;
-    animation: slideInLeft 0.6s ease-out 0.2s both;
-  }
-
-  .brand-logo svg {
-    width: 50px;
-    height: 50px;
-    animation: zoomIn 0.5s ease-out 0.3s both;
-  }
-
-  .brand-text h1 {
-    font-size: 29px;
-    animation: fadeIn 0.6s ease-out 0.4s both;
-  }
-
-  .brand-text .text-muted {
-    animation: fadeIn 0.6s ease-out 0.5s both;
-  }
-
-  .dashboard-header h1 {
-    font-size: 34px;
-    animation: slideInRight 0.6s ease-out 0.3s both;
-  }
-
-  .dashboard-header p {
-    font-size: 17px;
-    animation: fadeIn 0.6s ease-out 0.5s both;
-  }
-
-  .dashboard-grid {
-    gap: 25px;
-    animation: slideInUp 0.6s ease-out 0.4s both;
-  }
-
-  .stat-card {
-    padding: 28px;
-    border-radius: 16px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.6s);
-  }
-
-  .stat-card:hover {
-    transform: translateY(-8px) scale(1.01);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
-  }
-
-  .stat-icon {
-    width: 56px;
-    height: 56px;
-    font-size: 28px;
-    animation: zoomIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.8s);
-  }
-
-  .stat-value {
-    font-size: 26px;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.9s);
-  }
-
-  .stat-label {
-    font-size: 15px;
-    animation: fadeIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1s);
-  }
-
-  .actions-grid {
-    gap: 25px;
-    animation: fadeInUp 0.6s ease-out 0.7s both;
-  }
-
-  .action-card {
-    padding: 24px;
-    border-radius: 16px;
-    transition: all 0.4s ease;
-    animation: slideInUp 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.8s);
-  }
-
-  .action-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.18);
-  }
-
-  .action-icon {
-    font-size: 32px;
-    animation: bounceIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1s);
-  }
-
-  .action-card h4 {
-    font-size: 17px;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1.1s);
-  }
-
-  .action-card p {
-    font-size: 15px;
-    animation: fadeIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1.2s);
-  }
-
-  .filter-select {
-    padding: 12px 16px;
-    font-size: 16px;
-    border-radius: 12px;
-    animation: slideInDown 0.5s ease-out 0.6s both;
-    transition: all 0.4s ease;
-  }
-
-  .filter-select:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .table-responsive {
-    animation: fadeIn 0.5s ease-out 0.8s both;
-  }
-
-  .action-buttons {
-    gap: 12px;
-    animation: bounceIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1s);
-  }
-
-  .action-buttons .btn {
-    border-radius: 12px;
-    transition: all 0.4s ease;
-    animation: bounceIn 0.3s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1.1s);
-  }
-
-  .action-buttons .btn:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  }
-
-  .money-exchange-list {
-    gap: 18px;
-    animation: fadeInUp 0.6s ease-out 0.9s both;
-  }
-
-  .exchange-item {
-    padding: 20px;
-    border-radius: 16px;
-    transition: all 0.4s ease;
-    animation: slideInLeft 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1s);
-  }
-
-  .exchange-item:hover {
-    transform: translateX(10px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  }
-}
-
-/* Additional Keyframe Animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* ===== DARK MODE STYLES FOR ADMIN DASHBOARD ===== */
 
 [data-theme="dark"] .dashboard-container {
@@ -1050,18 +426,18 @@
 }
 
 [data-theme="dark"] .stat-card {
-  background: #1e293b;
+  background: #1E293B;
   border-color: var(--border);
   color: var(--text);
 }
 
 [data-theme="dark"] .stat-card:hover {
-  background: #334155;
-  box-shadow: var(--shadow-md);
+  background: #087443;
+  
 }
 
 [data-theme="dark"] .stat-icon {
-  background: #0f172a;
+  background: #0F172A;
   border-radius: 10px;
 }
 
@@ -1079,14 +455,14 @@
 
 /* Dark mode for action cards */
 [data-theme="dark"] .action-card {
-  background: #1e293b;
+  background: #1E293B;
   border-color: var(--border);
   color: var(--text);
 }
 
 [data-theme="dark"] .action-card:hover {
-  background: #334155;
-  border-color: #3b82f6;
+  background: #087443;
+  border-color: #34C88E;
 }
 
 [data-theme="dark"] .action-card h4 {
@@ -1099,7 +475,7 @@
 
 /* Dark mode for cards */
 [data-theme="dark"] .card {
-  background: #1e293b;
+  background: #1E293B;
   border-color: var(--border);
   color: var(--text);
 }
@@ -1114,13 +490,13 @@
 
 /* Dark mode for filters and selects */
 [data-theme="dark"] .filter-select {
-  background: #0f172a;
+  background: #0F172A;
   border-color: var(--border);
   color: var(--text);
 }
 
 [data-theme="dark"] .filter-select option {
-  background: #1e293b;
+  background: #1E293B;
   color: var(--text);
 }
 
@@ -1138,7 +514,7 @@
   padding: 12px;
   background: var(--bg-light);
   border-radius: 8px;
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #16A34A;
   transition: background 0.2s;
 }
 
@@ -1154,11 +530,11 @@
 }
 
 .currency-from {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: #E8F7F0;
+  color: #087443;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .currency-to {
@@ -1166,7 +542,7 @@
   color: #166534;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .exchange-arrow {
@@ -1183,23 +559,23 @@
 
 .exchange-amounts .amount {
   font-weight: 600;
-  color: var(--dark);
+  color: var(--text);
 }
 
 .exchange-amounts .mode {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
 }
 
 .exchange-time {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
 }
 
 /* Dark mode for money exchange */
 [data-theme="dark"] .exchange-item {
   background: var(--bg-light);
-  border-left-color: #10b981;
+  border-left-color: #16A34A;
 }
 
 [data-theme="dark"] .exchange-item:hover {
@@ -1227,3 +603,514 @@
   color: var(--text-light);
 }
 
+
+/* ==========================================================================
+   Dashboard stats — layout & polish
+   Fixed 3/4-column grids stranded the 7th card alone on its own row and left
+   each tile far wider than its content. Let the grid flow instead.
+   ========================================================================== */
+
+.dashboard-grid,
+.dashboard-grid.grid-4,
+.dashboard-grid.grid-5 {
+  grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));
+  gap: 16px;
+  margin-bottom: 26px;
+  align-items: stretch;
+}
+
+.dashboard-grid .stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 100%;
+  padding: 18px;
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.dashboard-grid .stat-card:hover {
+  transform: translateY(-2px);
+  border-color: #A9EBD1;
+  
+}
+
+.dashboard-grid .stat-card .stat-icon {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* the icons are rendered at size={28}; 24 sits better inside a 54px plate */
+.dashboard-grid .stat-card .stat-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* text column takes the remaining width so tiles stop looking half-empty */
+.dashboard-grid .stat-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.dashboard-grid .stat-label {
+  margin: 0 0 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  /* long labels wrap rather than truncate - an ellipsis would hide meaning */
+  line-height: 1.35;
+  min-height: 2.7em;
+  display: flex;
+  align-items: flex-end;
+}
+
+.dashboard-grid .stat-value {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.4px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  /* "SSP 1,600,000.00" must wrap rather than widen the card */
+  overflow-wrap: anywhere;
+}
+
+/* ---- page header ---- */
+.dashboard-container > .dashboard-header,
+.admin-dashboard .brand-row {
+  margin-bottom: 22px;
+}
+
+@media (max-width: 640px) {
+  .dashboard-grid,
+  .dashboard-grid.grid-4,
+  .dashboard-grid.grid-5 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashboard-grid .stat-card {
+    padding: 15px;
+    gap: 13px;
+  }
+
+  .dashboard-grid .stat-card .stat-icon {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    border-radius: 12px;
+  }
+
+  .dashboard-grid .stat-value { font-size: 14.5px; }
+}
+
+/* ---- page header: give it the same surface as the cards below ----------- */
+.dashboard-container > .dashboard-header {
+  background: var(--surface, #FFFFFF);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(8, 116, 67, 0.04), 0 4px 14px rgba(8, 116, 67, 0.05);
+}
+
+.dashboard-brand {
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.brand-text h1 {
+  font-size: 20.5px;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
+
+.brand-text .text-muted {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* the location line renders a lucide icon sized for body copy, not headings */
+.brand-text .text-muted svg {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+  margin-right: 3px;
+  color: var(--primary);
+}
+
+@media (max-width: 640px) {
+  .dashboard-container > .dashboard-header {
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .dashboard-brand { gap: 12px; }
+  .brand-logo svg { width: 40px; height: 40px; }
+  .brand-text h1 { font-size: 16.5px; }
+  .brand-text .text-muted { font-size: 11.5px; }
+}
+
+/* ---- per-admin exchange cards -------------------------------------------
+   Separate from the main stats because exchanges are conversions, not
+   settlement volume, and carry no commission. */
+.exchange-currency-row { margin: 4px 0 26px; }
+
+.exchange-currency-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.exchange-currency-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.exchange-currency-head h3 svg { color: var(--primary); }
+
+.exchange-currency-head span {
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+.exchange-currency-row .stat-sub {
+  margin: 3px 0 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="dark"] .exchange-currency-head h3 { color: #34C88E; }
+
+/* shown when no currencies exist yet, so the section is never a bare gap */
+.exchange-currency-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface, #FFFFFF);
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.exchange-currency-empty svg { flex-shrink: 0; color: var(--primary); }
+
+[data-theme="dark"] .exchange-currency-empty {
+  background: #1E293B;
+  border-color: #14532D;
+  color: #94A3B8;
+}
+
+/* ==========================================================================
+   Chart boxes
+   maintainAspectRatio:false lets the canvas fill a fixed box, so a pie with
+   one dominant slice no longer balloons the card height.
+   ========================================================================== */
+
+.charts-grid .chart-box {
+  position: relative;
+  height: 260px;
+  width: 100%;
+}
+
+.charts-grid .chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 260px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.charts-grid .chart-empty svg { flex-shrink: 0; color: var(--primary); }
+
+@media (max-width: 640px) {
+  .charts-grid .chart-box,
+  .charts-grid .chart-empty { height: 220px; }
+}
+
+[data-theme="dark"] .charts-grid .chart-empty { border-color: #14532D; color: #94A3B8; }
+
+/* ==========================================================================
+   Admin dashboard — compact stat cards on phones
+
+   A .stat-card rule at max-width:768px sets flex-direction:column and centres
+   the text, which stacked icon over label over value and roughly doubled each
+   card's height — only two fitted on a phone screen before scrolling.
+
+   These put the icon back beside the text. (0,2,0) so they outrank the bare
+   .stat-card rule regardless of file order.
+   ========================================================================== */
+
+@media screen and (max-width: 768px) {
+  .dashboard-grid { gap: var(--page-gutter); margin-bottom: var(--page-gutter); }
+
+  .dashboard-grid .stat-card {
+    flex-direction: row;
+    align-items: center;
+    text-align: left;
+    padding: 13px 14px;
+    gap: 13px;
+  }
+
+  .dashboard-grid .stat-card .stat-icon {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    border-radius: 12px;
+  }
+
+  .dashboard-grid .stat-card .stat-icon svg { width: 20px; height: 20px; }
+
+  /* the two-line shim exists so labels line up across a row of tall cards;
+     in a horizontal card it just pads the height out */
+  .dashboard-grid .stat-label {
+    min-height: 0;
+    margin-bottom: 3px;
+    display: block;
+    font-size: 10px;
+  }
+
+  .dashboard-grid .stat-value { font-size: 15.5px; }
+}
+
+/* ==========================================================================
+   Location chip
+
+   Was a third muted paragraph carrying an inline font-size, so it read as body
+   copy and no stylesheet could resize it. As a chip it reads as metadata and
+   separates itself from the description above.
+   ========================================================================== */
+
+.dash-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 0 0;
+  padding: 4px 10px 4px 8px;
+  border-radius: 999px;
+  background: var(--light, #E8F7F0);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--primary-dark, #087443);
+}
+
+.dash-location svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+[data-theme="dark"] .dash-location {
+  background: #05512F;
+  color: #A9EBD1;              /* 6.96:1 */
+}
+
+[data-theme="dark"] .dash-location svg { color: #34C88E; }
+
+/* ==========================================================================
+   Dashboard header on phones
+
+   23.5px is a desktop headline; on a 320px screen it wrapped to three lines
+   and pushed the stats below the fold before they had any data to show.
+   ========================================================================== */
+
+@media screen and (max-width: 768px) {
+  .dashboard-container > .dashboard-header {
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: var(--page-gutter);
+  }
+
+  .brand-text h1 {
+    font-size: 16.5px;
+    letter-spacing: -0.2px;
+  }
+
+  .brand-text .text-muted { font-size: 12px; }
+  .dash-location { margin-top: 9px; font-size: 11px; }
+}
+
+/* ==========================================================================
+   Two stat cards per row on phones
+
+   One per row meant eight tiles took eight screens of scrolling to read four
+   numbers. Two-up halves that.
+
+   `minmax(0, 1fr)` rather than plain `1fr` matters here: a grid track's
+   default floor is min-content, so a long label like "ALL ADMINS CASHED OUT"
+   can push a track wider than its container and overflow the page sideways.
+   The 0 floor lets tracks shrink, and `min-width: 0` on the items does the
+   same for the cards themselves.
+
+   At ~150px per tile the icon can no longer sit beside the text, so the card
+   goes back to a stack — left-aligned, not centred, so the label and value
+   share an edge with the icon.
+   ========================================================================== */
+
+@media screen and (max-width: 640px) {
+  .dashboard-grid,
+  .dashboard-grid.grid-4,
+  .dashboard-grid.grid-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--page-gutter);
+  }
+
+  .dashboard-grid > * { min-width: 0; }
+
+  .dashboard-grid .stat-card {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 9px;
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .dashboard-grid .stat-card .stat-icon {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 10px;
+  }
+
+  .dashboard-grid .stat-card .stat-icon svg { width: 17px; height: 17px; }
+
+  .dashboard-grid .stat-content { min-width: 0; }
+
+  .dashboard-grid .stat-label {
+    min-height: 0;
+    margin-bottom: 3px;
+    display: block;
+    font-size: 9.5px;
+    letter-spacing: 0.4px;
+    line-height: 1.3;
+  }
+
+  .dashboard-grid .stat-value {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+  }
+
+  /* the charts below are still one per row — two would be unreadable */
+  .dashboard-grid.charts-grid,
+  .charts-grid.grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   Exchange transactions filter row
+
+   This row was built with inline styles: the wrapper was a bare flex with no
+   flex-wrap, so on a phone its four controls crushed into ~280px and the two
+   selects collapsed to nothing but their arrow. The borders were hardcoded
+   #ddd, which reads as a pale outline on the dark theme. Inline styles beat
+   every stylesheet, so none of that was fixable until the markup moved to
+   classes.
+   ========================================================================== */
+
+.exchange-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.exchange-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;          /* the missing piece — they can now take a second row */
+  gap: 8px;
+}
+
+.exchange-filter {
+  flex: 1 1 auto;
+  min-width: 132px;         /* a date input needs this much to show dd/mm/yyyy */
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface, #FFFFFF);
+  font-family: inherit;
+  font-size: 11.5px;
+  color: var(--text);
+}
+
+.exchange-filter:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.exchange-filter-clear {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  background: var(--error, #DC2626);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.exchange-filter-clear:hover { filter: brightness(0.93); }
+
+[data-theme="dark"] .exchange-filter {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #E2E8F0;
+}
+
+/* the native date picker icon is black-on-dark without this */
+[data-theme="dark"] .exchange-filter::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.85);
+}
+
+/* On a phone the row stacks: four controls side by side cannot each hold a
+   date, and half-width selects show only their arrow. */
+@media screen and (max-width: 640px) {
+  .exchange-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  /* the two selects carry longer labels, so they get the full width */
+  .exchange-filters select,
+  .exchange-filter-clear { grid-column: 1 / -1; }
+
+  .exchange-filter { min-width: 0; width: 100%; }
+  .exchange-filter-clear { justify-content: center; }
+}

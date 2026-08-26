@@ -19,7 +19,21 @@ export const useAuthStore = create((set) => ({
   })(),
   token: localStorage.getItem('token') || null,
   isAuthenticated: !!localStorage.getItem('token'),
-  theme: localStorage.getItem('theme') || 'light',
+  // The user record mirrors the DB, so it wins over the standalone 'theme'
+  // key. Using only the latter let the two drift: the page rendered dark
+  // while the settings toggle (reading user.theme) still showed light.
+  theme: (() => {
+    // Signed out always means light - the default.
+    if (!localStorage.getItem('token')) return 'light';
+    try {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u && u.theme) return u.theme;
+      }
+    } catch (e) { /* fall through */ }
+    return localStorage.getItem('theme') || 'light';
+  })(),
 
   login: (user, token) => {
     // Ensure balance is a number
@@ -102,11 +116,18 @@ export const useNotificationStore = create((set) => ({
   },
 
   markAsRead: (id) => {
-    set((state) => ({
-      notifications: state.notifications.map(n =>
-        n._id === id ? { ...n, isRead: true } : n
-      ),
-      unreadCount: Math.max(0, state.unreadCount - 1)
-    }));
+    set((state) => {
+      // Sequelize exposes the primary key as `id`; the old `_id` check was a
+      // MongoDB leftover that never matched, so nothing was ever marked read.
+      const wasUnread = state.notifications.some(n => n.id === id && !n.isRead);
+      return {
+        notifications: state.notifications.map(n =>
+          n.id === id ? { ...n, isRead: true } : n
+        ),
+        // Only decrement for a genuinely unread item, otherwise repeat calls
+        // drift the badge below the real count.
+        unreadCount: wasUnread ? Math.max(0, state.unreadCount - 1) : state.unreadCount
+      };
+    });
   }
 }));

@@ -1,420 +1,709 @@
+/* ==========================================================================
+   Authentication — Login, Register, Admin Login, Admin Register
+
+   All four pages share the same skeleton:
+     .auth-container > .auth-card > (.auth-header + .auth-form)
+
+   That skeleton is turned into a split layout here — .auth-header becomes the
+   branded panel, .auth-form the form column — so the redesign needed no
+   markup restructuring and applies to all four pages at once. Below 900px the
+   grid collapses to a single column and the panel becomes a compact header.
+   ========================================================================== */
+
 .auth-container {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  padding: 20px;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background:
+    radial-gradient(1100px 520px at 12% -10%, #E8F7F0 0%, rgba(232, 247, 240, 0) 60%),
+    radial-gradient(900px 460px at 108% 110%, #D1F0E3 0%, rgba(209, 240, 227, 0) 55%),
+    #F7FBF9;
 }
 
 .auth-card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  display: grid;
+  grid-template-columns: 0.85fr 1fr;
   width: 100%;
-  max-width: 420px;
+  max-width: 940px;
+  overflow: hidden;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 20px;
+  
+}
+
+/* ---------- brand panel --------------------------------------------------- */
+/* The old gradient ran to #00A86B, where even pure white measures only
+   3.08:1 — the headline and the whole feature list were failing contrast. It
+   now ends at #087443, the lightest brand green that still clears 4.5:1 for
+   white (5.85:1), and starts deeper so the panel reads with some weight
+   instead of as one flat mid-green. */
+.auth-header {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 44px 38px;
+  background: linear-gradient(160deg, #04381F 0%, #05512F 42%, #087443 100%);
+  color: #FFFFFF;
   overflow: hidden;
 }
 
-.auth-header {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  color: white;
-  padding: 40px 20px;
-  text-align: center;
+/* soft light bloom, purely decorative */
+.auth-header::after {
+  content: '';
+  position: absolute;
+  right: -90px;
+  bottom: -110px;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.13) 0%, rgba(255, 255, 255, 0) 70%);
+  pointer-events: none;
 }
 
-.auth-header h1 {
-  font-size: 36px;
-  margin-bottom: 8px;
+/* The logo is a detailed multi-colour illustration (phone, wallet, coin), so
+   knocking it to a white silhouette would merge those shapes into a blob.
+   It sits on a white chip instead and keeps its real colours. */
+.auth-logo {
+  width: 172px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  align-self: flex-start;
+  padding: 9px 13px;
+  border-radius: 10px;
+  background: #FFFFFF;
+  /* tinted to the panel rather than neutral black, so the chip sits in the
+     gradient instead of floating on top of it */
+  box-shadow: 0 2px 10px rgba(3, 32, 18, 0.28);
 }
 
 .auth-header p {
-  font-size: 14px;
-  opacity: 0.9;
+  margin: 0;
+  max-width: 34ch;
+  font-size: 12px;
+  line-height: 1.55;
+  letter-spacing: 0.2px;
+  /* .88 is the floor here: it measures 4.90:1 on #087443, the panel's lightest
+     point. .82 drops to 4.49 and fails. */
+  color: rgba(255, 255, 255, 0.88);
 }
 
+/* ---------- form column --------------------------------------------------- */
 .auth-form {
-  padding: 40px;
+  padding: 40px 38px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .auth-form h2 {
-  margin-bottom: 8px;
-  color: var(--dark);
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: #087443;
 }
 
 .auth-subtitle {
-  color: var(--text-light);
-  margin-bottom: 24px;
-  font-size: 14px;
+  margin: 0 0 22px;
+  font-size: 12.5px;
+  color: #64748B;
 }
 
-.auth-form form {
-  margin-bottom: 20px;
+.auth-form .form-group { margin-bottom: 15px; }
+
+.auth-form .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  color: #1E293B;
 }
 
-.auth-footer {
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid var(--border);
+/* (0,2,1) so these outrank design-system.css's .form-group input (0,1,1),
+   which is imported last and would otherwise win on order alone */
+.auth-form .form-group input,
+.auth-form .form-group select {
+  width: 100%;
+  padding: 11px 13px;
+  font-size: 13px;
+  color: #1E293B;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.auth-footer p {
-  font-size: 14px;
-  margin: 8px 0;
-  color: var(--text-light);
+.auth-form .form-group input::placeholder { color: #94A3B8; }
+
+.auth-form .form-group input:focus,
+.auth-form .form-group select:focus {
+  outline: none;
+  border-color: #00A86B;
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
 }
 
-.auth-footer a {
-  color: var(--primary);
-  font-weight: 600;
-  transition: var(--transition);
+.auth-form .form-group input:disabled {
+  background: #F1F5F9;
+  color: #64748B;
+  cursor: not-allowed;
 }
 
-.auth-footer a:hover {
-  color: var(--primary-dark);
-}
-
+/* ---------- password field ------------------------------------------------ */
 .password-input-group {
   position: relative;
   display: flex;
   align-items: center;
 }
 
-.password-input-group input {
-  width: 100%;
-  padding-right: 40px;
+.auth-form .form-group .password-input-group input {
+  /* room for the toggle so the text never runs under it */
+  padding-right: 44px;
 }
 
 .password-toggle {
   position: absolute;
-  right: 12px;
-  background: none;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
   border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748B;
   cursor: pointer;
-  font-size: 18px;
-  padding: 4px 8px;
-  display: flex;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+/* No hover state. This is a small control sitting inside the field, and the
+   tint read as a second, competing button next to the input. The rule is kept
+   rather than deleted so it can cancel the blanket `button:hover` lift in
+   layout.css, which would otherwise slide the icon out of line with the field
+   on small screens. Colour is left unset so the base value applies in both
+   themes. :focus-visible still shows a ring, so keyboard users keep feedback. */
+.password-toggle:hover {
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid #00A86B;
+  outline-offset: 1px;
+}
+
+/* ---------- submit -------------------------------------------------------- */
+.auth-form .btn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
+  gap: 8px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-.password-toggle:hover {
-  opacity: 0.7;
+.auth-form .btn-block { width: 100%; }
+
+.auth-form .btn-lg {
+  padding: 12px 18px;
+  font-size: 13.5px;
+  margin-top: 6px;
 }
 
-.password-toggle:active {
-  transform: scale(0.95);
+.auth-form .btn-primary {
+  background: #00A86B;
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(0, 168, 107, 0.25);
 }
 
-@media (max-width: 1024px) {
+.auth-form .btn-primary:hover:not(:disabled) {
+  background: #087443;
+  transform: translateY(-1px);
+}
+
+.auth-form .btn-secondary {
+  background: #E8F7F0;
+  color: #087443;
+}
+
+.auth-form .btn-secondary:hover:not(:disabled) { background: #D1F0E3; }
+
+.auth-form .btn-success {
+  background: #16A34A;
+  color: #FFFFFF;
+}
+
+.auth-form .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ---------- alerts -------------------------------------------------------- */
+.auth-form .alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 13px;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.auth-form .alert-danger {
+  background: #FEF2F2;
+  border-color: #FECACA;
+  color: #991B1B;
+}
+
+.auth-form .alert-warning {
+  background: #FEF9E7;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+
+/* ---------- footer links -------------------------------------------------- */
+.auth-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #E2E8F0;
+  text-align: center;
+}
+
+.auth-footer p {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #64748B;
+}
+
+.auth-footer p:last-child { margin-bottom: 0; }
+
+.auth-footer a {
+  color: #087443;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.auth-footer a:hover { text-decoration: underline; }
+
+/* ---------- small helpers used by these pages ----------------------------- */
+.auth-form .text-muted { color: #64748B; }
+.auth-form .text-small { font-size: 12px; }
+.auth-form .mb-2 { margin-bottom: 8px; }
+.auth-form small { display: block; margin-top: 5px; font-size: 11.5px; color: #64748B; }
+
+/* ==========================================================================
+   Responsive — collapse to one column, panel becomes a header strip
+   ========================================================================== */
+/* ==========================================================================
+   Tablet keeps the desktop layout
+
+   The split used to collapse at 900px, which put every tablet on the stacked
+   phone treatment. It now holds down to 640px — a 768px or 834px tablet gets
+   the same two-column card as desktop, just scaled down. Below 640px it still
+   stacks, which is where the curved bottom edge applies.
+   ========================================================================== */
+@media (min-width: 641px) and (max-width: 900px) {
+  .auth-card { max-width: 780px; }
+  .auth-header { padding: 34px 28px; gap: 16px; }
+  .auth-card .auth-header .auth-brand-copy h2 { font-size: 18.5px; max-width: 16ch; }
+  .auth-logo { width: 150px; height: auto; }
+  .auth-form { padding: 34px 28px; }
+  .auth-header .auth-points { padding-top: 18px; gap: 11px; }
+  .auth-header .auth-points li { font-size: 12px; gap: 10px; }
+  .auth-header .auth-points svg { width: 26px; height: 26px; }
+}
+
+@media (max-width: 640px) {
   .auth-card {
-    max-width: 100%;
+    grid-template-columns: 1fr;
+    max-width: 620px;
   }
 
-  .auth-form {
-    padding: 30px;
-  }
-}
+  /* the panel is a header strip here — the list would push the form down */
+  .auth-header .auth-points { display: none; }
 
-@media (max-width: 768px) {
-  .auth-container {
-    padding: 15px;
-  }
-
-  .auth-card {
-    max-width: 100%;
-    border-radius: 8px;
-  }
-
+  /* Stays left-aligned when it collapses. Centring the headline while the
+     feature list stayed left-aligned gave the panel two competing edges. */
   .auth-header {
-    padding: 30px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 18px;
+    padding: 30px 26px;
   }
 
-  .auth-header h1 {
-    font-size: 28px;
-    margin-bottom: 6px;
-  }
 
-  .auth-header p {
-    font-size: 13px;
-  }
+  .auth-logo { width: 158px; height: auto; align-self: flex-start; }
+  .auth-header p { max-width: none; font-size: 12px; }
 
-  .auth-form {
-    padding: 25px;
-  }
 
-  .auth-form h2 {
-    font-size: 20px;
-  }
-
-  .auth-subtitle {
-    font-size: 13px;
-    margin-bottom: 20px;
-  }
+  .auth-form { padding: 28px 24px; }
 }
 
-@media (max-width: 480px) {
-  .auth-container {
-    padding: 10px;
-  }
+@media (max-width: 640px) {
+  .auth-container { padding: 0; }
 
   .auth-card {
-    border-radius: 6px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    max-width: none;
+    min-height: 100vh;
+    border: none;
+    border-radius: 0;
+    
+    align-content: start;
   }
 
-  .auth-header {
-    padding: 20px 15px;
-  }
+  .auth-header { padding: 26px 22px; gap: 16px; }
+  /* smaller on a phone: the panel is a short header strip, so the headline
+     sits closer to the subtitle and the logo rather than dominating them */
+  .auth-card .auth-header .auth-brand-copy h2 { font-size: 15.5px; max-width: 24ch; }
 
-  .auth-header h1 {
-    font-size: 24px;
-    margin-bottom: 4px;
-  }
+  /* Curved bottom — phone only.
 
-  .auth-header p {
-    font-size: 12px;
-  }
+     Two-value radii are what make this a single sweeping arc rather than two
+     rounded corners: the horizontal halves sum to 100% of the width, so the
+     two corner curves meet exactly at the centre with no flat spot between
+     them. The vertical value is the depth.
 
-  .auth-form {
-    padding: 20px;
-  }
+     48px rather than the 30px this started at: across a full-bleed panel that
+     is roughly a 1:8 depth-to-width ratio, where 30px read as a rounded edge
+     instead of a deliberate curve.
 
-  .auth-form h2 {
-    font-size: 18px;
-    margin-bottom: 6px;
+     The shadow follows the border-radius, so the arc casts onto the form and
+     reads as an edge rather than a flat colour change. It falls inside the
+     card, so the card overflow:hidden does not clip it. */
+  .auth-card .auth-header {
+    padding-bottom: 58px;
+    border-bottom-left-radius: 50% 48px;
+    border-bottom-right-radius: 50% 48px;
+    box-shadow: 0 10px 24px rgba(4, 56, 31, 0.18);
   }
-
-  .auth-subtitle {
-    font-size: 12px;
-    margin-bottom: 18px;
-  }
-
-  .password-toggle {
-    right: 8px;
-    font-size: 16px;
-  }
+  .auth-logo { width: 146px; height: auto; align-self: flex-start; }
+  .auth-form { padding: 24px 20px; }
+  .auth-form h2 { font-size: 18.5px; }
 }
 
-/* Mobile Styles (480px - 768px) */
-@media (min-width: 480px) and (max-width: 768px) {
-  .auth-container {
-    padding: 15px;
-    animation: slideInUp 0.6s ease-out;
-  }
-
-  .auth-card {
-    max-width: 100%;
-    border-radius: 12px;
-    transform: scale(0.98);
-    transition: transform 0.3s ease;
-  }
-
-  .auth-card:hover {
-    transform: scale(1);
-  }
-
-  .auth-header {
-    padding: 30px 20px;
-  }
-
-  .auth-header h1 {
-    font-size: 28px;
-    margin-bottom: 6px;
-    animation: fadeInDown 0.8s ease-out 0.2s both;
-  }
-
-  .auth-header p {
-    font-size: 13px;
-    animation: fadeIn 0.8s ease-out 0.4s both;
-  }
-
-  .auth-form {
-    padding: 25px;
-  }
-
-  .auth-form h2 {
-    font-size: 20px;
-    animation: slideInLeft 0.6s ease-out 0.1s both;
-  }
-
-  .auth-subtitle {
-    font-size: 13px;
-    margin-bottom: 20px;
-    animation: slideInLeft 0.6s ease-out 0.2s both;
-  }
-
-  .password-toggle {
-    animation: bounceIn 0.5s ease-out 0.8s both;
-  }
+/* ==========================================================================
+   Dark mode
+   ========================================================================== */
+[data-theme="dark"] .auth-container {
+  background:
+    radial-gradient(1100px 520px at 12% -10%, #05512F 0%, rgba(5, 81, 47, 0) 60%),
+    #0F172A;
 }
 
-/* Tablet Styles (834px - 1024px) */
-@media (min-width: 834px) and (max-width: 1024px) {
-  .auth-container {
-    padding: 20px;
-    animation: slideInUp 0.6s ease-out;
-  }
-
-  .auth-card {
-    max-width: 90%;
-    border-radius: 14px;
-    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
-    transition: all 0.3s ease;
-  }
-
-  .auth-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
-  }
-
-  .auth-header {
-    padding: 35px 25px;
-  }
-
-  .auth-header h1 {
-    font-size: 32px;
-    margin-bottom: 8px;
-    animation: fadeInDown 0.8s ease-out 0.2s both;
-  }
-
-  .auth-header p {
-    font-size: 14px;
-    animation: fadeIn 0.8s ease-out 0.4s both;
-  }
-
-  .auth-form {
-    padding: 35px;
-  }
-
-  .auth-form h2 {
-    font-size: 22px;
-    animation: slideInLeft 0.6s ease-out 0.1s both;
-  }
-
-  .auth-subtitle {
-    font-size: 14px;
-    margin-bottom: 22px;
-    animation: slideInLeft 0.6s ease-out 0.2s both;
-  }
-
-  .password-toggle {
-    animation: bounceIn 0.5s ease-out 0.8s both;
-  }
+[data-theme="dark"] .auth-card {
+  background: #1E293B;
+  border-color: #14532D;
+  
 }
 
-/* Laptop Styles (1440px+) */
-@media (min-width: 1440px) {
-  .auth-container {
-    padding: 30px;
-    animation: slideInUp 0.6s ease-out;
-  }
+[data-theme="dark"] .auth-form h2 { color: #34C88E; }
+[data-theme="dark"] .auth-subtitle { color: #94A3B8; }
+[data-theme="dark"] .auth-form .form-group label { color: #E2E8F0; }
 
-  .auth-card {
-    max-width: 450px;
-    border-radius: 16px;
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
-    transition: all 0.4s ease;
-  }
-
-  .auth-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.35);
-  }
-
-  .auth-header {
-    padding: 45px 30px;
-  }
-
-  .auth-header h1 {
-    font-size: 38px;
-    margin-bottom: 10px;
-    animation: fadeInDown 0.8s ease-out 0.2s both;
-  }
-
-  .auth-header p {
-    font-size: 15px;
-    animation: fadeIn 0.8s ease-out 0.4s both;
-  }
-
-  .auth-form {
-    padding: 45px;
-  }
-
-  .auth-form h2 {
-    font-size: 24px;
-    animation: slideInLeft 0.6s ease-out 0.1s both;
-  }
-
-  .auth-subtitle {
-    font-size: 15px;
-    margin-bottom: 26px;
-    animation: slideInLeft 0.6s ease-out 0.2s both;
-  }
-
-  .password-toggle {
-    animation: bounceIn 0.5s ease-out 0.8s both;
-  }
+[data-theme="dark"] .auth-form .form-group input,
+[data-theme="dark"] .auth-form .form-group select {
+  background: #0F172A;
+  border-color: #14532D;
+  color: #E2E8F0;
 }
 
-/* Keyframe Animations */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+[data-theme="dark"] .auth-form .form-group input::placeholder { color: #64748B; }
+[data-theme="dark"] .auth-form .form-group input:disabled { background: #0B1220; color: #64748B; }
+[data-theme="dark"] .auth-footer { border-top-color: #14532D; }
+[data-theme="dark"] .auth-footer p { color: #94A3B8; }
+[data-theme="dark"] .auth-footer a { color: #A9EBD1; }
+[data-theme="dark"] .auth-form .text-muted,
+[data-theme="dark"] .auth-form small { color: #94A3B8; }
+[data-theme="dark"] .auth-form .alert-danger { background: #450A0A; border-color: #7F1D1D; color: #FCA5A5; }
+[data-theme="dark"] .auth-form .alert-warning { background: #422006; border-color: #78350F; color: #FCD34D; }
+
+/* ==========================================================================
+   Brand panel content
+   The panel previously held only the logo and one line, which left it sparse
+   beside a tall form column. A headline plus three value points give it
+   purpose and balance the two sides.
+   ========================================================================== */
+
+.auth-brand-copy { position: relative; z-index: 1; }
+
+.auth-header .auth-brand-copy h2 {
+  margin: 0 0 8px;
+  /* a touch larger with tighter leading — the headline now carries the panel,
+     which lets the logo shrink out of the way */
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.6px;
+  max-width: 17ch;
+  color: #FFFFFF;
 }
 
-@keyframes fadeInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ---------- feature list -------------------------------------------------- */
+/* Shown on desktop and tablet, where the panel is a tall side column with room
+   for it. Hidden below 640px: there the panel collapses to a short header strip
+   above the form, and the list made the user scroll to reach the fields. */
+.auth-points {
+  position: relative;
+  z-index: 1;
+  list-style: none;
+  /* a hairline separates the claim from the proof points, which is what makes
+     the panel read as composed rather than as one stack of text */
+  margin: 0;
+  padding: 22px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  display: grid;
+  gap: 14px;
+  width: 100%;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.auth-points li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  /* .92 = 5.22:1 on #087443, the panel gradient s lightest point */
+  color: rgba(255, 255, 255, 0.92);
 }
 
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+.auth-points svg {
+  flex-shrink: 0;
+  padding: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
 }
 
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* ==========================================================================
+   Two-column field grid (Register)
+   Six stacked fields made a very tall card; the short ones pair up.
+   ========================================================================== */
+
+.auth-form .auth-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 14px;
 }
+
+/* full-width rows: password, the generated agent ID, and the submit */
+.auth-form .auth-form-grid .span-2 { grid-column: 1 / -1; }
+
+@media (max-width: 900px) {
+  .auth-form .auth-form-grid { grid-template-columns: 1fr; }
+  .auth-form .auth-form-grid .span-2 { grid-column: auto; }
+}
+
+/* Forgot password sits under the password field, right-aligned to the input's
+   trailing edge, where it is next to the thing it relates to rather than
+   stranded among the footer links. */
+.auth-form .forgot-link {
+  display: block;
+  width: fit-content;
+  margin: 7px 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: #087443;
+  text-decoration: none;
+}
+
+.auth-form .forgot-link:hover { text-decoration: underline; }
+
+.auth-form .forgot-link:focus-visible {
+  outline: 2px solid #00A86B;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] .auth-form .forgot-link { color: #A9EBD1; }
+
+/* inline validation under a field on the reset form */
+.auth-form .auth-field-error {
+  display: block;
+  margin-top: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #DC2626;
+}
+
+.auth-form .auth-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+[data-theme="dark"] .auth-form .auth-field-error { color: #FCA5A5; }
+
+/* ==========================================================================
+   Phone field with country picker
+
+   One framed control holding: flag, an invisible <select> covering the flag
+   and code, the dialling code as static text, then the number input.
+
+   The select is stretched over the flag/code area and made transparent rather
+   than styled directly — a native closed <select> renders its value as plain
+   text on most platforms, so the flag would not show inside it. This way the
+   flag and code are ordinary elements we control, and the select is just the
+   invisible hit area that opens the native list (which keeps the accessible
+   keyboard behaviour and the mobile picker).
+   ========================================================================== */
+
+.phone-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  background: #FFFFFF;
+  overflow: hidden;
+}
+
+.phone-field:focus-within {
+  border-color: #00A86B;
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.15);
+}
+
+.phone-flag {
+  display: grid;
+  place-items: center;
+  padding-left: 11px;
+  font-size: 17px;
+  line-height: 1;
+  flex-shrink: 0;
+  /* emoji flags fall back to letters on platforms without the glyphs, so keep
+     a font stack that prefers real flag fonts where they exist */
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.phone-dial {
+  padding: 0 8px 0 5px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1E293B;
+  white-space: nowrap;
+  flex-shrink: 0;
+  /* a hairline separating the code from the number the user types */
+  border-right: 1px solid #E2E8F0;
+  margin-right: 9px;
+}
+
+/* the caret hints that the flag/code area is a control */
+.phone-dial::after {
+  content: '';
+  display: inline-block;
+  margin-left: 6px;
+  vertical-align: 2px;
+  border: 4px solid transparent;
+  border-top-color: #94A3B8;
+}
+
+/* (0,3,0). `.auth-form .form-group select` is (0,2,1) and sets width:100%,
+   which beat a bare .phone-country and stretched this invisible select over
+   the entire field — so every tap on the number input opened the country list
+   instead of focusing it. The extra class is what makes the width below hold. */
+.auth-form .phone-field .phone-country {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  /* only the flag + code region; the number input must stay tappable */
+  width: 86px;
+  padding: 0;
+  opacity: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 2;
+}
+
+/* the number input is bare — the wrapper owns the frame */
+.auth-form .form-group .phone-field input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding-left: 0;
+}
+
+.auth-form .form-group .phone-field input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .phone-field {
+  background: #0F172A;
+  border-color: #14532D;
+}
+
+[data-theme="dark"] .phone-dial {
+  color: #E2E8F0;
+  border-right-color: #14532D;
+}
+
+[data-theme="dark"] .phone-dial::after { border-top-color: #64748B; }
+
+/* the open native list is drawn by the OS, so its options need real colours */
+[data-theme="dark"] .phone-country option {
+  background: #0F172A;
+  color: #E2E8F0;
+}
+
+/* Resend control under the verification code field. A button, not a link — it
+   performs an action rather than navigating — styled to read as a link.
+   Scoped to .auth-card so it cannot leak into other pages' buttons. */
+.auth-card .resend-line {
+  margin: 14px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #64748B;
+}
+
+.auth-card .link-button {
+  /* Overrides the global button primitives, which give every button a solid
+     background, 48px min-height and full width. */
+  display: inline;
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  color: var(--primary, #007A3D);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth-card .link-button:hover:not(:disabled) { color: var(--primary-dark, #005C2E); }
+
+.auth-card .link-button:disabled {
+  color: #94A3B8;
+  cursor: default;
+  text-decoration: none;
+}
+
+[data-theme="dark"] .auth-card .resend-line { color: #94A3B8; }
+[data-theme="dark"] .auth-card .link-button { color: #34D399; }
+[data-theme="dark"] .auth-card .link-button:disabled { color: #64748B; }

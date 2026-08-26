@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
 import { adminAPI } from '../utils/api';
 import PrintReceipt from '../components/PrintReceipt';
-import { Bar, Pie, Line } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, Filler } from 'chart.js';
-
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement, Filler);
 import Footer from '../components/Footer';
+import CompositionChart from '../components/CompositionChart';
 import '../styles/admin-dashboard.css';
 import { useAuthStore } from '../context/store';
+import { ArrowRightLeft, ArrowUpRight, Banknote, Bell, CircleCheck, Clock, Coins, CreditCard, Files, Landmark, MapPin, TrendingUp, Users, Wallet, X } from 'lucide-react';
+import { typeLabel } from '../data/transactionTypes';
+
+// Exchange cards are built from the currencies that actually exist, so adding
+// a currency adds a card with no code change.
+
+// Six- and seven-figure totals are unreadable without separators, and DECIMAL
+// columns arrive from Sequelize as strings, so coerce before formatting.
+const money = (v) => 'SSP ' + (Number(v) || 0).toLocaleString('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+const count = (v) => (Number(v) || 0).toLocaleString('en-US');
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -18,6 +29,9 @@ export default function AdminDashboard() {
   const [myCashedOut, setMyCashedOut] = useState(null);
   const [adminStateCommission, setAdminStateCommission] = useState(null);
   const [moneyExchangeTransactions, setMoneyExchangeTransactions] = useState([]);
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [loadingRecent, setLoadingRecent] = useState(true);
+  const [currencies, setCurrencies] = useState([]);
   const [exchangeFromDate, setExchangeFromDate] = useState('');
   const [exchangeToDate, setExchangeToDate] = useState('');
   const [exchangeSortByAdminAsc, setExchangeSortByAdminAsc] = useState(null); // null = no sort, true = asc, false = desc
@@ -28,7 +42,7 @@ export default function AdminDashboard() {
   const exchangeAdmins = (() => {
     const map = new Map();
     (moneyExchangeTransactions || []).forEach(t => {
-      const id = t.sender?._id || t.sender?.phone || '';
+      const id = t.sender?.phone || '';
       const name = t.sender?.name || t.sender?.phone || id;
       if (id && !map.has(id)) map.set(id, { id, name });
     });
@@ -48,6 +62,28 @@ export default function AdminDashboard() {
     }
   };
 
+  // One card per currency in the system. Codes that already carry exchanges are
+  // unioned in, so a currency deleted from the table keeps showing its history
+  // instead of the count silently vanishing.
+  const exchangeCodes = (() => {
+    const byCurrency = stats?.myExchangesByCurrency || {};
+    const codes = new Set();
+    for (const c of currencies) {
+      const code = String(c?.code || '').toUpperCase();
+      if (code) codes.add(code);
+    }
+    for (const code of Object.keys(byCurrency)) {
+      if (code) codes.add(String(code).toUpperCase());
+    }
+    return [...codes].sort((a, b) => {
+      // currencies the admin actually exchanged in come first, then alphabetical
+      const na = byCurrency[a]?.count || 0;
+      const nb = byCurrency[b]?.count || 0;
+      if (na !== nb) return nb - na;
+      return a.localeCompare(b);
+    });
+  })();
+
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -66,14 +102,31 @@ export default function AdminDashboard() {
         // Filter for money_exchange transactions and get the latest 5
         const exchangeTransactions = data.filter(t => t.type === 'money_exchange').slice(0, 5);
         setMoneyExchangeTransactions(exchangeTransactions);
+        /* The Recent Transactions card below reads from the same response —
+           everything except exchanges, which already have their own card. No
+           second request is needed. */
+        setRecentTransactions(data.filter(t => t.type !== 'money_exchange').slice(0, 5));
       } catch (error) {
         console.error('Failed to fetch money exchange transactions:', error);
+      } finally {
+        setLoadingRecent(false);
+      }
+    };
+
+    const fetchCurrencies = async () => {
+      try {
+        const { data } = await adminAPI.getCurrencies();
+        setCurrencies(data.currencies || []);
+      } catch (error) {
+        console.error('Failed to fetch currencies:', error);
+        setCurrencies([]);
       }
     };
 
     fetchStats();
     fetchMoneyExchangeTransactions();
     fetchMyCommission();
+    fetchCurrencies();
 
     // fetch admin's assigned state commission percent
     (async () => {
@@ -82,7 +135,7 @@ export default function AdminDashboard() {
         const states = statesRes.data.states || [];
         const myStateId = user?.state;
         if (myStateId) {
-          const found = states.find(s => s._id === myStateId || String(s._id) === String(myStateId));
+          const found = states.find(s => s.id === myStateId || String(s.id) === String(myStateId));
           if (found) setAdminStateCommission(Number(found.commissionPercent || 0));
           else setAdminStateCommission(null);
         } else {
@@ -129,7 +182,7 @@ export default function AdminDashboard() {
     }
     // filter by selected admin if any
     if (exchangeSelectedAdmin && exchangeSelectedAdmin !== 'all') {
-      const senderId = t.sender?._id || t.sender?.phone || '';
+      const senderId = t.sender?.phone || '';
       if (String(senderId) !== String(exchangeSelectedAdmin)) return false;
     }
     // filter by mode if selected
@@ -157,117 +210,155 @@ export default function AdminDashboard() {
     return copy;
   })();
 
-  const chartData = {
-    labels: ['Users', 'Agents', 'Admins'],
-    datasets: [
-      {
-        label: 'User Distribution',
-        data: [
-          stats?.usersByRole?.find(r => r._id === 'user')?.count || 0,
-          stats?.usersByRole?.find(r => r._id === 'agent')?.count || 0,
-          stats?.usersByRole?.find(r => r._id === 'admin')?.count || 0
-        ],
-        backgroundColor: ['#2563eb', '#10b981', '#f59e0b']
-      }
-    ]
+  /* ---- breakdowns ---------------------------------------------------------
+     Rendered as composition bars rather than a pie/one-bar chart: these
+     breakdowns are usually a single category today (one role, one status) and
+     a pie of one slice reads as broken. Rows are built from the grouped API
+     data, so a new role or status appears on its own.
+
+     Colours live in composition-chart.css, keyed by the entity name so a
+     changing count never repaints the survivors.
+     ------------------------------------------------------------------------ */
+
+  const titleCase = (v) => {
+    const t = String(v ?? '').replace(/_/g, ' ').trim();
+    return t ? t.charAt(0).toUpperCase() + t.slice(1) : 'Unknown';
   };
 
-  const transactionChart = {
-    labels: ['Completed', 'Pending', 'Failed'],
-    datasets: [
-      {
-        label: 'Transactions',
-        data: [
-          stats?.completedTransactions || 0,
-          stats?.pendingTransactions || 0,
-          (stats?.totalTransactions || 0) - (stats?.completedTransactions || 0) - (stats?.pendingTransactions || 0)
-        ],
-        backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
-      }
-    ]
-  };
+  // COUNT() comes back as a string on some drivers, so coerce before plotting.
+  const toRows = (rows, field) =>
+    (Array.isArray(rows) ? rows : [])
+      .map((r) => ({
+        key: String(r?.[field] ?? '').toLowerCase(),
+        name: titleCase(r?.[field]),
+        value: Number(r?.count) || 0,
+      }))
+      .filter((r) => r.value > 0)
+      .sort((a, b) => b.value - a.value);
 
-  
+  const roleRows = toRows(stats?.usersByRole, 'role');
+  const statusRows = toRows(stats?.transactionsByStatus, 'status');
 
   return (
     <>
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div className="dashboard-brand">
-          <div className="brand-logo" aria-hidden>
-            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect width="48" height="48" rx="10" fill="#10B981"/>
-              <path d="M17 28c1.5 1.5 4 2 6 2s4.5-.5 6-2v-2c-1.5 1-3.5 1.5-6 1.5s-4.5-.5-6-1.5V28z" fill="#fff" opacity="0.95"/>
-              <path d="M24 14c-3 0-5 2-5 5h2c0-1.7 1.3-3 3-3s3 1.3 3 3-1.3 3-3 3c-3 0-6 1-6 4v1h6v-2h-4v-1c0-1.2 2-2 4-2s6-1 6-5-4-7-7-7z" fill="#fff"/>
-            </svg>
-          </div>
           <div className="brand-text">
             <h1>MoneyPay Admin Dashboard</h1>
             <p className="text-muted">Monitor your MoneyPay system and manage operations</p>
+            {/* .dash-location replaces an inline font-size, which no stylesheet
+                could override — the responsive sizing could not reach it */}
             {user?.currentLocation && (
-              <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}>
-                📍 {user.currentLocation.city}, {user.currentLocation.country}
+              <p className="dash-location">
+                <MapPin size={18} /> {user.currentLocation.city}, {user.currentLocation.country}
               </p>
             )}
           </div>
         </div>
       </div>
 
-      <div className="dashboard-grid grid-3">
+      <div className="dashboard-grid grid-4">
+        {/* My Wallet card removed for admin users */}
+
         <div className="stat-card">
-          <div className="stat-icon">👥</div>
+          <div className="stat-icon tone-info"><Users size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Total Users</p>
-            <h3 className="stat-value">{stats?.totalUsers || 0}</h3>
+            <h3 className="stat-value">{count(stats?.totalUsers)}</h3>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">💳</div>
+          <div className="stat-icon tone-dark"><CreditCard size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Total Transactions</p>
-            <h3 className="stat-value">{stats?.totalTransactions || 0}</h3>
+            <h3 className="stat-value">{count(stats?.totalTransactions)}</h3>
           </div>
         </div>
 
+        {/* Money in, then money out — Total Cash counts top-ups, the
+            two cards after it count cash-outs. */}
         <div className="stat-card">
-          <div className="stat-icon">💰</div>
+          <div className="stat-icon tone-info"><TrendingUp size={28} /></div>
           <div className="stat-content">
-            <p className="stat-label">Total Volume</p>
-            <h3 className="stat-value">SSP {(Number(stats?.totalVolume) || 0).toFixed(2)}</h3>
+            <p className="stat-label">Total Cash</p>
+            <h3 className="stat-value">{money(stats?.totalTopupVolume)}</h3>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">✅</div>
+          <div className="stat-icon tone-dark"><ArrowUpRight size={28} /></div>
+          <div className="stat-content">
+            <p className="stat-label">Total Cash Out</p>
+            <h3 className="stat-value">{money(stats?.totalVolume)}</h3>
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-icon tone-success"><CircleCheck size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Completed</p>
-            <h3 className="stat-value">{stats?.completedTransactions || 0}</h3>
+            <h3 className="stat-value">{count(stats?.completedTransactions)}</h3>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">💵</div>
+          <div className="stat-icon tone-warning"><Banknote size={28} /></div>
           <div className="stat-content">
-            <p className="stat-label">All Admins Cashed Out</p>
-            <h3 className="stat-value">SSP {(Number(stats?.totalAdminCashOut) || 0).toFixed(2)}</h3>
+            <p className="stat-label">You Cashed Out</p>
+            <h3 className="stat-value">{money(stats?.totalAdminCashOut)}</h3>
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon">👛</div>
+          <div className="stat-icon tone-primary"><Coins size={28} /></div>
           <div className="stat-content">
-            <p className="stat-label">Admin Commission Cash</p>
-            <h3 className="stat-value">SSP {(myCashedOut !== null ? Number(myCashedOut) : 0).toFixed(2)}</h3>
+            <p className="stat-label">Admin State Send Commission</p>
+            <h3 className="stat-value">{money(myCashedOut)}</h3>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-icon">🏦</div>
+          <div className="stat-icon tone-success"><Landmark size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Company Benefits</p>
-            <h3 className="stat-value">SSP {(Number(stats?.companyBenefits) || 0).toFixed(2)}</h3>
+            <h3 className="stat-value">{money(stats?.companyBenefits)}</h3>
           </div>
         </div>
+      </div>
+
+      {/* Exchanges made by THIS admin, split by currency. Kept out of Total
+          Cash Out because a conversion is not a cash-out, and exchanges
+          never carry commission. */}
+      <div className="exchange-currency-row">
+        <div className="exchange-currency-head">
+          <h3><ArrowRightLeft size={17} /> My exchanges by currency</h3>
+          <span>Not included in Total Cash Out · no commission applied</span>
+        </div>
+        {exchangeCodes.length === 0 ? (
+          <div className="exchange-currency-empty">
+            <ArrowRightLeft size={20} />
+            <span>No currencies yet. Add one under Currencies and a card appears here.</span>
+          </div>
+        ) : (
+        <div className="dashboard-grid">
+          {exchangeCodes.map((code) => {
+            const entry = stats?.myExchangesByCurrency?.[code] || { count: 0, total: 0 };
+            return (
+              <div className="stat-card" key={code}>
+                <div className="stat-icon tone-info"><ArrowRightLeft size={28} /></div>
+                <div className="stat-content">
+                  <p className="stat-label">Exchanges in {code}</p>
+                  <h3 className="stat-value">{count(entry.count)}</h3>
+                  <p className="stat-sub">
+                    {Number(entry.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} {code} converted
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        )}
       </div>
           <div className="charts-grid grid-2">
             <div className="card">
@@ -275,7 +366,13 @@ export default function AdminDashboard() {
                 <h3>User Distribution</h3>
               </div>
               <div className="card-body">
-                {!loading && <Pie data={chartData} options={{ responsive: true, maintainAspectRatio: true }} />}
+                {!loading && (
+                  roleRows.length > 0 ? (
+                    <CompositionChart rows={roleRows} scheme="role" caption="registered users" />
+                  ) : (
+                    <div className="chart-empty"><Users size={20} /><span>No users yet.</span></div>
+                  )
+                )}
               </div>
             </div>
 
@@ -284,33 +381,39 @@ export default function AdminDashboard() {
                 <h3>Transaction Status</h3>
               </div>
               <div className="card-body">
-                {!loading && <Bar data={transactionChart} options={{ responsive: true, maintainAspectRatio: true }} />}
+                {!loading && (
+                  statusRows.length > 0 ? (
+                    <CompositionChart rows={statusRows} scheme="status" caption="transactions" />
+                  ) : (
+                    <div className="chart-empty"><CreditCard size={20} /><span>No transactions yet.</span></div>
+                  )
+                )}
               </div>
             </div>
           </div>
 
           <div className="card mt-4">
-        <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <h3>💱 Recent Money Exchange Transactions</h3>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div className="card-header exchange-header-row">
+          <h3><ArrowRightLeft size={18} /> Recent Money Exchange Transactions</h3>
+          <div className="exchange-filters">
             <input 
               type="date"
               value={exchangeFromDate}
               onChange={(e) => setExchangeFromDate(e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '13px' }}
+              className="exchange-filter"
               title="From Date"
             />
             <input 
               type="date"
               value={exchangeToDate}
               onChange={(e) => setExchangeToDate(e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '13px' }}
+              className="exchange-filter"
               title="To Date"
             />
             <select
               value={exchangeModeFilter}
               onChange={(e) => setExchangeModeFilter(e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '13px' }}
+              className="exchange-filter"
               title="Filter by Mode"
             >
               <option value="all">All Modes</option>
@@ -320,7 +423,7 @@ export default function AdminDashboard() {
             <select
               value={exchangeSelectedAdmin}
               onChange={(e) => setExchangeSelectedAdmin(e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: '4px', border: '1px solid #ddd', fontSize: '13px' }}
+              className="exchange-filter"
               title="Filter by Admin"
             >
               <option value="all">All Admins</option>
@@ -331,18 +434,9 @@ export default function AdminDashboard() {
             {(exchangeFromDate || exchangeToDate) && (
               <button
                 onClick={() => { setExchangeFromDate(''); setExchangeToDate(''); }}
-                style={{
-                  padding: '6px 12px',
-                  background: '#ef4444',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  fontWeight: '600'
-                }}
+                className="exchange-filter-clear"
               >
-                ✕ Clear
+                <X size={18} /> Clear
               </button>
             )}
           </div>
@@ -370,9 +464,9 @@ export default function AdminDashboard() {
                     const [amounts, mode] = exchangeInfo ? exchangeInfo.split(' (') : ['', ''];
                     const [fromAmount, toAmount] = amounts ? amounts.split(' → ') : ['', ''];
                     return (
-                      <tr key={transaction._id}>
+                      <tr key={transaction.id}>
                         <td>
-                          <span style={{ fontWeight: 600, color: '#0369a1' }}>
+                          <span style={{ fontWeight: 600, color: '#087443' }}>
                             {transaction.currencyCode}
                           </span>
                         </td>
@@ -384,16 +478,16 @@ export default function AdminDashboard() {
                         <td>{fromAmount || transaction.amount}</td>
                         <td>{toAmount || '-'}</td>
                         <td>
-                          <span style={{ fontSize: '12px', textTransform: 'capitalize' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'capitalize' }}>
                             {mode ? mode.replace(')', '') : '-'}
                           </span>
                         </td>
                         <td>
-                          <span style={{ fontSize: '13px' }}>
+                          <span style={{ fontSize: '11.5px' }}>
                             {transaction.sender?.name || transaction.sender?.phone || 'Admin'}
                           </span>
                         </td>
-                        <td style={{ fontSize: '12px', color: '#666' }}>
+                        <td style={{ fontSize: '11px', color: '#666' }}>
                           {new Date(transaction.createdAt).toLocaleDateString()} {new Date(transaction.createdAt).toLocaleTimeString()}
                         </td>
                       </tr>
@@ -410,6 +504,68 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Recent Transactions — everything except exchanges, which have their
+          own card above. Uses the same .recent-tx-* markup as the user and
+          agent dashboards so all three tables read identically. */}
+      <div className="card mt-4 recent-tx-card">
+        <div className="card-header flex-between">
+          <h3><Clock size={18} /> Recent Transactions</h3>
+          <a href="/admin/transactions" className="recent-tx-all">See all</a>
+        </div>
+        <div className="card-body">
+          {loadingRecent ? (
+            <p className="recent-tx-empty">Loading transactions…</p>
+          ) : recentTransactions.length === 0 ? (
+            <div className="recent-tx-empty-state">
+              <span className="recent-tx-empty-icon"><Files size={22} /></span>
+              <h4>No transactions yet</h4>
+              <p>Transfers, top-ups and cash-outs will appear here.</p>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table className="table recent-tx-table">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>From</th>
+                    <th>Reference</th>
+                    <th>Date</th>
+                    <th className="right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentTransactions.map((tx, idx) => (
+                    <tr key={tx.transactionId || idx}>
+                      <td>
+                        <span className={'badge tx-type is-' + tx.type}>{typeLabel(tx.type)}</span>
+                      </td>
+                      <td>
+                        <span className="recent-tx-type">{tx.sender?.name || tx.sender?.phone || '—'}</span>
+                      </td>
+                      <td><span className="recent-tx-ref">{tx.transactionId || '—'}</span></td>
+                      <td>
+                        <span className="recent-tx-date">
+                          {tx.createdAt
+                            ? new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : 'N/A'}
+                        </span>
+                      </td>
+                      <td className="right">
+                        {/* the admin view is not one account's ledger, so there
+                            is no "outgoing" here — no +/- sign, just the amount */}
+                        <span className="recent-tx-amount">
+                          {money(tx.amount)}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
         <div className="card mt-4">
         <div className="card-header">
           <h3>Quick Actions</h3>
@@ -417,27 +573,27 @@ export default function AdminDashboard() {
         <div className="card-body">
           <div className="actions-grid">
             <a href="/admin/users" className="action-card">
-              <div className="action-icon">👥</div>
+              <div className="action-icon tone-info"><Users size={28} /></div>
               <h4>Manage Users</h4>
               <p>View and manage users</p>
             </a>
             <a href="/admin/transactions" className="action-card">
-              <div className="action-icon">💳</div>
+              <div className="action-icon tone-dark"><CreditCard size={28} /></div>
               <h4>View Transactions</h4>
               <p>Monitor all transactions</p>
             </a>
             <a href="/admin/notifications" className="action-card">
-              <div className="action-icon">🔔</div>
+              <div className="action-icon tone-warning"><Bell size={28} /></div>
               <h4>Send Notifications</h4>
               <p>Notify users</p>
             </a>
             <a href="/admin/tiered-commission" className="action-card">
-              <div className="action-icon">💰</div>
+              <div className="action-icon tone-success"><Wallet size={28} /></div>
               <h4>Tiered Commission</h4>
               <p>Manage send-money commission tiers</p>
             </a>
             <a href="/admin/reports" className="action-card">
-              <div className="action-icon">📈</div>
+              <div className="action-icon tone-dark"><TrendingUp size={28} /></div>
               <h4>Reports</h4>
               <p>View detailed reports</p>
             </a>

@@ -1,0 +1,135 @@
+.bottomNav {
+  position: fixed;
+  /* both edges pinned: margin:auto cannot centre a fixed element from left
+     alone, so the bar used to be a 430px block stuck to the left edge */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  /* the content fills the screen, so the bar does too */
+  max-width: none;
+  margin: 0;
+  height: 76px;
+  background: #fff;
+  box-shadow: 0 -2px 16px #0000000f;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+  padding: 0 8px env(safe-area-inset-bottom, 8px) 8px;
+  transition: background .3s;
+  /* above the page content and the footer, which also sits low */
+  z-index: 1200;
+}
+
+/* the nav is always mounted; the breakpoint alone decides whether it shows,
+   so it now responds to a resize instead of only to a reload.
+   1033px: every width up to and including 1032 uses the mobile layout. */
+@media (min-width: 1033px) {
+  .bottomNav {
+    display: none;
+  }
+}
+
+
+
+.navItem {
+  flex: 1 1 0;
+  text-align: center;
+  color: #8b92a9;
+  text-decoration: none;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 6px 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  position: relative;
+  cursor: pointer;
+  border-radius: 12px;
+  gap: 4px;
+}
+
+.navItem:hover {
+  color: #333;
+}
+
+/* The active tab is marked by colour alone: the icon and label turn green.
+   #087443 rather than #34C88E — at 11px the lighter green measures 2.14:1 on
+   the white bar, well under the 4.5:1 small text needs. This one is 5.85:1.
+   .icon and .label both inherit, so setting it here covers both. */
+.active {
+  color: #087443;
+}
+
+.icon {
+  font-size: 1.188rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.active .icon {
+  color: #087443;
+}
+
+.label {
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  font-weight: 500;
+  color: inherit;
+  transition: color 0.3s ease;
+}
+
+/* ==========================================================================
+   Tablet bar
+
+   Placed last: .navItem, .icon and .label are defined further up this file,
+   and at equal specificity the later rule wins — declared earlier, the sizes
+   below were silently overridden by the base rules.
+   ========================================================================== */
+@media (min-width: 700px) and (max-width: 1032px) {
+  .bottomNav { height: 92px; }
+  .navItem { gap: 6px; }
+  .icon svg { width: 26px; height: 26px; }
+  .label { font-size: 0.75rem; }
+}
+
+/* ==========================================================================
+   Dark mode
+
+   The bar was a hardcoded white slab at the bottom of a dark app. It now sits
+   on #0F172A — a step darker than the #1E293B body, so it reads as chrome
+   over the page rather than as another card, with a hairline top border since
+   the light-mode drop shadow is invisible against dark.
+
+   The active green has to flip. #087443 is chosen in light mode because
+   #34C88E only measures 2.14:1 on white; on this bar the reverse holds and
+   #087443 falls to 3.05:1, under the 4.5:1 an 11px label needs. #34C88E is
+   8.33:1 here.
+
+   :global() keeps the theme attribute global while the class stays hashed.
+   ========================================================================== */
+
+:global([data-theme='dark']) .bottomNav {
+  background: #0F172A;
+  border-top: 1px solid #14532D;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.5);
+}
+
+:global([data-theme='dark']) .navItem {
+  color: #94A3B8;              /* 6.96:1 */
+}
+
+:global([data-theme='dark']) .navItem:hover {
+  color: #E2E8F0;              /* 14.48:1 */
+}
+
+:global([data-theme='dark']) .active,
+:global([data-theme='dark']) .active .icon {
+  color: #34C88E;              /* 8.33:1 */
+}

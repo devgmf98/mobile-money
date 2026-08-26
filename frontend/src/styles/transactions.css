@@ -2,7 +2,7 @@
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   background-color: white;
 }
@@ -29,7 +29,7 @@
 }
 
 .transaction-icon {
-  font-size: 28px;
+  font-size: 22px;
   min-width: 40px;
   text-align: center;
 }
@@ -43,25 +43,25 @@
 
 .transaction-title {
   margin: 0;
-  font-size: 15px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--dark);
+  color: var(--text);
 }
 
 .transaction-id {
   margin: 4px 0 0 0;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
 }
 
 .transaction-date {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
   text-align: right;
 }
 
 .transaction-amount {
-  font-size: 16px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--primary);
   min-width: 100px;
@@ -79,15 +79,15 @@
   }
 
   .transaction-icon {
-    font-size: 24px;
+    font-size: 19px;
   }
 
   .transaction-title {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .transaction-amount {
-    font-size: 14px;
+    font-size: 12px;
     min-width: 80px;
   }
 }
@@ -96,7 +96,7 @@
   .filter-select {
     width: 100%;
     padding: 8px 10px;
-    font-size: 13px;
+    font-size: 11px;
   }
 
   .transaction-item {
@@ -106,7 +106,7 @@
   }
 
   .transaction-icon {
-    font-size: 24px;
+    font-size: 19px;
     min-width: auto;
   }
 
@@ -118,7 +118,7 @@
   }
 
   .transaction-title {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
   }
 
@@ -128,12 +128,12 @@
 
   .transaction-date {
     text-align: left;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .transaction-amount {
     text-align: left;
-    font-size: 14px;
+    font-size: 12px;
     min-width: auto;
   }
 
@@ -146,7 +146,7 @@
   .filter-select {
     width: 100%;
     padding: 8px 8px;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .transactions-list {
@@ -160,7 +160,7 @@
   }
 
   .transaction-icon {
-    font-size: 20px;
+    font-size: 16.5px;
   }
 
   .transaction-details {
@@ -168,11 +168,11 @@
   }
 
   .transaction-title {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .transaction-id {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .transaction-date {
@@ -180,7 +180,7 @@
   }
 
   .transaction-amount {
-    font-size: 13px;
+    font-size: 11px;
   }
 }
 
@@ -189,10 +189,10 @@
   .filter-select {
     width: 100%;
     padding: 10px 12px;
-    font-size: 14px;
+    font-size: 11px;
     border-radius: 8px;
-    animation: slideInDown 0.5s ease-out;
-    transition: all 0.3s ease;
+    
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .filter-select:hover {
@@ -202,7 +202,7 @@
 
   .transactions-list {
     gap: 14px;
-    animation: fadeInUp 0.6s ease-out 0.2s both;
+    
   }
 
   .transaction-item {
@@ -210,9 +210,9 @@
     gap: 12px;
     padding: 16px;
     border-radius: 10px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.3s);
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
   }
 
   .transaction-item:hover {
@@ -221,10 +221,10 @@
   }
 
   .transaction-icon {
-    font-size: 26px;
+    font-size: 20.5px;
     min-width: auto;
-    animation: zoomIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.5s);
+    
+    
   }
 
   .transaction-details {
@@ -235,37 +235,37 @@
   }
 
   .transaction-title {
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
-    animation: fadeInLeft 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.6s);
+    
+    
   }
 
   .transaction-id {
     font-size: 11px;
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.7s);
+    
+    
   }
 
   .transaction-date {
     text-align: left;
-    font-size: 12px;
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.8s);
+    font-size: 11px;
+    
+    
   }
 
   .transaction-amount {
     text-align: left;
-    font-size: 15px;
+    font-size: 11px;
     min-width: auto;
-    animation: slideInRight 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 0.9s);
+    
+    
   }
 
   .transaction-status {
     min-width: auto;
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.1s + 1s);
+    
+    
   }
 }
 
@@ -273,10 +273,10 @@
 @media (min-width: 834px) and (max-width: 1024px) {
   .filter-select {
     padding: 10px 14px;
-    font-size: 15px;
+    font-size: 12.5px;
     border-radius: 8px;
-    animation: slideInDown 0.5s ease-out;
-    transition: all 0.3s ease;
+    
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .filter-select:hover {
@@ -286,16 +286,16 @@
 
   .transactions-list {
     gap: 16px;
-    animation: fadeInUp 0.6s ease-out 0.2s both;
+    
   }
 
   .transaction-item {
     gap: 16px;
     padding: 18px;
     border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.3s);
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), filter 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
   }
 
   .transaction-item:hover {
@@ -304,9 +304,9 @@
   }
 
   .transaction-icon {
-    font-size: 28px;
-    animation: zoomIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.5s);
+    font-size: 22px;
+    
+    
   }
 
   .transaction-details {
@@ -317,32 +317,32 @@
   }
 
   .transaction-title {
-    font-size: 15px;
-    animation: fadeInLeft 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.6s);
+    font-size: 12.5px;
+    
+    
   }
 
   .transaction-id {
-    font-size: 12px;
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.7s);
+    font-size: 11px;
+    
+    
   }
 
   .transaction-date {
-    font-size: 13px;
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.8s);
+    font-size: 11.5px;
+    
+    
   }
 
   .transaction-amount {
-    font-size: 16px;
-    animation: slideInRight 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 0.9s);
+    font-size: 13.5px;
+    
+    
   }
 
   .transaction-status {
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.08s + 1s);
+    
+    
   }
 }
 
@@ -350,10 +350,10 @@
 @media (min-width: 1440px) {
   .filter-select {
     padding: 12px 16px;
-    font-size: 16px;
+    font-size: 13.5px;
     border-radius: 10px;
-    animation: slideInDown 0.5s ease-out;
-    transition: all 0.3s ease;
+    
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .filter-select:hover {
@@ -363,16 +363,16 @@
 
   .transactions-list {
     gap: 18px;
-    animation: fadeInUp 0.6s ease-out 0.2s both;
+    
   }
 
   .transaction-item {
     gap: 18px;
     padding: 20px;
     border-radius: 14px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInUp 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.3s);
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    
   }
 
   .transaction-item:hover {
@@ -381,9 +381,9 @@
   }
 
   .transaction-icon {
-    font-size: 30px;
-    animation: zoomIn 0.4s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.5s);
+    font-size: 24px;
+    
+    
   }
 
   .transaction-details {
@@ -394,90 +394,45 @@
   }
 
   .transaction-title {
-    font-size: 16px;
-    animation: fadeInLeft 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.6s);
+    font-size: 13.5px;
+    
+    
   }
 
   .transaction-id {
-    font-size: 13px;
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.7s);
+    font-size: 11.5px;
+    
+    
   }
 
   .transaction-date {
-    font-size: 14px;
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.8s);
+    font-size: 12px;
+    
+    
   }
 
   .transaction-amount {
-    font-size: 17px;
-    animation: slideInRight 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 0.9s);
+    font-size: 14.5px;
+    
+    
   }
 
   .transaction-status {
-    animation: fadeIn 0.5s ease-out both;
-    animation-delay: calc(var(--i, 0) * 0.06s + 1s);
+    
+    
   }
 }
 
 /* Keyframe Animations */
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+@keyframes slideInDown { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+@keyframes fadeInUp { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+@keyframes slideInUp { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+@keyframes zoomIn { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes fadeInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+@keyframes fadeInLeft { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes fadeIn {
   from {
@@ -488,13 +443,4 @@
   }
 }
 
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
+@keyframes slideInRight { from { opacity: 0; } to { opacity: 1; } }

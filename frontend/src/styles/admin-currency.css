@@ -1,0 +1,167 @@
+/* ==========================================================================
+   Currencies
+   Page-specific pieces only; card, table, form fields, badges, buttons,
+   .icon-btn, .count-pill and .editing-banner come from the shared layers.
+   ========================================================================== */
+
+.currency-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+@keyframes cu-spin { to { transform: rotate(360deg); } }
+.currency-page .spin { animation: cu-spin 0.9s linear infinite; }
+
+/* ---------- form ---------------------------------------------------------- */
+.currency-page .form-group label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.currency-page .form-group label svg { color: var(--primary); flex-shrink: 0; }
+
+/* Code is a short token, so it gets a narrower column than name/symbol. */
+.currency-page .currency-form-row {
+  display: grid;
+  grid-template-columns: 0.7fr 1.6fr 0.7fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.currency-page #cu-code {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.currency-page .field-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+
+.currency-page .is-invalid {
+  display: block;
+  margin-top: 5px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--error, #DC2626);
+}
+
+/* ---------- footer: live preview + submit --------------------------------- */
+.currency-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.currency-preview {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.preview-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.preview-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--light, #E8F7F0);
+}
+
+.preview-code {
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: var(--primary-dark);
+}
+
+.preview-sym {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.preview-name {
+  font-size: 12px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- table --------------------------------------------------------- */
+.currency-table th.num,
+.currency-table td.num { text-align: center; }
+
+.currency-table th.right,
+.currency-table td.right { text-align: right; }
+
+.currency-name { font-weight: 600; color: var(--text); }
+
+.currency-symbol {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: 8px;
+  background: var(--light, #E8F7F0);
+  font-weight: 700;
+  color: var(--primary-dark);
+}
+
+.currency-table tr.is-editing td { background: #FEF9E7; }
+
+/* ---------- responsive ---------------------------------------------------- */
+@media (max-width: 900px) {
+  .currency-page .currency-form-row { grid-template-columns: 1fr 1fr; }
+  .currency-page .currency-form-row .form-group:nth-child(2) { grid-column: 1 / -1; order: -1; }
+}
+
+@media (max-width: 620px) {
+  .currency-page .currency-form-row { grid-template-columns: 1fr; }
+  .currency-page .currency-form-row .form-group:nth-child(2) { grid-column: auto; order: 0; }
+  .currency-form-footer { align-items: stretch; }
+  .currency-form-footer .btn { width: 100%; justify-content: center; }
+  .currency-preview { justify-content: center; }
+}
+
+/* ---------- dark mode ----------------------------------------------------- */
+[data-theme="dark"] .preview-chip { background: #05512F; border-color: #14532D; }
+[data-theme="dark"] .preview-code { color: #A9EBD1; }
+[data-theme="dark"] .preview-sym { background: #0F172A; border-color: #14532D; color: #E2E8F0; }
+[data-theme="dark"] .preview-name { color: #E2E8F0; }
+[data-theme="dark"] .currency-name { color: #E2E8F0; }
+[data-theme="dark"] .currency-symbol { background: #05512F; color: #A9EBD1; }
+[data-theme="dark"] .currency-table tr.is-editing td { background: #422006; }

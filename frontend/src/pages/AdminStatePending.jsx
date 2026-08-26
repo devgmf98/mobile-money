@@ -2,6 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../utils/api';
 import { useAuthStore } from '../context/store';
 import Toast from '../components/Toast';
+import Select from '../components/Select';
+import '../styles/admin-state-pending.css';
+import {
+  Ban, Check, CircleCheck, Clock, Inbox, RefreshCw, Search, X
+} from 'lucide-react';
+
+// Status arrives in a few historical shapes; normalise once so sorting, the
+// badge and the action cell can never disagree about what a row is.
+const normalizeStatus = (raw) => {
+  const v = (raw || '').toString().toLowerCase();
+  if (v === 'completed' || v === 'received' || v === 'received_by_admin') return 'completed';
+  if (v === 'cancelled' || v === 'canceled') return 'cancelled';
+  return 'pending';
+};
 
 export default function AdminStatePending() {
   const [pending, setPending] = useState([]);
@@ -34,7 +48,7 @@ export default function AdminStatePending() {
       const { data } = await adminAPI.receiveStateSend(txId);
       setToast({ type: 'success', message: data.message || 'Marked received' });
       // update local state to mark as received (keep the row visible)
-      setPending((prev) => prev.map(p => p._id === txId ? { ...p, status: 'completed' } : p));
+      setPending((prev) => prev.map(p => p.id === txId ? { ...p, status: 'completed' } : p));
       // notify dashboard to refresh commission and balances
       window.dispatchEvent(new CustomEvent('mpay:refresh-admin-commission'));
     } catch (err) {
@@ -52,7 +66,7 @@ export default function AdminStatePending() {
       const { data } = await adminAPI.cancelStateSend(txId);
       setToast({ type: 'success', message: data.message || 'Cancelled' });
       // update local state to mark as cancelled (keep the row visible) and clear commission fields
-      setPending((prev) => prev.map(p => p._id === txId ? { ...p, status: 'cancelled', commission: 0, companyCommission: 0 } : p));
+      setPending((prev) => prev.map(p => p.id === txId ? { ...p, status: 'cancelled', commission: 0, companyCommission: 0 } : p));
       // notify any listeners to refresh
       window.dispatchEvent(new CustomEvent('mpay:refresh-admin-commission'));
     } catch (err) {
@@ -63,179 +77,201 @@ export default function AdminStatePending() {
     }
   };
 
+  const counts = pending.reduce((acc, tx) => {
+    acc[normalizeStatus(tx.status)] += 1;
+    return acc;
+  }, { pending: 0, completed: 0, cancelled: 0 });
+
   // apply search and sort
   const filtered = pending
     .filter(tx => {
       if (!searchTerm) return true;
       const q = searchTerm.trim().toLowerCase();
-      const tid = (tx.transactionId || tx._id || '').toString().toLowerCase();
+      const tid = (tx.transactionId || tx.id || '').toString().toLowerCase();
       return tid.includes(q);
     })
     .sort((a, b) => {
-      // normalize status values and support legacy values like 'received'
-      const norm = (s) => (s || '').toString().toLowerCase();
-      const isCompleted = (s) => {
-        const v = norm(s);
-        return v === 'completed' || v === 'received' || v === 'received_by_admin';
-      };
-      const isPending = (s) => norm(s) === 'pending';
-      const isCancelled = (s) => norm(s) === 'cancelled';
-
       const rank = (tx, order) => {
-        if (order === 'pending_first') return isPending(tx.status) ? 0 : 1;
-        if (order === 'received_first') return isCompleted(tx.status) ? 0 : 1;
-        if (order === 'cancelled_first') return isCancelled(tx.status) ? 0 : 1;
-        // default to received_first behavior
-        return isCompleted(tx.status) ? 0 : 1;
+        const s = normalizeStatus(tx.status);
+        if (order === 'pending_first') return s === 'pending' ? 0 : 1;
+        if (order === 'received_first') return s === 'completed' ? 0 : 1;
+        if (order === 'cancelled_first') return s === 'cancelled' ? 0 : 1;
+        return s === 'completed' ? 0 : 1;
       };
 
       const ra = rank(a, sortOrder);
       const rb = rank(b, sortOrder);
       if (ra !== rb) return ra - rb;
 
-      // tie-break: newest first by createdAt if available, else by _id
+      // tie-break: newest first by createdAt if available, else by id
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : null;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : null;
       if (dateA !== null && dateB !== null) return dateB - dateA;
-      // fallback to string compare of _id (ObjectId roughly increases over time)
-      return String(b._id).localeCompare(String(a._id));
+      // fallback to comparing ids (autoincrement, so higher == newer)
+      return String(b.id).localeCompare(String(a.id));
     });
 
-  return (
-    <div style={{paddingTop: 24, paddingBottom: 24}}>
-      <h2>Pending Send By State</h2>
-      <div style={{display:'flex', gap:8, alignItems:'center', marginBottom:24, paddingTop: 16}}>
-        <input
-          placeholder="Search by transaction id"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{padding:8, borderRadius:6, border:'1px solid #ddd', minWidth:240}}
-        />
-        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={{padding:8,borderRadius:6}}>
-          <option value="pending_first">Pending first</option>
-          <option value="received_first">Received first</option>
-          <option value="cancelled_first">Cancelled first</option>
-        </select>
+  const statusBadge = (raw) => {
+    const s = normalizeStatus(raw);
+    if (s === 'completed') return <span className="badge badge-success"><CircleCheck size={13} /> Received</span>;
+    if (s === 'cancelled') return <span className="badge badge-muted"><Ban size={13} /> Cancelled</span>;
+    return <span className="badge badge-warning"><Clock size={13} /> Pending</span>;
+  };
+
+  const renderAction = (tx) => {
+    const s = normalizeStatus(tx.status);
+    if (s === 'cancelled') return <span className="action-note">—</span>;
+    if (s === 'completed') return <span className="action-note is-done"><Check size={14} /> Settled</span>;
+
+    // Only the sender may cancel; only the receiver may mark as received.
+    const userPhone = user?.phone;
+    const senderPhone = tx.sender?.phone || tx.sender;
+    const receiverPhone = tx.receiver?.phone || tx.receiver;
+    const isSender = userPhone && senderPhone && userPhone === senderPhone;
+    const isReceiver = userPhone && receiverPhone && userPhone === receiverPhone;
+    const busy = actionLoading === tx.id;
+
+    if (isReceiver) {
+      return (
+        <button className="btn btn-primary btn-sm" onClick={() => handleReceive(tx.id)} disabled={busy}>
+          {busy ? 'Processing…' : <><Check size={14} /> Mark received</>}
+        </button>
+      );
+    }
+    if (isSender) {
+      return (
+        <button className="btn btn-outline btn-danger btn-sm" onClick={() => handleCancel(tx.id)} disabled={busy}>
+          {busy ? 'Processing…' : <><X size={14} /> Cancel</>}
+        </button>
+      );
+    }
+    return <span className="action-note">No action</span>;
+  };
+
+  const party = (p) => {
+    const name = p?.name || (typeof p === 'string' ? p : '') || '—';
+    const phone = p?.phone;
+    return (
+      <div className="party">
+        <span className="party-name">{name}</span>
+        {phone && <span className="party-phone">{phone}</span>}
       </div>
-      {loading ? <div>Loading...</div> : (
-        <div style={{overflowX: 'auto'}}>
-          {filtered.length === 0 ? <div>No pending transfers</div> : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Txn ID</th>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Amount</th>
-                  <th>Currency</th>
-                  <th>Receiver Gets</th>
-                  <th>Commission</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map(tx => (
-                  <tr key={tx._id}>
-                    <td style={{whiteSpace: 'nowrap'}}>{tx.transactionId || tx._id}</td>
-                    <td>{tx.sender?.name || tx.sender} {tx.sender?.phone ? `(${tx.sender.phone})` : ''}</td>
-                    <td>{tx.receiver?.name || tx.receiver} {tx.receiver?.phone ? `(${tx.receiver.phone})` : ''}</td>
-                    <td>{Number(tx.amount).toFixed(2)}</td>
-                    <td>{tx.currencyCode || 'SSP'}</td>
-                    <td>{Number(tx.receiverCredit || tx.amount).toFixed(2)}</td>
-                    <td>{Number(tx.commission || 0).toFixed(2)}</td>
-                    <td>{tx.status === 'completed' ? 'Received' : tx.status === 'cancelled' ? 'Cancelled' : 'Pending'}</td>
-                    <td>
-                      {/* existing action cell (receive/cancel/labels) */}
-                      {(() => {
-                        const isReceiver = String(user?._id) === String(tx.receiver?._id || tx.receiver);
-                        const isSender = String(user?._id) === String(tx.sender?._id || tx.sender);
+    );
+  };
 
-                        const IconButton = ({ children, loading, ...props }) => (
-                          <button 
-                            className="icon-btn" 
-                            {...props} 
-                            style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              width: 32,
-                              height: 32,
-                              padding: 0,
-                              background: 'none',
-                              border: 'none',
-                              cursor: props.disabled ? 'not-allowed' : 'pointer',
-                              opacity: props.disabled ? 0.5 : 1,
-                              color: '#2563eb'
-                            }}
-                          >
-                            {loading ? (
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ animation: 'spin 1s linear infinite' }}>
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.2" />
-                                <path d="M22 12c0-5.52-4.48-10-10-10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
-                              </svg>
-                            ) : children}
-                          </button>
-                        );
+  return (
+    <div className="page-container state-pending">
+      <div className="page-header pending-header">
+        <div>
+          <h1>Pending Send To Destination</h1>
+          <p>Transfers awaiting confirmation between admins.</p>
+        </div>
+        <button className="btn btn-secondary btn-sm" onClick={load} disabled={loading}>
+          <RefreshCw size={15} className={loading ? 'spin' : ''} /> Refresh
+        </button>
+      </div>
 
-                        if (isReceiver) {
-                          if (tx.status === 'completed') {
-                            return <span style={{color: 'green', fontWeight: 600}}>Received</span>;
-                          }
-                          if (tx.status === 'cancelled') {
-                            return <span style={{color: '#777'}}>Cancelled</span>;
-                          }
-                          // only allow receive action for pending transactions
-                          return (
-                            <IconButton 
-                              onClick={() => handleReceive(tx._id)} 
-                              disabled={actionLoading === tx._id}
-                              loading={actionLoading === tx._id}
-                              title="Mark Received" 
-                              aria-label="Mark Received"
-                            >
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-                                <path d="M8 12l2 2 4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
-                            </IconButton>
-                          );
-                        }
+      {/* status summary */}
+      <div className="pending-summary">
+        <div className="summary-tile">
+          <span className="tile-icon tone-warning"><Clock size={18} /></span>
+          <span className="tile-value">{counts.pending}</span>
+          <span className="tile-label">Pending</span>
+        </div>
+        <div className="summary-tile">
+          <span className="tile-icon tone-success"><CircleCheck size={18} /></span>
+          <span className="tile-value">{counts.completed}</span>
+          <span className="tile-label">Received</span>
+        </div>
+        <div className="summary-tile">
+          <span className="tile-icon tone-muted"><Ban size={18} /></span>
+          <span className="tile-value">{counts.cancelled}</span>
+          <span className="tile-label">Cancelled</span>
+        </div>
+      </div>
 
-                        if (isSender) {
-                          if (tx.status === 'completed') {
-                            return <span style={{color: 'green', fontWeight: 600}}>Received</span>;
-                          }
-                          if (tx.status === 'cancelled') {
-                            return <span style={{color: '#777'}}>Cancelled</span>;
-                          }
-                          // only allow cancel action for pending transactions
-                          return (
-                            <IconButton 
-                              onClick={() => handleCancel(tx._id)} 
-                              disabled={actionLoading === tx._id}
-                              loading={actionLoading === tx._id}
-                              title="Cancel" 
-                              aria-label="Cancel"
-                            >
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M19 6.4L17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4Z" fill="currentColor" />
-                              </svg>
-                            </IconButton>
-                          );
-                        }
+      <div className="card">
+        <div className="card-header pending-toolbar">
+          <div className="search-field">
+            <Search size={15} />
+            <input
+              type="search"
+              placeholder="Search by transaction ID"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Search by transaction ID"
+            />
+          </div>
+          <Select
+            value={sortOrder}
+            onChange={setSortOrder}
+            ariaLabel="Sort order"
+            className="sort-select-wrap"
+            options={[
+              { value: 'pending_first', label: 'Pending first' },
+              { value: 'received_first', label: 'Received first' },
+              { value: 'cancelled_first', label: 'Cancelled first' },
+            ]}
+          />
+        </div>
 
-                        if (tx.status === 'cancelled') return <span style={{color: '#777'}}>Cancelled</span>;
-                        return <span>{tx.status === 'completed' ? 'Received' : 'Pending'}</span>;
-                      })()}
-                    </td>
+        <div className="card-body">
+          {loading ? (
+            <div className="empty-state">
+              <span className="empty-icon"><RefreshCw size={22} className="spin" /></span>
+              <h3>Loading transfers…</h3>
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-state">
+              <span className="empty-icon"><Inbox size={22} /></span>
+              <h3>{searchTerm ? 'No matching transfers' : 'No transfers yet'}</h3>
+              <p>
+                {searchTerm
+                  ? `Nothing matches “${searchTerm}”. Try a different transaction ID.`
+                  : 'Transfers sent between admins by state will appear here.'}
+              </p>
+              {searchTerm && (
+                <button className="btn btn-secondary btn-sm" onClick={() => setSearchTerm('')}>Clear search</button>
+              )}
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table className="table pending-table">
+                <thead>
+                  <tr>
+                    <th>Txn ID</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th className="num">Amount</th>
+                    <th className="num">Receiver gets</th>
+                    <th className="num">Commission</th>
+                    <th>Status</th>
+                    <th>Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map(tx => (
+                    <tr key={tx.id}>
+                      <td><code className="txn-id">{tx.transactionId || tx.id}</code></td>
+                      <td>{party(tx.sender)}</td>
+                      <td>{party(tx.receiver)}</td>
+                      <td className="num">
+                        <span className="cur">{tx.currencyCode || 'SSP'}</span> {Number(tx.amount).toFixed(2)}
+                      </td>
+                      <td className="num strong">
+                        <span className="cur">{tx.currencyCode || 'SSP'}</span> {Number(tx.receiverCredit || tx.amount).toFixed(2)}
+                      </td>
+                      <td className="num credit">{Number(tx.commission || 0).toFixed(2)}</td>
+                      <td>{statusBadge(tx.status)}</td>
+                      <td className="action-cell">{renderAction(tx)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
-      )}
+      </div>
 
       {toast && (
         <Toast type={toast.type} message={toast.message} onClose={() => setToast(null)} />

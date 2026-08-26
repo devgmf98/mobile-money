@@ -1,7 +1,10 @@
 .layout {
   display: flex;
+  height: 100vh;
   min-height: 100vh;
   background-color: var(--light);
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .sidebar {
@@ -17,7 +20,7 @@
 }
 
 [data-theme="dark"] .sidebar {
-  background: #1e293b;
+  background: #1E293B;
   border-right-color: var(--border);
   color: var(--text);
 }
@@ -35,7 +38,7 @@
 
 .sidebar .sidebar-brand h2 {
   margin: 0 0 4px 0;
-  font-size: 16px;
+  font-size: 13.5px;
   color: var(--primary);
 }
 
@@ -47,19 +50,19 @@
 }
 
 .sidebar .brand-icon {
-  font-size: 20px;
+  font-size: 16.5px;
   line-height: 1;
 }
 
 .sidebar .brand-label {
-  font-size: 16px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--primary);
   transition: color 0.3s ease;
 }
 
 [data-theme="dark"] .sidebar .brand-label {
-  color: #60a5fa;
+  color: #64748B;
 }
 
 [data-theme="dark"] .sidebar .brand-sub {
@@ -68,7 +71,7 @@
 
 .sidebar .brand-sub {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
 }
 
@@ -79,7 +82,7 @@
 }
 
 .sidebar.collapsed .sidebar-brand h2 {
-  font-size: 18px;
+  font-size: 14.5px;
 }
 
 .sidebar.collapsed .brand-label {
@@ -119,7 +122,7 @@
   top: 50%;
   transform: translateY(-50%);
   background: white;
-  color: var(--dark);
+  color: var(--text);
   padding: 8px 10px;
   border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
@@ -130,7 +133,7 @@
 }
 
 [data-theme="dark"] .sidebar.collapsed .nav-item:hover .nav-label {
-  background: #1e293b;
+  background: #1E293B;
   color: var(--text);
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
@@ -179,13 +182,13 @@
 }
 
 .sidebar .sidebar-brand h2 {
-  font-size: 16px;
+  font-size: 13.5px;
   margin: 0;
 }
 
 .sidebar .sidebar-brand p {
   margin: 0;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
 }
 
@@ -194,7 +197,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .sidebar .btn-icon {
@@ -239,29 +242,38 @@
 
 .main {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
 .navbar {
-  background: white;
-  border-bottom: 1px solid var(--border);
-  padding: 15px 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #E8F7F0 100%);
+  border-bottom: 2px solid #E8F7F0;
+  padding: 12px 20px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
-  gap: 20px;
-  box-shadow: var(--shadow-sm);
+  gap: 16px;
+  box-shadow: 0 2px 12px rgba(26, 35, 126, 0.08);
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  height: 64px;
+}
+
+.navbar:hover {
+  box-shadow: 0 4px 16px rgba(26, 35, 126, 0.12);
 }
 
 [data-theme="dark"] .navbar {
-  background: #0f172a;
-  border-bottom-color: var(--border);
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border-bottom-color: #087443;
   color: var(--text);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 
 .admin-navbar {
@@ -269,16 +281,22 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  background: white;
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #E8F7F0 100%);
+  border-bottom: 2px solid #E8F7F0;
+  box-shadow: 0 2px 12px rgba(26, 35, 126, 0.08);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  height: 64px;
+}
+
+.admin-navbar:hover {
+  box-shadow: 0 4px 16px rgba(26, 35, 126, 0.12);
 }
 
 [data-theme="dark"] .admin-navbar {
-  background: #0f172a;
-  border-bottom-color: var(--border);
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  border-bottom-color: #087443;
   color: var(--text);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
 }
 /* Brand on the left and user info on the right. Provide spacing between them */
 .navbar-brand-admin {
@@ -292,44 +310,297 @@
   align-items: center;
   gap: 12px;
   text-decoration: none;
-  color: var(--primary);
+  color: #087443;
   font-weight: 800;
-  transition: color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  padding: 6px 12px;
+  border-radius: 8px;
+  letter-spacing: -0.5px;
+}
+
+.navbar-brand-admin .brand-link:hover {
+  color: #34C88E;
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
 }
 
 [data-theme="dark"] .navbar-brand-admin .brand-link {
-  color: #60a5fa;
+  color: #64748B;
+}
+
+[data-theme="dark"] .navbar-brand-admin .brand-link:hover {
+  background: rgba(0, 168, 107, 0.1);
+  color: #64748B;
 }
 
 .navbar-brand-admin .brand-icon {
-  font-size: 28px; /* increased size for the emoji/logo */
+  font-size: 22px;
   line-height: 1;
+  opacity: 0.95;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .navbar-brand-admin .brand-label {
-  font-size: 20px; /* larger label text */
+  font-size: 16.5px;
   letter-spacing: 0.2px;
+  font-weight: 800;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .admin-user-info {
-  margin-left: auto; /* push user info to the far right */
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-left: 16px; /* ensure padding between username and brand on narrow layouts */
+  gap: 16px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   color: var(--text);
+}
+
+.admin-user-info:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+}
+
+[data-theme="dark"] .admin-user-info:hover {
+  background: rgba(0, 168, 107, 0.1);
+}
+
+/* User Details Section */
+.admin-user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.admin-user-name {
+  font-weight: 600;
+  color: #222;
+  font-size: 0.781rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .admin-user-name {
+  color: var(--text);
+}
+
+.admin-user-role {
+  color: #34C88E;
+  font-size: 0.75rem;
+  text-transform: capitalize;
+  white-space: nowrap;
   transition: color 0.3s ease;
 }
 
-[data-theme="dark"] .admin-user-info {
-  color: var(--text);
+[data-theme="dark"] .admin-user-role {
+  color: #64748B;
+}
+
+/* Profile Icon */
+.admin-profile-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  flex-shrink: 0;
+}
+
+.admin-profile-icon:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+}
+
+[data-theme="dark"] .admin-profile-icon:hover {
+  background: rgba(0, 168, 107, 0.1);
+}
+
+.admin-profile-icon svg {
+  color: #34C88E;
+  width: 28px;
+  height: 28px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+.admin-profile-icon:hover svg {
+  color: #00A86B;
+  filter: drop-shadow(0 2px 8px rgba(0, 168, 107, 0.3));
+  transform: scale(1.1);
+}
+
+[data-theme="dark"] .admin-profile-icon svg {
+  color: #64748B;
+}
+
+[data-theme="dark"] .admin-profile-icon:hover svg {
+  color: #64748B;
 }
 
 
 .navbar-brand h2 {
   margin: 0;
-  color: var(--primary);
-  font-size: 24px;
+  color: #087443;
+  font-size: 17.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.5px;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.navbar-brand h2:hover {
+  color: #34C88E;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .navbar-brand h2 {
+  color: #64748B;
+}
+
+/* Navbar Icons Container */
+.navbar-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 16px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Individual Icon Item */
+.navbar-icon-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+/* Profile icon is larger */
+.navbar-icon-item:last-child svg {
+  color: #34C88E;
+  width: 26px;
+  height: 26px;
+}
+
+.navbar-icon-item:last-child:hover svg {
+  color: #00A86B;
+}
+
+[data-theme="dark"] .navbar-icon-item:last-child svg {
+  color: #64748B;
+}
+
+[data-theme="dark"] .navbar-icon-item:last-child:hover svg {
+  color: #64748B;
+}
+
+.navbar-icon-item:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+}
+
+[data-theme="dark"] .navbar-icon-item:hover {
+  background: rgba(0, 168, 107, 0.1);
+}
+
+.navbar-icon-item svg {
+  color: #34C88E;
+  width: 24px;
+  height: 24px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+.navbar-icon-item:hover svg {
+  color: #34C88E;
+  transform: scale(1.1) translateY(-2px);
+  filter: drop-shadow(0 2px 8px rgba(0, 168, 107, 0.2));
+}
+
+[data-theme="dark"] .navbar-icon-item svg {
+  color: #64748B;
+}
+
+[data-theme="dark"] .navbar-icon-item:hover svg {
+  color: #64748B;
+}
+
+/* Notification Badge */
+.navbar-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: linear-gradient(135deg, #ff3b3b, #d63031);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  width: 13px;
+  height: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px #DC26264d;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* User Profile Section */
+.navbar-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  cursor: pointer;
+}
+
+.navbar-user:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+}
+
+[data-theme="dark"] .navbar-user:hover {
+  background: rgba(0, 168, 107, 0.1);
+}
+
+/* User Icon */
+.navbar-user svg {
+  color: #34C88E;
+  width: 28px;
+  height: 28px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+.navbar-user:hover svg {
+  color: #00A86B;
+  filter: drop-shadow(0 2px 8px rgba(0, 168, 107, 0.3));
+}
+
+[data-theme="dark"] .navbar-user svg {
+  color: #64748B;
+}
+
+[data-theme="dark"] .navbar-user:hover svg {
+  color: #64748B;
 }
 
 .navbar-menu {
@@ -344,36 +615,75 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--text);
+  color: #34C88E;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  position: relative;
+  z-index: 9999;
+}
+
+.menu-toggle:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+  color: #34C88E;
+  transform: scale(1.1);
+}
+
+[data-theme="dark"] .menu-toggle:hover {
+  background: rgba(0, 168, 107, 0.1);
+  color: #64748B;
 }
 
 .menu-toggle svg {
   display: block;
-}
-
-.menu-toggle {
-  position: relative;
-  z-index: 9999; /* keep toggle above the mobile menu so clicks register */
+  width: 20px;
+  height: 20px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 /* Hidden mobile menu (becomes visible when .open is added) */
 .navbar-menu {
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
 }
 
 @media (max-width: 768px) {
+  .navbar {
+    padding: 8px 12px;
+    height: 56px;
+  }
+
+  .navbar-brand h2 {
+    font-size: 14.5px;
+  }
+
+  .navbar-icons {
+    display: flex !important;
+    gap: 8px;
+    padding: 0 8px;
+    margin-right: 40px;
+  }
+
+  .navbar-icon-item {
+    width: 32px;
+    height: 32px;
+  }
+
+  .navbar-icon-item svg {
+    width: 18px;
+    height: 18px;
+  }
+
   .menu-toggle {
-    display: inline-flex;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    padding: 12px 14px; /* increased padding for easier tapping */
-    margin-right: 6px;
-    border-radius: 6px;
-    /* place the toggle at the right side for mobile */
+    padding: 8px 12px;
+    border-radius: 8px;
     position: absolute;
     right: 12px;
-    top: 12px;
-    margin-right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
   }
 
   /* hide the regular inline menu by default on small screens */
@@ -383,13 +693,20 @@
     left: 8px;
     right: 8px;
     top: 56px;
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #E8F7F0 100%);
     flex-direction: column;
     gap: 0;
-    padding: 12px 16px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 12px 32px rgba(26, 35, 126, 0.15);
+    border-radius: 12px;
+    border: 1px solid #E8F7F0;
     z-index: 998;
+  }
+
+  [data-theme="dark"] .navbar-menu {
+    background: linear-gradient(135deg, #1E293B 0%, #087443 100%);
+    border-color: #087443;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
   }
 
   .navbar-menu.open {
@@ -427,24 +744,22 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: linear-gradient(135deg, var(--card-bg, #f9fafb) 0%, var(--card-bg, #f0f1f3) 100%);
+  background: linear-gradient(135deg, var(--card-bg, #E8F7F0) 0%, var(--card-bg, #f0f1f3) 100%);
   border: 1px solid var(--border-color, #e5e7eb);
   border-radius: 6px;
   margin-bottom: 4px;
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  
 }
 
 .nav-card:hover {
-  background: linear-gradient(135deg, var(--primary, #2563eb) 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, var(--primary, #00A86B) 0%, #00A86B 100%);
   color: white;
-  border-color: var(--primary, #2563eb);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
-  transform: translateY(-2px);
+  border-color: var(--primary, #00A86B);
 }
 
 .nav-icon {
-  font-size: 14px;
+  font-size: 12px;
   min-width: 16px;
   display: flex;
   align-items: center;
@@ -452,7 +767,7 @@
 }
 
 .nav-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -475,7 +790,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -506,6 +821,25 @@
   .user-dropdown {
     display: none;
   }
+  
+  /* Hide the sidebar on phones — the USER shell only. Scoped to .layout
+     because the admin sidebar carries this same .sidebar class, and an
+     unscoped !important here made the admin drawer impossible to open: it beat
+     every display rule in admin-layout.css regardless of specificity. */
+  .layout > .sidebar {
+    display: none !important;
+  }
+  
+  /* adjust main content to full width on mobile */
+  .layout {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+    flex: 1;
+  }
 }
 
 /* Ensure Logout button is visible and properly sized on larger screens */
@@ -514,7 +848,7 @@
   align-items: center;
   justify-content: center;
   padding: 8px 12px;
-  font-size: 14px;
+  font-size: 12px;
   border-radius: 6px;
 }
 
@@ -531,18 +865,29 @@
 
 .user-name {
   font-weight: 600;
-  color: var(--dark);
+  color: var(--text);
 }
 
 .user-role {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
   text-transform: capitalize;
 }
 
 .layout-body {
-  padding: 30px;
+  flex: 1;
+  padding: 0;
   overflow-y: auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.route-loading {
+  display: grid;
+  place-items: center;
+  min-height: calc(100vh - 64px);
+  color: var(--text-light, #64748B);
+  font-size: 13px;
 }
 
 @media (max-width: 1024px) {
@@ -553,11 +898,11 @@
 
   .nav-card {
     padding: 10px 12px;
-    font-size: 13px;
+    font-size: 11.5px;
   }
 
   .nav-icon {
-    font-size: 16px;
+    font-size: 13.5px;
   }
 
   .navbar-menu {
@@ -565,13 +910,13 @@
   }
 
   .layout-body {
-    padding: 20px;
+    padding: 0;
   }
 }
 
 @media (max-width: 768px) {
-  /* On small screens the sidebar becomes hidden and the top navbar/menu is used */
-  .sidebar {
+  /* user shell only — see the note above */
+  .layout > .sidebar {
     display: none;
   }
 
@@ -586,19 +931,19 @@
   }
 
   .navbar-brand h2 {
-    font-size: 20px;
+    font-size: 16.5px;
   }
 
   .navbar-menu {
     flex-basis: 100%;
     gap: 12px;
     order: 3;
-    font-size: 13px;
+    font-size: 11.5px;
     overflow-x: auto;
   }
 
   .nav-item {
-    font-size: 12px;
+    font-size: 11px;
     white-space: nowrap;
   }
 
@@ -629,25 +974,38 @@
   }
 
   .layout-body {
-    padding: 12px;
+    padding: 0;
   }
 }
 
 @media (max-width: 480px) {
   .navbar {
     flex-direction: column;
-    gap: 10px;
+    gap: 60px;
     padding: 10px;
   }
 
+  .navbar-brand {
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .navbar-icons {
+    justify-content: flex-end;
+    align-items: center;
+    margin-right: 0;
+    padding: 0;
+    gap: 8px;
+  }
+
   .navbar-brand h2 {
-    font-size: 18px;
+    font-size: 14.5px;
   }
 
   .navbar-menu {
     flex-basis: 100%;
     gap: 10px;
-    font-size: 12px;
+    font-size: 11px;
     overflow-x: auto;
   }
 
@@ -668,13 +1026,13 @@
   }
 
   .layout-body {
-    padding: 10px;
+    padding: 0;
   }
 
   /* Make logout button smaller on very small screens */
   .navbar-user .btn {
     padding: 6px 8px;
-    font-size: 12px;
+    font-size: 11px;
     height: auto;
   }
 }
@@ -685,7 +1043,7 @@
   width: 100%;
   margin: 0 0 16px 0;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--text);
 }
 
 /* Currency converter in admin sidebar */
@@ -697,7 +1055,7 @@
   border: 1px solid var(--border);
 }
 .currency-converter .converter-title {
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 700;
   margin-bottom: 6px;
 }
@@ -732,7 +1090,7 @@
   cursor: pointer;
 }
 .currency-converter .converter-result {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   padding-top: 4px;
@@ -750,14 +1108,14 @@
 }
 
 .page-header h1 {
-  font-size: 32px;
+  font-size: 25.5px;
   font-weight: 700;
   margin: 0 0 8px;
   color: #333;
 }
 
 .page-header p {
-  font-size: 14px;
+  font-size: 12px;
   color: #999;
   margin: 0;
 }
@@ -767,15 +1125,15 @@
   border: 1px solid #e0e0e0;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  
 }
 
 /* Quick Note card styles for pairwise rate summary */
 .quick-note {
   padding: 16px;
-  background-color: #f5f7ff; /* subtle bluish card background */
+  background-color: #E8F7F0; /* subtle bluish card background */
   background-image: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(245,247,255,0.8) 100%);
-  border: 1px solid #e6edff;
+  border: 1px solid #E8F7F0;
   box-shadow: 0 6px 18px rgba(99,102,241,0.06);
   position: relative;
   overflow: hidden;
@@ -783,8 +1141,8 @@
 
 .quick-note h3 {
   margin: 0 0 8px 0;
-  font-size: 16px;
-  color: var(--dark);
+  font-size: 13.5px;
+  color: var(--text);
 }
 
 .pairwise-grid {
@@ -795,16 +1153,16 @@
 
 .pairwise-tile {
   background: #ffffff;
-  border: 1px solid #eef3ff;
+  border: 1px solid #E8F7F0;
   border-radius: 8px;
   padding: 10px;
-  box-shadow: 0 2px 6px rgba(99,102,241,0.04);
+  
 }
 
 .pairwise-tile {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #E8F7F0 100%);
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
@@ -815,17 +1173,17 @@
   right: 0;
   top: 0;
   height: 6px;
-  background: linear-gradient(90deg, var(--primary, #667eea), #7c3aed);
+  background: linear-gradient(90deg, var(--primary, #6FDCB0), #34C88E);
   opacity: 0.95;
 }
 
 .pairwise-tile:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(124,58,237,0.12);
+  
 }
 
 .pairwise-tile .pair-title {
-  color: var(--primary, #5b21b6);
+  color: var(--primary, #0A8F53);
 }
 
 .quick-note::before {
@@ -835,45 +1193,45 @@
   top: 0;
   bottom: 0;
   width: 6px;
-  background: linear-gradient(180deg, var(--primary) 0%, #7c3aed 100%);
+  background: linear-gradient(180deg, var(--primary) 0%, #34C88E 100%);
   opacity: 0.95;
 }
 
 /* Dark mode: make Quick Note card white for strong contrast */
 [data-theme="dark"] .quick-note {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #0F172A;
   border: 1px solid rgba(2,6,23,0.06);
   box-shadow: 0 10px 30px rgba(2,6,23,0.06);
 }
 
 [data-theme="dark"] .quick-note::before {
   /* slightly brighter accent in dark mode */
-  background: linear-gradient(180deg, var(--primary, #667eea) 0%, #7c3aed 100%);
+  background: linear-gradient(180deg, var(--primary, #6FDCB0) 0%, #34C88E 100%);
   opacity: 0.98;
 }
 
 /* Ensure tiles inside Quick Note remain readable on white background in dark mode */
 [data-theme="dark"] .pairwise-tile {
   background: #ffffff;
-  color: #0f172a;
-  border: 1px solid #eef3ff;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.04);
+  color: #0F172A;
+  border: 1px solid #E8F7F0;
+  
 }
 
 [data-theme="dark"] .pairwise-tile .pair-title {
-  color: var(--primary, #5b21b6);
+  color: var(--primary, #0A8F53);
 }
 
 .pairwise-tile .pair-title {
   font-weight: 700;
-  color: var(--dark);
-  font-size: 13px;
+  color: var(--text);
+  font-size: 11.5px;
 }
 
 .pairwise-tile .pair-values {
   margin-top: 6px;
-  font-size: 13px;
+  font-size: 11.5px;
   color: #444;
   line-height: 1.2;
 }
@@ -902,11 +1260,11 @@
 }
 
 .converter-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6FDCB0 0%, #00A86B 100%);
   border-radius: 16px;
   padding: 32px;
   color: white;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -926,7 +1284,7 @@
 }
 
 .converter-input-group label {
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -939,10 +1297,10 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 12px 16px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .converter-select-lg:hover {
@@ -958,12 +1316,12 @@
 }
 
 .converter-select-lg option {
-  background: #764ba2;
+  background: #00A86B;
   color: white;
 }
 
 .converter-rate {
-  font-size: 12px;
+  font-size: 11px;
   opacity: 0.8;
   font-style: italic;
 }
@@ -983,7 +1341,7 @@
   background: transparent;
   border: none;
   color: white;
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 700;
   outline: none;
 }
@@ -993,7 +1351,7 @@
 }
 
 .converter-code {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   background: rgba(255, 255, 255, 0.2);
@@ -1009,9 +1367,9 @@
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  font-size: 20px;
+  font-size: 16.5px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1036,7 +1394,7 @@
 
 .converter-result-value {
   flex: 1;
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 700;
   min-height: 32px;
 }
@@ -1053,21 +1411,21 @@
   border-radius: 12px;
   padding: 20px;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .info-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+  border-color: #64748B;
+  
 }
 
 .info-icon {
-  font-size: 32px;
+  font-size: 25.5px;
   margin-bottom: 8px;
 }
 
 .info-card h3 {
-  font-size: 13px;
+  font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #666;
@@ -1075,14 +1433,14 @@
 }
 
 .info-value {
-  font-size: 18px;
+  font-size: 14.5px;
   font-weight: 600;
   color: #333;
   margin: 0;
 }
 
 .highlight {
-  color: #667eea;
+  color: #64748B;
   font-weight: 700;
 }
 
@@ -1106,7 +1464,7 @@
   padding: 14px;
   text-align: left;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .currencies-table th {
@@ -1114,7 +1472,7 @@
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .currencies-table tbody tr {
@@ -1142,7 +1500,7 @@
 @media (max-width: 768px) {
   .send-by-state-title {
     margin-bottom: 12px;
-    font-size: 1.1rem;
+    font-size: 0.906rem;
   }
 
   .converter-card {
@@ -1160,7 +1518,7 @@
   .currencies-table th,
   .currencies-table td {
     padding: 10px;
-    font-size: 13px;
+    font-size: 11.5px;
   }
 
   .currencies-table th {
@@ -1168,11 +1526,11 @@
   }
 
   .converter-input-amount {
-    font-size: 18px;
+    font-size: 14.5px;
   }
 
   .converter-result-value {
-    font-size: 18px;
+    font-size: 14.5px;
   }
 
   .page-container {
@@ -1180,7 +1538,7 @@
   }
 
   .page-header h1 {
-    font-size: 24px;
+    font-size: 19px;
   }
 }
 
@@ -1193,7 +1551,7 @@
   .converter-swap-btn {
     width: 40px;
     height: 40px;
-    font-size: 16px;
+    font-size: 13.5px;
   }
 
   .converter-info-grid {
@@ -1201,11 +1559,11 @@
   }
 
   .info-value {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .currencies-table {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .currencies-table th,
@@ -1214,7 +1572,7 @@
   }
 
   .page-header h1 {
-    font-size: 20px;
+    font-size: 16.5px;
   }
 }
 
@@ -1222,7 +1580,7 @@
 @media (max-width: 768px) {
   .send-by-state-title {
     margin-bottom: 12px;
-    font-size: 1.1rem;
+    font-size: 0.906rem;
   }
 }
 
@@ -1235,13 +1593,13 @@
 
 /* Dark mode for sidebar */
 [data-theme="dark"] .sidebar {
-  background: #1e293b;
+  background: #1E293B;
   border-right-color: var(--border);
   color: var(--text);
 }
 
 [data-theme="dark"] .sidebar .brand-label {
-  color: #60a5fa;
+  color: #64748B;
 }
 
 [data-theme="dark"] .sidebar .sidebar-toggle {
@@ -1253,26 +1611,26 @@
 }
 
 [data-theme="dark"] .sidebar-item:hover {
-  background-color: #3b82f6;
+  background-color: #34C88E;
   color: white;
 }
 
 /* Dark mode for navbar */
 [data-theme="dark"] .navbar {
-  background: #0f172a;
+  background: #0F172A;
   border-bottom-color: var(--border);
   color: var(--text);
 }
 
 /* Dark mode for admin navbar */
 [data-theme="dark"] .admin-navbar {
-  background: #0f172a;
+  background: #0F172A;
   border-bottom-color: var(--border);
   color: var(--text);
 }
 
 [data-theme="dark"] .navbar-brand-admin .brand-link {
-  color: #60a5fa;
+  color: #64748B;
 }
 
 [data-theme="dark"] .admin-user-info {
@@ -1286,23 +1644,23 @@
 
 /* Dark mode for collapsed nav item hover label */
 [data-theme="dark"] .sidebar.collapsed .nav-item:hover .nav-label {
-  background: #1e293b;
+  background: #1E293B;
   color: var(--text);
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
 
 /* Dark mode for nav cards */
 [data-theme="dark"] .nav-card {
-  background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+  background: linear-gradient(135deg, #087443 0%, #1E293B 100%);
   border-color: var(--border);
   color: var(--text);
 }
 
 [data-theme="dark"] .nav-card:hover {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #34C88E 0%, #00A86B 100%);
   color: white;
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  border-color: #34C88E;
+  
 }
 
 /* Dark mode for nav item (non-card) */
@@ -1327,14 +1685,14 @@
 .exchange-rate-widget {
   margin: 12px 6px;
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6FDCB0 0%, #00A86B 100%);
   border-radius: 8px;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.2);
 }
 
 .exchange-rate-header {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1362,7 +1720,7 @@
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
   text-transform: capitalize;
 }
 
@@ -1378,7 +1736,7 @@
 }
 
 .exchange-rate-mode-select option {
-  background: #764ba2;
+  background: #00A86B;
   color: white;
   text-transform: capitalize;
 }
@@ -1396,10 +1754,10 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 6px 8px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
 }
 
 .exchange-rate-select:hover {
@@ -1414,12 +1772,12 @@
 }
 
 .exchange-rate-select option {
-  background: #764ba2;
+  background: #00A86B;
   color: white;
 }
 
 .exchange-rate-arrow {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   opacity: 0.9;
 }
@@ -1433,7 +1791,7 @@
 }
 
 .exchange-rate-value {
-  font-size: 18px;
+  font-size: 14.5px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1460,16 +1818,16 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .rate-summary-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+  border-color: #64748B;
+  
 }
 
 .rate-summary-icon {
-  font-size: 32px;
+  font-size: 25.5px;
   min-width: 40px;
 }
 
@@ -1480,7 +1838,7 @@
 }
 
 .rate-summary-label {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: #999;
@@ -1488,7 +1846,7 @@
 }
 
 .rate-summary-value {
-  font-size: 20px;
+  font-size: 16.5px;
   font-weight: 700;
   color: #333;
 }
@@ -1504,20 +1862,20 @@
   padding: 12px 40px 12px 16px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.3s ease;
+  font-size: 12px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
 }
 
 .rates-search-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #64748B;
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1);
 }
 
 .rates-search-icon {
   position: absolute;
   right: 14px;
-  font-size: 16px;
+  font-size: 13.5px;
   color: #999;
 }
 
@@ -1525,11 +1883,6 @@
   overflow-x: auto;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
-}
-
-.rates-table {
-  width: 100%;
-  border-collapse: collapse;
 }
 
 .rates-table thead {
@@ -1543,21 +1896,14 @@
   color: #666;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-size: 12px;
+  font-size: 11px;
   border-bottom: 1px solid #e0e0e0;
-}
-
-.rates-table th:nth-child(4),
-.rates-table th:nth-child(5) {
-  background: #f9fafb;
-  font-weight: 700;
-  color: #333;
 }
 
 .rates-table td {
   padding: 14px;
   border-bottom: 1px solid #e0e0e0;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .rate-row {
@@ -1573,8 +1919,8 @@
 }
 
 .currency-code {
-  font-size: 15px;
-  color: #667eea;
+  font-size: 12.5px;
+  color: #64748B;
   font-weight: 700;
 }
 
@@ -1583,16 +1929,16 @@
   padding: 4px 8px;
   border-radius: 4px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 11.5px;
 }
 
 .exchange-rate-badge {
-  background: #e0e7ff;
-  color: #667eea;
+  background: #E8F7F0;
+  color: #64748B;
   padding: 6px 12px;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 11.5px;
   display: inline-block;
 }
 
@@ -1600,11 +1946,11 @@
   padding: 8px 14px;
   border-radius: 6px;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
   display: inline-block;
   min-width: 80px;
   text-align: center;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
 }
 
 .price-badge.buying-badge {
@@ -1626,27 +1972,27 @@
 
 .price-badge.selling-badge:hover {
   background: #fecaca;
-  border-color: #f87171;
+  border-color: #F87171;
 }
 
 .tier-badge {
   padding: 6px 12px;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   display: inline-block;
 }
 
 .tier-1 {
-  background: #dbeafe;
-  color: #1e40af;
+  background: #D1F0E3;
+  color: #0A8F53;
 }
 
 .tier-2 {
-  background: #e0e7ff;
-  color: #3730a3;
+  background: #E8F7F0;
+  color: #0A8F53;
 }
 
 .tier-3 {
@@ -1655,7 +2001,7 @@
 }
 
 .countries-list {
-  font-size: 13px;
+  font-size: 11.5px;
   color: #666;
 }
 
@@ -1665,8 +2011,8 @@
   padding: 6px 10px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 12px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
 }
 
 .action-btn:hover {
@@ -1675,16 +2021,16 @@
 }
 
 .view-btn {
-  color: #667eea;
+  color: #64748B;
 }
 
 .delete-btn {
-  color: #ef4444;
+  color: #DC2626;
 }
 
 .delete-btn:hover {
   background: #fee2e2;
-  border-color: #ef4444;
+  border-color: #DC2626;
 }
 
 .conversion-reference-grid {
@@ -1694,13 +2040,13 @@
 }
 
 .conversion-ref-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6FDCB0 0%, #00A86B 100%);
   border-radius: 8px;
   padding: 16px;
   text-align: center;
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-  transition: all 0.3s ease;
+  
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1708,11 +2054,11 @@
 
 .conversion-ref-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  
 }
 
 .conversion-ref-code {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   opacity: 0.9;
@@ -1737,7 +2083,7 @@
 }
 
 .ref-price-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -1745,7 +2091,7 @@
 }
 
 .ref-price-value {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -1773,7 +2119,7 @@
   .rates-table th,
   .rates-table td {
     padding: 10px;
-    font-size: 13px;
+    font-size: 11.5px;
   }
 
   .rates-table th {
@@ -1795,15 +2141,15 @@
   }
 
   .rate-summary-icon {
-    font-size: 24px;
+    font-size: 19px;
   }
 
   .rate-summary-value {
-    font-size: 16px;
+    font-size: 13.5px;
   }
 
   .rates-table {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .rates-table th,
@@ -1820,7 +2166,7 @@
   }
 
   .conversion-ref-value {
-    font-size: 16px;
+    font-size: 13.5px;
   }
 }
 
@@ -1858,14 +2204,14 @@
 
 .modal-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 16.5px;
   color: #333;
 }
 
 .modal-close {
   background: transparent;
   border: none;
-  font-size: 24px;
+  font-size: 19px;
   cursor: pointer;
   color: #999;
   transition: color 0.2s ease;
@@ -1898,7 +2244,7 @@
 }
 
 .form-group label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #333;
 }
@@ -1908,15 +2254,15 @@ select.form-input {
   padding: 10px 12px;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 12px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
 }
 
 .form-input:focus,
 select.form-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #64748B;
+  box-shadow: 0 0 0 3px rgba(0, 168, 107, 0.1);
 }
 
 .form-row {
@@ -1936,20 +2282,20 @@ select.form-input:focus {
 }
 
 .btn-add-country {
-  background: #667eea;
+  background: #6FDCB0;
   color: white;
   border: none;
   padding: 10px 16px;
   border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  font-size: 14px;
-  transition: all 0.2s ease;
+  font-size: 12px;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
   white-space: nowrap;
 }
 
 .btn-add-country:hover {
-  background: #5568d3;
+  background: #34C88E;
 }
 
 .countries-tags {
@@ -1963,55 +2309,26 @@ select.form-input:focus {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #e0e7ff;
-  color: #667eea;
+  background: #E8F7F0;
+  color: #64748B;
   padding: 6px 12px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
 }
 
 .country-tag-remove {
   background: transparent;
   border: none;
-  color: #667eea;
+  color: #64748B;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
   padding: 0;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
 }
 
 .country-tag-remove:hover {
-  color: #ef4444;
-}
-
-.btn {
-  padding: 10px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: #667eea;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #5568d3;
-}
-
-.btn-secondary {
-  background: #f0f0f0;
-  color: #333;
-  border: 1px solid #e0e0e0;
-}
-
-.btn-secondary:hover {
-  background: #e8e8e8;
+  color: #DC2626;
 }
 
 /* Send By State page spacing */
@@ -2052,12 +2369,11 @@ select.form-input:focus {
     border-right: none;
     border-bottom: 1px solid var(--border);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.95);
+    background: #ffffff;
   }
 
   [data-theme="dark"] .sidebar {
-    background: rgba(15, 23, 42, 0.95);
+    background: #0F172A;
   }
 
   .sidebar.open {
@@ -2070,12 +2386,12 @@ select.form-input:focus {
   }
 
   .sidebar .sidebar-brand h2 {
-    font-size: 18px;
+    font-size: 14.5px;
     margin: 0;
   }
 
   .sidebar .brand-icon {
-    font-size: 24px;
+    font-size: 19px;
   }
 
   .sidebar-nav {
@@ -2085,11 +2401,10 @@ select.form-input:focus {
   .sidebar-nav .nav-item {
     margin: 4px 16px;
     border-radius: 12px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .sidebar-nav .nav-item:hover {
-    transform: translateX(8px);
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
   }
@@ -2097,20 +2412,19 @@ select.form-input:focus {
   .sidebar-nav .nav-item.active {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-    animation: pulse 2s infinite;
+    box-shadow: 0 4px 15px rgba(0, 168, 107, 0.3);
   }
 
   .sidebar-nav .nav-link {
     padding: 14px 16px;
-    font-size: 15px;
+    font-size: 12.5px;
     display: flex;
     align-items: center;
     gap: 12px;
   }
 
   .sidebar-nav .nav-icon {
-    font-size: 18px;
+    font-size: 14.5px;
     min-width: 20px;
   }
 
@@ -2118,7 +2432,7 @@ select.form-input:focus {
     margin-left: 0;
     padding: 16px;
     margin-top: 0;
-    animation: fadeIn 0.6s ease-in-out;
+    
   }
 
   .mobile-menu-toggle {
@@ -2133,15 +2447,15 @@ select.form-input:focus {
     border-radius: 50%;
     width: 48px;
     height: 48px;
-    font-size: 20px;
+    font-size: 16.5px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 168, 107, 0.3);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .mobile-menu-toggle:hover {
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 168, 107, 0.4);
   }
 
   .mobile-menu-overlay {
@@ -2171,7 +2485,6 @@ select.form-input:focus {
     background: white;
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
-    backdrop-filter: blur(10px);
   }
 
   [data-theme="dark"] .mobile-header {
@@ -2185,7 +2498,7 @@ select.form-input:focus {
   }
 
   .mobile-header .header-title {
-    font-size: 18px;
+    font-size: 14.5px;
     font-weight: 600;
     color: var(--text);
   }
@@ -2199,14 +2512,14 @@ select.form-input:focus {
   .card {
     padding: 20px;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    animation: slideInFromBottom 0.6s ease-out;
+    
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+    
   }
 
   .card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    
   }
 
   /* Mobile Tables */
@@ -2219,7 +2532,7 @@ select.form-input:focus {
 
   table {
     min-width: 600px;
-    font-size: 14px;
+    font-size: 12px;
   }
 
   th, td {
@@ -2240,15 +2553,15 @@ select.form-input:focus {
   input, select, textarea {
     width: 100%;
     padding: 16px;
-    font-size: 16px;
+    font-size: 13.5px;
     border-radius: 12px;
     border: 2px solid var(--border);
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   input:focus, select:focus, textarea:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 0 0 4px rgba(0, 168, 107, 0.1);
     transform: scale(1.02);
   }
 
@@ -2258,18 +2571,35 @@ select.form-input:focus {
     gap: 12px;
   }
 
-  button, .btn {
+  /* Full-width, tall buttons are the right default on a phone for form submits
+     and primary actions. .btn-sm opts out: it is an explicit request for a
+     compact button, and it is what page-header actions like Refresh use — those
+     should stay small and sit at the end of the header, not span the screen.
+     .btn-block is still the way to ask for full width at any size. */
+  /* The two halves are deliberately weighted differently.
+
+     `button:where(:not(.btn-sm))` scores (0,0,1) because :where() contributes
+     nothing — so it loses to ANY class that sets its own width. That is what
+     keeps icon buttons intact: .password-toggle, .modal-close, .icon-btn,
+     .sidebar-toggle and friends each declare a fixed px width, and previously
+     the old `button:not(.btn-sm)` at (0,1,1) outranked them and stretched them
+     across the screen. Any icon button added later is covered automatically.
+
+     `.btn:not(.btn-sm)` stays at (0,2,0) so it still beats design-system's
+     `.btn` and real buttons keep going full width on a phone. */
+  button:where(:not(.btn-sm)),
+  .btn:not(.btn-sm) {
     width: 100%;
     padding: 16px;
-    font-size: 16px;
+    font-size: 13.5px;
     border-radius: 12px;
     min-height: 52px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   button:hover, .btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 168, 107, 0.2);
   }
 
   /* Mobile Modals */
@@ -2308,7 +2638,7 @@ select.form-input:focus {
     position: sticky;
     top: 0;
     height: 100vh;
-    transition: all 0.4s ease;
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease;
   }
 
   .sidebar.collapsed {
@@ -2323,32 +2653,32 @@ select.form-input:focus {
 
   .sidebar .sidebar-brand {
     padding: 20px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .sidebar-nav .nav-item {
     margin: 6px 12px;
     border-radius: 14px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .sidebar-nav .nav-item:hover {
     transform: translateX(6px) scale(1.02);
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 168, 107, 0.2);
   }
 
   .sidebar-nav .nav-link {
     padding: 16px 20px;
-    font-size: 15px;
+    font-size: 12.5px;
   }
 
   .main-content {
     margin-left: 0;
     padding: 24px;
     flex: 1;
-    animation: fadeIn 0.7s ease-in-out;
+    
   }
 
   .dashboard-cards {
@@ -2359,17 +2689,17 @@ select.form-input:focus {
   .card {
     padding: 24px;
     border-radius: 18px;
-    transition: all 0.4s ease;
-    animation: slideInFromBottom 0.7s ease-out;
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease;
+    
   }
 
   .card:hover {
     transform: translateY(-6px) rotate(0.5deg);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    
   }
 
   table {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   th, td {
@@ -2405,7 +2735,7 @@ select.form-input:focus {
     width: 320px;
     border-radius: 0 20px 20px 0;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
-    transition: all 0.5s ease;
+    transition: background-color 0.5s ease, border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease, transform 0.5s ease, opacity 0.5s ease, filter 0.5s ease;
   }
 
   .sidebar:hover {
@@ -2419,12 +2749,12 @@ select.form-input:focus {
   }
 
   .sidebar .sidebar-brand h2 {
-    font-size: 24px;
+    font-size: 19px;
     font-weight: 700;
   }
 
   .sidebar .brand-icon {
-    font-size: 28px;
+    font-size: 22px;
   }
 
   .sidebar-nav {
@@ -2434,7 +2764,7 @@ select.form-input:focus {
   .sidebar-nav .nav-item {
     margin: 8px 16px;
     border-radius: 16px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
   }
@@ -2443,44 +2773,45 @@ select.form-input:focus {
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
+    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
+    transform: translateX(-100%);
+    transition: transform 0.5s;
   }
 
   .sidebar-nav .nav-item:hover::before {
-    left: 100%;
+    transform: translateX(100%);
   }
 
   .sidebar-nav .nav-item:hover {
     transform: translateX(12px) scale(1.05);
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 8px 30px rgba(0, 168, 107, 0.3);
   }
 
   .sidebar-nav .nav-item.active {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 8px 30px rgba(0, 168, 107, 0.3);
     animation: pulse 3s infinite;
   }
 
   .sidebar-nav .nav-link {
     padding: 18px 24px;
-    font-size: 16px;
+    font-size: 13.5px;
   }
 
   .sidebar-nav .nav-icon {
-    font-size: 20px;
+    font-size: 16.5px;
     min-width: 24px;
   }
 
   .main-content {
     padding: 40px;
-    animation: fadeIn 0.8s ease-in-out;
+    
   }
 
   .dashboard-cards {
@@ -2491,8 +2822,8 @@ select.form-input:focus {
   .card {
     padding: 32px;
     border-radius: 24px;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInFromBottom 0.8s ease-out;
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    
     position: relative;
     overflow: hidden;
   }
@@ -2510,11 +2841,11 @@ select.form-input:focus {
 
   .card:hover {
     transform: translateY(-10px) rotate(0.5deg) scale(1.02);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    
   }
 
   table {
-    font-size: 15px;
+    font-size: 12.5px;
     border-radius: 16px;
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   }
@@ -2552,16 +2883,7 @@ select.form-input:focus {
    ANIMATIONS FOR LAYOUT
    ======================================== */
 
-@keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
+@keyframes slideInFromLeft { from { opacity: 0; } to { opacity: 1; } }
 
 @keyframes slideOutToLeft {
   from {
@@ -2574,38 +2896,13 @@ select.form-input:focus {
   }
 }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+@keyframes fadeInScale { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+@keyframes bounceIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Sidebar animations */
 .sidebar-enter {
-  animation: slideInFromLeft 0.4s ease-out;
+  
 }
 
 .sidebar-exit {
@@ -2613,12 +2910,6 @@ select.form-input:focus {
 }
 
 /* Card stagger animation */
-.dashboard-cards .card:nth-child(1) { animation-delay: 0.1s; }
-.dashboard-cards .card:nth-child(2) { animation-delay: 0.2s; }
-.dashboard-cards .card:nth-child(3) { animation-delay: 0.3s; }
-.dashboard-cards .card:nth-child(4) { animation-delay: 0.4s; }
-.dashboard-cards .card:nth-child(5) { animation-delay: 0.5s; }
-.dashboard-cards .card:nth-child(6) { animation-delay: 0.6s; }
 
 /* Loading states */
 .sidebar-loading {
@@ -2665,3 +2956,559 @@ select.form-input:focus {
   }
 }
 
+
+/* ==========================================================================
+   Icon colour consistency
+   Icons are lucide SVGs drawn with stroke="currentColor", so they follow the
+   `color` of whatever contains them. The old emoji had their own intrinsic
+   colour, so several containers never set one — leaving icon and label in
+   different colours. These rules make every icon inherit its label's colour.
+   ========================================================================== */
+
+/* ---- brand lockup: wallet mark + wordmark share one colour ---- */
+.sidebar .sidebar-brand,
+.navbar-brand-admin .brand-link {
+  color: var(--primary-dark);
+}
+
+.sidebar .sidebar-brand .brand-icon,
+.sidebar .sidebar-brand .brand-label,
+.navbar-brand-admin .brand-icon,
+.navbar-brand-admin .brand-label {
+  color: inherit;
+  opacity: 1;
+}
+
+.sidebar .brand-icon svg,
+.navbar-brand-admin .brand-icon svg {
+  display: block;
+  stroke: currentColor;
+}
+
+[data-theme="dark"] .sidebar .sidebar-brand,
+[data-theme="dark"] .navbar-brand-admin .brand-link {
+  color: var(--primary);
+}
+
+/* restore brand colour in dark mode (was left neutral grey) */
+[data-theme="dark"] .sidebar .brand-label,
+[data-theme="dark"] .navbar-brand-admin .brand-link {
+  color: var(--primary);
+}
+
+[data-theme="dark"] .navbar-brand-admin .brand-link:hover {
+  color: var(--primary);
+}
+
+/* ---- nav icons follow their row's colour ---- */
+.nav-icon,
+.nav-icon svg,
+.sidebar-item svg,
+.nav-item svg {
+  color: inherit;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.nav-item.active .nav-icon,
+.sidebar-item.active svg {
+  color: inherit;
+}
+
+/* ---- generic: icons inside buttons and links match their text ---- */
+.btn svg,
+.action-btn svg,
+.btn-icon svg {
+  color: inherit;
+  stroke: currentColor;
+  vertical-align: middle;
+}
+
+/* ==========================================================================
+   Sidebar density (user / agent)
+   Kept in step with the admin sidebar above.
+   ========================================================================== */
+
+.sidebar-nav {
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.nav-card {
+  padding: 10px 12px;
+  margin-bottom: 0;
+  border-radius: 10px;
+  gap: 12px;
+}
+
+@media screen and (min-width: 834px) and (max-width: 1024px) {
+  .sidebar-nav .nav-item {
+    margin: 3px 10px;
+    border-radius: 10px;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  .sidebar-nav {
+    padding: 14px 0;
+    gap: 4px;
+  }
+
+  .sidebar-nav .nav-item {
+    margin: 3px 12px;
+    border-radius: 12px;
+  }
+
+  .sidebar-nav .nav-item:hover {
+    transform: translateX(4px);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar-nav {
+    padding: 10px 0;
+  }
+
+  .sidebar-nav .nav-item {
+    margin: 3px 10px;
+    border-radius: 10px;
+  }
+}
+
+/* ---- sidebar icons carry the brand colour ------------------------------- */
+.sidebar-nav .nav-item svg,
+.sidebar-nav .nav-icon svg,
+.nav-card svg {
+  color: var(--primary);
+  transition: color 0.2s ease;
+}
+
+.sidebar-nav .nav-item:hover svg,
+.sidebar-nav .nav-item.active svg,
+.nav-card:hover svg,
+.nav-card.active svg {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .sidebar-nav .nav-item svg,
+[data-theme="dark"] .nav-card svg {
+  color: var(--primary);
+}
+
+/* the brand mark stays locked to the wordmark colour, not the nav accent */
+.sidebar .sidebar-brand .brand-icon svg,
+.navbar-brand-admin .brand-icon svg {
+  color: inherit;
+}
+
+/* Same gap on the user/agent sidebar: .nav-item:hover only changed text
+   colour, and .nav-item.active was green only inside media queries. */
+.sidebar-nav .nav-item:hover,
+.sidebar-nav .nav-item.active,
+.nav-card:hover,
+.nav-card.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #FFFFFF;
+  border-color: var(--primary);
+}
+
+.sidebar-nav .nav-item:hover svg,
+.sidebar-nav .nav-item.active svg,
+.nav-card:hover svg,
+.nav-card.active svg,
+.nav-card:hover .nav-icon,
+.nav-card.active .nav-icon {
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Active nav row (user / agent) — same rationale as the admin sidebar
+   ========================================================================== */
+
+.sidebar-nav .nav-item:hover:not(.active),
+.nav-card:hover:not(.active) {
+  background: #E8F7F0;
+  color: var(--primary-dark);
+  border-color: #A9EBD1;
+  
+  transform: none;
+}
+
+.sidebar-nav .nav-item:hover:not(.active) svg,
+.nav-card:hover:not(.active) svg,
+.nav-card:hover:not(.active) .nav-icon {
+  color: var(--primary-dark);
+}
+
+.sidebar-nav .nav-item.active,
+.nav-card.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  border-color: var(--primary);
+  
+  transform: none;
+}
+
+.sidebar-nav .nav-item.active:hover,
+.nav-card.active:hover {
+  transform: none;
+  filter: brightness(1.04);
+}
+
+.sidebar-nav .nav-item.active svg,
+.nav-card.active svg,
+.nav-card.active .nav-icon,
+.nav-card.active .nav-label {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .sidebar-nav .nav-item:hover:not(.active),
+[data-theme="dark"] .nav-card:hover:not(.active) {
+  background: #05512F;
+  color: #D1F0E3;
+}
+
+/* ==========================================================================
+   Sidebar width (user / agent) — kept in step with the admin sidebar
+   ========================================================================== */
+
+@media screen and (min-width: 769px) {
+  .sidebar {
+    width: 240px;
+  }
+
+  .sidebar.collapsed {
+    width: 80px;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .sidebar {
+    width: 280px;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  .sidebar {
+    width: 340px;
+  }
+
+  .sidebar.collapsed {
+    width: 80px;
+  }
+
+  .sidebar-nav .nav-item {
+    margin: 3px 14px;
+  }
+
+  .nav-card {
+    padding: 11px 14px;
+  }
+}
+
+/* ==========================================================================
+   Brand logo (raster)
+   The sidebar shows the full lockup, and swaps to the icon mark when collapsed.
+   PNGs carry a transparent backdrop, so they sit on light and dark alike.
+   ========================================================================== */
+
+
+.brand-logo-full {
+  height: 38px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-logo-mark {
+  height: 34px;
+  width: 34px;
+  object-fit: contain;
+  display: none;
+}
+
+/* collapsed rail: icon mark only, centred */
+.sidebar.collapsed .sidebar-brand {
+  justify-content: center;
+  padding: 10px 4px 8px;
+}
+
+.sidebar.collapsed .brand-logo-full { display: none; }
+.sidebar.collapsed .brand-logo-mark { display: block; }
+
+/* top navbar lockup */
+.navbar-logo {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+@media screen and (min-width: 1440px) {
+  .brand-logo-full { height: 42px; }
+  .navbar-logo { height: 38px; }
+}
+
+@media screen and (max-width: 768px) {
+  .brand-logo-full { height: 34px; }
+  .navbar-logo { height: 30px; }
+}
+
+/* ==========================================================================
+   Admin navbar logo — small screens only
+   From 769px up the sidebar is on screen and already carries the lockup, so
+   the navbar copy is a duplicate. At 768px and below the sidebar collapses to
+   a drawer, and the navbar becomes the only place the brand appears.
+   ========================================================================== */
+
+.navbar-brand-admin {
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .navbar-brand-admin {
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* ==========================================================================
+   Brand row: logo left, display-mode toggle right
+   ========================================================================== */
+
+
+.sidebar .sidebar-brand .sidebar-toggle {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* A 78px rail cannot fit the mark and the button side by side, so stack them. */
+.sidebar.collapsed .sidebar-brand,
+.admin-layout.sidebar-collapsed .sidebar-brand {
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 4px 8px;
+}
+
+.sidebar.collapsed .sidebar-brand .sidebar-toggle,
+.admin-layout.sidebar-collapsed .sidebar-brand .sidebar-toggle {
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Sidebar brand block — single definition
+   Earlier passes left several competing .sidebar .sidebar-brand rules; this is
+   the authoritative one. Extra bottom padding keeps the toggle clear of the
+   divider instead of sitting on it.
+   ========================================================================== */
+
+.sidebar .sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  min-height: 56px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+.sidebar .sidebar-brand .sidebar-toggle {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+/* collapsed rail: mark above the toggle, both centred and clear of the rule */
+.sidebar.collapsed .sidebar-brand,
+.admin-layout.sidebar-collapsed .sidebar-brand {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 4px 16px;
+  margin-bottom: 8px;
+}
+
+/* ==========================================================================
+   Brand logo in dark mode
+   The artwork's wordmark and phone body are dark navy, which all but vanishes
+   on the dark sidebar. Sit it on a light plate — the same treatment used in
+   the footer — so it stays legible without needing separate inverted artwork.
+   ========================================================================== */
+
+/* .navbar-brand-logo is the user/agent navbar mark, shown below 769px where
+   the sidebar is off-canvas. It was left out of this rule, so it was the one
+   logo still vanishing into the dark bar. */
+[data-theme="dark"] .sidebar .brand-logo-full,
+[data-theme="dark"] .navbar-brand-admin .navbar-logo,
+[data-theme="dark"] .navbar-brand .navbar-brand-logo {
+  background: #FFFFFF;
+  border-radius: 10px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+}
+
+@media screen and (max-width: 768px) {
+  [data-theme="dark"] .admin-layout .sidebar .brand-logo-full {
+    padding-top: 0;
+  }
+}
+
+[data-theme="dark"] .sidebar .brand-logo-mark {
+  background: #FFFFFF;
+  border-radius: 9px;
+  padding: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
+}
+
+/* the plate adds height, so keep the brand row from growing */
+[data-theme="dark"] .sidebar .brand-logo-full { height: 42px; }
+[data-theme="dark"] .sidebar.collapsed .brand-logo-mark { height: 40px; width: 40px; }
+
+/* ==========================================================================
+   Navbar QR shortcut — large screens only
+   Below 769px the bottom nav already gives one-tap access, so the navbar
+   copy would be a duplicate.
+   ========================================================================== */
+
+.navbar-icon-item.navbar-qr { display: none; }
+
+@media screen and (min-width: 769px) {
+  .navbar-icon-item.navbar-qr { display: flex; }
+}
+
+.navbar-icon-item.navbar-qr svg { color: var(--primary, #00A86B); }
+
+.navbar-icon-item.navbar-qr:hover {
+  background: #E8F7F0;
+}
+
+.navbar-icon-item.navbar-qr:hover svg { color: var(--primary-dark, #087443); }
+
+.navbar-icon-item.navbar-qr:focus-visible {
+  outline: 2px solid var(--primary, #00A86B);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .navbar-icon-item.navbar-qr:hover { background: rgba(0, 168, 107, 0.12); }
+[data-theme="dark"] .navbar-icon-item.navbar-qr svg { color: #34C88E; }
+
+/* ==========================================================================
+   Navbar avatar
+   Shown in place of the fallback CircleUserRound icon when the account has a
+   profile image. Uploads are square-cropped, but object-fit guards any legacy
+   non-square image stored before that.
+   ========================================================================== */
+
+.navbar-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  background: var(--light, #E8F7F0);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.navbar-icon-item:hover .navbar-avatar,
+.admin-profile-icon:hover .navbar-avatar {
+  border-color: var(--primary, #00A86B);
+}
+
+[data-theme="dark"] .navbar-avatar {
+  background: #05512F;
+  border-color: #14532D;
+}
+
+/* the navbar carries the logo rather than a text wordmark */
+.navbar-brand-logo {
+  height: 30px;
+  width: auto;
+  max-width: 150px;
+  object-fit: contain;
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .navbar-brand-logo { height: 26px; max-width: 128px; }
+}
+
+/* Room for the fixed bottom nav, which exists up to 1032px. This was an
+   inline paddingBottom driven by a one-off window.innerWidth read. */
+@media (max-width: 1032px) {
+  .layout-body { padding-bottom: 92px; }
+}
+
+/* the bar is 92px tall on a tablet, so the content needs more clearance */
+@media (min-width: 700px) and (max-width: 1032px) {
+  .layout-body { padding-bottom: 108px; }
+}
+
+/* ==========================================================================
+   Tablet uses the mobile shell
+
+   The sidebar was only dismissed below 769px, so a tablet showed the sidebar
+   AND the bottom nav. Scoped to `.layout >` so the admin shell
+   (.admin-layout) keeps its sidebar at these widths.
+   ========================================================================== */
+@media (max-width: 1032px) {
+  .layout > .sidebar { display: none !important; }
+}
+
+/* ==========================================================================
+   Navbar page title — user and agent layouts
+
+   Below 769px the sidebar is off-canvas, so the navbar is the only thing
+   carrying the brand and keeps the logo. From 769px up the sidebar is on
+   screen with the brand chip at its top, so repeating the logo in the navbar
+   said the same thing twice next to an otherwise empty bar. It now names the
+   active sidebar item instead.
+
+   Deliberately self-contained rather than leaning on the .navbar-page-title
+   rules in admin-layout.css: cross-stylesheet borrowing like that is what
+   left the dashboard unstyled when the routes were split. Scoped to .layout
+   (0,2,0) so the admin navbar keeps its own spacing either way.
+   ========================================================================== */
+
+.layout .navbar-page-title {
+  display: none;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: var(--primary-dark, #087443);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.layout .navbar-page-title svg {
+  flex-shrink: 0;
+  color: var(--primary);
+  /* the admin bar offsets this to clear its logo; here the logo is gone */
+  margin-left: 0;
+}
+
+.layout .navbar-page-title span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media screen and (min-width: 769px) {
+  .layout .navbar-brand { display: none; }
+  .layout .navbar-page-title { display: inline-flex; }
+}
+
+@media screen and (min-width: 1440px) {
+  .layout .navbar-page-title { font-size: 14.5px; }
+}
+
+[data-theme="dark"] .layout .navbar-page-title { color: #E2E8F0; }
+[data-theme="dark"] .layout .navbar-page-title svg { color: #A9EBD1; }

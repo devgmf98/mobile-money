@@ -1,14 +1,24 @@
 import { Op } from 'sequelize';
+import { quoteWithdrawal, quoteSendMoney, maxWithdrawable, maxSendable } from '../utils/commission.js';
 import sequelize from '../config/database.js';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import WithdrawalRequest from '../models/WithdrawalRequest.js';
-import { generateTransactionId } from '../utils/helpers.js';
+import { phoneVariants, generateTransactionId } from '../utils/helpers.js';
 import { sendSMS, sendTransactionSMS } from '../utils/sms.js';
 import { getIO } from '../utils/socket.js';
-import SendMoneyCommissionTier from '../models/SendMoneyCommissionTier.js';
-import WithdrawalCommissionTier from '../models/WithdrawalCommissionTier.js';
+
+/* Single source of truth for who may pay whom — also used by the send-quote
+   endpoint so the form can refuse a pairing before pricing it. */
+export const transferAllowed = (senderRole, recipientRole) => {
+  if (!recipientRole) return true;
+  if (recipientRole === 'admin') return false;
+  if (senderRole === 'agent' && recipientRole === 'agent') return false;
+  if (senderRole === 'user') return ['user', 'agent'].includes(recipientRole);
+  if (senderRole === 'agent') return recipientRole === 'user';
+  return true;
+};
 
 export const sendMoney = async (req, res) => {
   try {
@@ -20,54 +30,57 @@ export const sendMoney = async (req, res) => {
       return res.status(404).json({ message: 'Sender not found' });
     }
 
-    // fetch company commission percent for send — use tiered commission
-    let companyPercent = 0;
-    const applicableTier = await SendMoneyCommissionTier.findOne({
-      where: {
-        minAmount: { [Op.lte]: amount },
-        maxAmount: { [Op.gte]: amount }
-      },
-      order: [['minAmount', 'ASC']]
-    });
-
-    if (applicableTier) {
-      companyPercent = parseFloat(applicableTier.companyPercent) || 0;
-    } else {
-      // Default tiered commission: ranges for send-money
-      const defaultTiers = [
-        { minAmount: 0, maxAmount: 99, companyPercent: 0 },
-        { minAmount: 100, maxAmount: 499, companyPercent: 1 },
-        { minAmount: 500, maxAmount: 999, companyPercent: 2 },
-        { minAmount: 1000, maxAmount: Infinity, companyPercent: 3 }
-      ];
-      const defaultTier = defaultTiers
-        .find(t => (parseFloat(t.minAmount) || 0) <= amount && amount <= (parseFloat(t.maxAmount) || Infinity));
-      companyPercent = defaultTier ? defaultTier.companyPercent : 0;
+    /* Resolve the recipient BEFORE pricing: sending to an agent is a cash-out
+       in all but name, so it is charged on the withdrawal tier, while a
+       transfer between two users uses the send-money tier. */
+    let recipient = null;
+    for (const variant of phoneVariants(recipientPhone)) {
+      recipient = await User.findOne({ where: { phone: variant } });
+      if (recipient) break;
     }
-    // If tieredDoc exists but has empty tiers array, companyPercent remains 0 (no commission)
-    const companyCommission = parseFloat(((amount * companyPercent) / 100).toFixed(2)) || 0;
-
-    if (parseFloat(sender.balance) < amount + companyCommission) {
-      return res.status(400).json({ message: 'Insufficient balance' });
-    }
-
-    const recipient = await User.findOne({ where: { phone: recipientPhone } });
     if (!recipient) {
       return res.status(404).json({ message: 'Recipient not found' });
     }
 
-    // Restrict normal users from sending to agents or admins
-    if (sender.role === 'user' && recipient.role && recipient.role !== 'user') {
-      return res.status(400).json({ message: "You can't send money to this person" });
+    /* Who may pay whom:
+         user  -> user   yes (send-money tier)
+         user  -> agent  yes (withdrawal tier — it is a cash-out)
+         agent -> user   yes (send-money tier)
+         agent -> agent  no  — agents settle through the admin, not each other
+         anyone -> admin no
+       Stated as a matrix because the old single condition only constrained
+       senders with the 'user' role, leaving agent-to-agent wide open. */
+    if (!transferAllowed(sender.role, recipient.role)) {
+      return res.status(400).json({
+        message: sender.role === 'agent' && recipient.role === 'agent'
+          ? "Agents can't send money to other agents"
+          : "You can't send money to this person",
+      });
+    }
+
+    const toAgent = recipient.role === 'agent';
+    /* Same helpers the send form quotes from, so the fee previewed and the fee
+       charged are one calculation. */
+    const quote = toAgent ? await quoteWithdrawal(amount) : await quoteSendMoney(amount);
+    const companyPercent = quote.companyPercent;
+    const companyCommission = quote.companyCommission;
+    /* Only the withdrawal tier has an agent leg. As on a withdrawal, that
+       share is credited to the agent rather than kept — otherwise the sender
+       would be charged for it and nobody would receive it. */
+    const agentPercent = toAgent ? quote.agentPercent : 0;
+    const agentCommission = toAgent ? quote.agentCommission : 0;
+
+    if (parseFloat(sender.balance) < quote.totalDebit) {
+      return res.status(400).json({ message: 'Insufficient balance' });
     }
 
     const transactionId = generateTransactionId();
     const senderPreviousBalance = parseFloat(sender.balance);
     const receiverPreviousBalance = parseFloat(recipient.balance);
 
-    // Update balances (sender pays company fee in addition to amount)
-    sender.balance = senderPreviousBalance - (amount + companyCommission);
-    recipient.balance = receiverPreviousBalance + amount;
+    // Sender pays the amount plus every fee on it
+    sender.balance = senderPreviousBalance - quote.totalDebit;
+    recipient.balance = receiverPreviousBalance + amount + agentCommission;
 
     await sender.save();
     await recipient.save();
@@ -86,7 +99,11 @@ export const sendMoney = async (req, res) => {
       senderLocation: sender.currentLocation || null,
       receiverLocation: recipient.currentLocation || null,
       companyCommission,
-      companyCommissionPercent: companyPercent
+      companyCommissionPercent: companyPercent,
+      commission: agentCommission,
+      commissionPercent: agentPercent,
+      agentCommission,
+      agentCommissionPercent: agentPercent
     });
 
     // Create notifications
@@ -184,46 +201,13 @@ export const withdrawMoney = async (req, res) => {
       return res.status(400).json({ message: 'Invalid agent' });
     }
 
-    // Get tiered withdrawal commission
-    let commissionPercent = 0;
-    let companyCommissionPercent = 0;
-
-    try {
-      const applicableTier = await WithdrawalCommissionTier.findOne({
-        where: {
-          minAmount: { [Op.lte]: amount },
-          maxAmount: { [Op.gte]: amount }
-        },
-        order: [['minAmount', 'ASC']]
-      });
-
-      if (applicableTier) {
-        commissionPercent = parseFloat(applicableTier.agentPercent) || 0;
-        companyCommissionPercent = parseFloat(applicableTier.companyPercent) || 0;
-      } else {
-        // Only use defaults if no tiered commission record exists at all
-        // Default tiered commission for withdrawals: ranges
-        const defaultTiers = [
-          { minAmount: 0, maxAmount: 99, agentPercent: 0, companyPercent: 0 },
-          { minAmount: 100, maxAmount: 499, agentPercent: 1, companyPercent: 0.5 },
-          { minAmount: 500, maxAmount: 999, agentPercent: 1.5, companyPercent: 0.5 },
-          { minAmount: 1000, maxAmount: Infinity, agentPercent: 2, companyPercent: 1 }
-        ];
-        const applicableTier = defaultTiers
-          .find(t => (parseFloat(t.minAmount) || 0) <= amount && amount <= (parseFloat(t.maxAmount) || Infinity));
-
-        if (applicableTier) {
-          commissionPercent = applicableTier.agentPercent || 0;
-          companyCommissionPercent = applicableTier.companyPercent || 0;
-        }
-      }
-      // If tieredDoc exists but has empty withdrawalTiers array, commission remains 0 (no commission)
-    } catch (err) {
-      console.error('Failed to fetch tiered commission for withdrawal:', err);
-    }
-
-    const commissionAmount = parseFloat(((amount * commissionPercent) / 100).toFixed(2)) || 0;
-    const companyCommissionAmount = parseFloat(((amount * companyCommissionPercent) / 100).toFixed(2)) || 0;
+    /* Tier lookup and rounding live in quoteWithdrawal so the figure shown in
+       the withdraw form is produced by the same code that charges it. */
+    const q = await quoteWithdrawal(amount);
+    const commissionPercent = q.agentPercent;
+    const companyCommissionPercent = q.companyPercent;
+    const commissionAmount = q.agentCommission;
+    const companyCommissionAmount = q.companyCommission;
 
     const transactionId = generateTransactionId();
 
@@ -427,24 +411,123 @@ export const getTransactionStats = async (req, res) => {
   }
 };
 
+/* Price a withdrawal before it happens, so the form can show the true cost.
+   The user is debited amount + agent commission + company commission, and the
+   page previously previewed the amount alone — which understated the hit to
+   their balance by the whole fee. Shares quoteWithdrawal() with the charging
+   path so the two cannot disagree. */
+export const getSendQuote = async (req, res) => {
+  try {
+    /* Which tier applies depends on who is being paid: an agent is a cash-out
+       and uses the withdrawal tier, another user uses the send-money tier. The
+       form passes the recipient's number as soon as it has one; without it we
+       quote the user-to-user rate, which is what the form starts out showing. */
+    let recipient = null;
+    if (req.query.recipientPhone) {
+      for (const variant of phoneVariants(req.query.recipientPhone)) {
+        recipient = await User.findOne({ where: { phone: variant } });
+        if (recipient) break;
+      }
+    }
+    const toAgent = recipient?.role === 'agent';
+
+    const quote = toAgent
+      ? await quoteWithdrawal(req.query.amount)
+      : await quoteSendMoney(req.query.amount);
+    /* Tells the form which breakdown to render, and lets it label the fee. */
+    quote.tier = toAgent ? 'withdrawal' : 'send';
+    quote.recipientRole = recipient?.role || null;
+    const sender = await User.findByPk(req.userId);
+    quote.allowed = transferAllowed(sender?.role, recipient?.role);
+
+    quote.maxAmount = sender
+      ? (toAgent ? await maxWithdrawable(sender.balance) : await maxSendable(sender.balance))
+      : 0;
+    res.json(quote);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getWithdrawalQuote = async (req, res) => {
+  try {
+    const quote = await quoteWithdrawal(req.query.amount);
+    /* maxAmount lets the "All" button pick a figure that still fits once fees
+       are added — the client cannot work it out, since the rate changes by
+       tier. Always the caller's own balance; never a balance they supply. */
+    /* Agents pulling from a customer need that customer's ceiling, not their
+       own. Restricted to staff so a user cannot probe other people's balances
+       through the max figure. */
+    let holder = await User.findByPk(req.userId);
+    if (req.query.forPhone && ['agent', 'admin'].includes(holder?.role)) {
+      for (const variant of phoneVariants(req.query.forPhone)) {
+        const found = await User.findOne({ where: { phone: variant } });
+        if (found) { holder = found; break; }
+      }
+    }
+    quote.maxAmount = holder ? await maxWithdrawable(holder.balance) : 0;
+    res.json(quote);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* Look up an agent by the 6-digit ID printed on their badge, so the withdraw
+   form can confirm who the customer is about to hand cash to before they type
+   an amount. Deliberately narrower than getUserInfo: a withdrawing user has no
+   business seeing an agent's balance or email, so only the name and phone they
+   would verify in person are returned. */
+export const getAgentInfo = async (req, res) => {
+  try {
+    const id = (req.params.agentId || '').trim();
+    if (!/^\d{6}$/.test(id)) {
+      return res.status(400).json({ message: 'Agent ID must be 6 digits' });
+    }
+
+    const agent = await User.findOne({ where: { agentId: id } });
+    /* Same response for "no such ID" and "that ID is not an agent" — telling
+       the difference apart would let anyone enumerate which IDs exist. */
+    if (!agent || agent.role !== 'agent') {
+      return res.status(404).json({ message: 'No agent found with that ID' });
+    }
+
+    res.json({
+      agentId: agent.agentId,
+      name: agent.name,
+      phone: agent.phone,
+      isSuspended: !!agent.isSuspended,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export const getUserInfo = async (req, res) => {
   try {
-    const { phoneNumber } = req.params;
 
-    const user = await User.findOne({ where: { phone: phoneNumber } });
+    const { phoneNumber } = req.params;
+    /* Shares phoneVariants with send-money and the quote endpoints — this used
+       to be its own copy that never stripped the national trunk zero, so
+       0912345002 failed to verify while +211912345002 succeeded. */
+    let user = null;
+    for (const variant of phoneVariants(phoneNumber)) {
+      user = await User.findOne({ where: { phone: variant } });
+      if (user) break;
+    }
+    // Only search by phone variants, not agentId/adminId
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     res.json({
-      user: {
-        id: user.id,
-        fullName: user.name,
-        phoneNumber: user.phone,
-        balance: parseFloat(user.balance) || 0,
-        email: user.email,
-        userType: user.role
-      }
+      id: user.id,
+      name: user.name,
+      phone: user.phone,
+      balance: parseFloat(user.balance) || 0,
+      email: user.email,
+      role: user.role,
+      isVerified: user.isVerified,
+      isSuspended: user.isSuspended
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

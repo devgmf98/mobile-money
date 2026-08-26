@@ -1,3 +1,57 @@
+// Get user/agent details by id or phone
+export const getUserOrAgentDetails = async (req, res) => {
+  try {
+    const { id, phone } = req.query;
+    let user;
+    if (id) {
+      user = await User.findByPk(id);
+    } else if (phone) {
+      // Normalize phone: trim and allow with or without +
+      const normalized = phone.trim();
+      // Try exact match first
+      user = await User.findOne({ where: { phone: normalized } });
+      // If not found, try with/without +
+      if (!user) {
+        if (normalized.startsWith('+')) {
+          user = await User.findOne({ where: { phone: normalized.replace(/^\+/, '') } });
+        } else {
+          user = await User.findOne({ where: { phone: '+' + normalized } });
+        }
+      }
+    } else {
+      return res.status(400).json({ message: 'Missing phone or id parameter' });
+    }
+    if (!user) return res.status(404).json({ message: 'User, agent, or admin not found' });
+    const {
+      id: userId,
+      name,
+      email,
+      phone: userPhone,
+      role,
+      balance,
+      isVerified,
+      isSuspended,
+      agentId,
+      adminId,
+      createdAt
+    } = user;
+    res.json({
+      id: userId,
+      name,
+      email,
+      phone: userPhone,
+      role,
+      balance: parseFloat(balance),
+      isVerified,
+      isSuspended,
+      agentId: agentId || null,
+      adminId: adminId || null,
+      createdAt
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 import { Op } from 'sequelize';
 import sequelize from '../config/database.js';
 import User from '../models/User.js';
@@ -15,8 +69,14 @@ import ExchangeRate from '../models/ExchangeRate.js';
 
 export const topupUser = async (req, res) => {
   try {
+
     const { userId, description } = req.body;
     const amount = parseFloat(req.body.amount);
+
+    // Prevent admin from topping up their own account
+    if (parseInt(userId) === parseInt(req.userId)) {
+      return res.status(400).json({ message: 'Admins cannot top up their own account.' });
+    }
 
     const user = await User.findByPk(userId);
     if (!user) {
@@ -61,6 +121,18 @@ export const topupUser = async (req, res) => {
       console.error('SMS failed:', error);
     }
 
+    // Emit socket event to update user balance in real time
+    try {
+      const io = getIO();
+      if (io && userId) {
+        io.to(`user-${userId}`).emit('balance-updated', {
+          userId,
+          balance: parseFloat(user.balance)
+        });
+      }
+    } catch (e) {
+      console.error('Socket emit failed:', e);
+    }
     res.json({
       message: 'Topup successful',
       transaction: { id: transaction.id, transactionId, amount },
@@ -326,7 +398,10 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
       amount,
       type: 'admin_state_push',
       status: 'pending',
-      description: `Admin transfer using state ${state?.name || stateId}`,
+      /* "Destination" is what this is called throughout the UI — Send To
+         Destination, Destination Settings — so the recorded description now
+         matches rather than calling it a state. */
+      description: `Admin transfer from ${state?.name || stateId}`,
       commission: senderCommissionGiven,
       commissionPercent: senderCommissionGiven ? percent : 0,
       companyCommission: companyCommission,
@@ -450,6 +525,9 @@ export const withdrawFromUser = async (req, res) => {
 
 export const withdrawFromAgent = async (req, res) => {
   try {
+    console.log('POST /api/admin/withdraw-from-agent called');
+    console.log('Request body:', req.body);
+    console.log('Request userId:', req.userId);
     const { agentId, description } = req.body;
     const amount = parseFloat(req.body.amount);
     const adminId = req.userId;
@@ -480,8 +558,8 @@ export const withdrawFromAgent = async (req, res) => {
     // Send request to agent for approval
     if (!agent.autoAdminCashout) {
       const request = await WithdrawalRequest.create({
-        agent: agentId,
-        user: adminId,
+        agentId: agentId,
+        userId: adminId,
         amount: amount,
         commission: 0,
         commissionPercent: 0,
@@ -720,10 +798,40 @@ export const getAdminStats = async (req, res) => {
     const totalUsers = await User.count();
     const totalTransactions = await Transaction.count();
 
-    // Get transaction statistics using Sequelize
-    const totalVolume = await Transaction.sum('amount') || 0;
+    /* Total Cash Out counts cash-outs only.
+
+       It used to sum every type except money_exchange, so transfers, top-ups,
+       withdrawals and admin pushes all landed in the same figure — which made
+       it a total of unrelated movements rather than a volume of anything in
+       particular.
+
+       'agent_cash_out_money' is the cash-out type; the same filter is used by
+       totalAdminCashOut below, so the two figures agree on what a cash-out is.
+       Withdrawals ('withdrawal', 'user_withdraw') are deliberately excluded —
+       they are a different operation. */
+    const totalVolume = await Transaction.sum('amount', {
+      where: { type: 'agent_cash_out_money' }
+    }) || 0;
+
+    /* Money loaded into the system, shown on the dashboard as "Total Volume".
+       Separate from the cash-out figures, which measure money going out. */
+    const totalTopupVolume = await Transaction.sum('amount', {
+      where: { type: 'topup' }
+    }) || 0;
     const completedTransactions = await Transaction.count({ where: { status: 'completed' } });
     const pendingTransactions = await Transaction.count({ where: { status: 'pending' } });
+
+    // Group by the statuses that actually exist, rather than deriving a
+    // "failed" bucket as total - completed - pending, which silently relabels
+    // any other status (cancelled, rejected, ...) as a failure.
+    const transactionsByStatus = await Transaction.findAll({
+      attributes: [
+        'status',
+        [sequelize.fn('COUNT', sequelize.col('status')), 'count']
+      ],
+      group: ['status'],
+      raw: true
+    });
 
     // Get users by role
     const usersByRole = await User.findAll({
@@ -735,10 +843,33 @@ export const getAdminStats = async (req, res) => {
       raw: true
     });
 
-    // Get admin cash out stats
+    /* This admin's own cash-outs, not every admin's. The unscoped sum showed
+       the same company-wide figure on every admin's dashboard, so an admin who
+       had taken 300 saw 400 because a colleague had taken the other 100.
+       An admin is the RECEIVER of an agent cash-out, which is how
+       getMyAdminCashOut below already scopes it. */
     const totalAdminCashOut = await Transaction.sum('amount', {
-      where: { type: 'agent_cash_out_money' }
+      where: { type: 'agent_cash_out_money', receiverId: req.userId }
     }) || 0;
+
+    // Exchange activity for THIS admin, grouped by source currency.
+    const myExchangeRows = await Transaction.findAll({
+      attributes: [
+        'currencyCode',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+        [sequelize.fn('SUM', sequelize.col('amount')), 'total']
+      ],
+      where: { type: 'money_exchange', senderId: req.userId },
+      group: ['currencyCode'],
+      raw: true
+    });
+
+    const myExchangesByCurrency = myExchangeRows.reduce((acc, r) => {
+      const code = (r.currencyCode || '').toUpperCase();
+      if (!code) return acc;
+      acc[code] = { count: Number(r.count) || 0, total: Number(r.total) || 0 };
+      return acc;
+    }, {});
 
     // Get company benefits (total company commission)
     const companyBenefits = await Transaction.sum('companyCommission', {
@@ -749,11 +880,14 @@ export const getAdminStats = async (req, res) => {
       totalUsers,
       totalTransactions,
       totalVolume,
+      totalTopupVolume,
       completedTransactions,
       pendingTransactions,
       usersByRole,
+      transactionsByStatus,
       totalAdminCashOut,
-      companyBenefits
+      companyBenefits,
+      myExchangesByCurrency
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -928,7 +1062,7 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
 
-    if (request.agent.toString() !== agentId) {
+    if (request.agentId.toString() !== agentId.toString()) {
       return res.status(403).json({ message: 'Only the agent can approve their withdrawal' });
     }
 
@@ -963,7 +1097,7 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
     }
 
     // Get the admin user to credit their balance
-    const admin = await User.findByPk(request.user);
+    const admin = await User.findByPk(request.userId);
     if (!admin) {
       return res.status(404).json({ message: 'Admin user not found' });
     }
@@ -984,7 +1118,7 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
     const transaction = await Transaction.create({
       transactionId,
       senderId: agentId,
-      receiverId: request.user,
+      receiverId: request.userId,
       amount: parsedAmount,
       type: 'agent_cash_out_money',
       status: 'completed',
@@ -1025,8 +1159,8 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
           balance: parseFloat(agent.balance)
         });
 
-        io.to(`user-${request.user}`).emit('balance-updated', {
-          userId: request.user,
+        io.to(`user-${request.userId}`).emit('balance-updated', {
+          userId: request.userId,
           balance: parseFloat(admin.balance)
         });
 
@@ -1061,7 +1195,7 @@ export const rejectAdminWithdrawalRequest = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
 
-    if (request.agent.toString() !== agentId) {
+    if (request.agentId.toString() !== agentId.toString()) {
       return res.status(403).json({ message: 'Only the agent can reject their withdrawal' });
     }
 
@@ -1086,8 +1220,8 @@ export const rejectAdminWithdrawalRequest = async (req, res) => {
     try {
       const io = getIO();
       if (io) {
-        io.to(`user-${request.user}`).emit('new-notification', {
-          recipient: request.user,
+        io.to(`user-${request.userId}`).emit('new-notification', {
+          recipient: request.userId,
           title: 'Withdrawal Request Rejected',
           message: `Agent rejected your withdrawal request of SSP ${request.amount}`,
           type: 'system'
@@ -1137,6 +1271,7 @@ export const pushMoneyBetweenUsers = async (req, res) => {
       return res.status(400).json({ message: 'Source and destination cannot be the same' });
     }
 
+    const actingAdmin = await User.findByPk(req.userId);
     const fromUser = await User.findOne({ where: { phone: normalizedFromPhone } });
     const toUser = await User.findOne({ where: { phone: normalizedToPhone } });
 
@@ -1173,7 +1308,10 @@ export const pushMoneyBetweenUsers = async (req, res) => {
       amount,
       type: 'admin_push',
       status: 'completed',
-      description: description || `Admin pushed money from ${normalizedFromPhone} to ${normalizedToPhone}`,
+      /* Records WHO moved the money, not just that an admin did. These pushes
+         are corrections, so the acting admin has to be identifiable from the
+         transaction itself when it is queried later. */
+      description: description || `Refunded by admin (${actingAdmin?.email || 'unknown admin'}) from ${normalizedFromPhone} to ${normalizedToPhone}`,
       senderBalance: fromUser.balance,
       receiverBalance: toUser.balance,
       senderLocation: fromUser.currentLocation || null,
@@ -1400,11 +1538,11 @@ export const receiveSendByState = async (req, res) => {
 
     // Notifications
     await Notification.create({
-      recipient: adminId,
+      recipientId: adminId,
       title: 'Transfer Received',
       message: `You received SSP ${receiverCredit.toFixed(2)} from admin transfer`,
       type: 'system',
-      relatedTransaction: tx.id
+      relatedTransactionId: tx.id
     });
 
     try { await sendSMS(receiver.phone, `MoneyPay: You have received SSP ${receiverCredit.toFixed(2)}`); } catch (e) {}
@@ -1643,16 +1781,38 @@ export const createMoneyExchangeTransaction = async (req, res) => {
     // Generate unique transaction ID
     const transactionId = `ME-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
+    // Effective rate actually applied. The old version always read
+    // buyingPrice and relied on pairUsed.inverse, which the client never
+    // sends - so selling-mode exchanges recorded the buying rate.
+    const mode = priceMode === 'selling' ? 'selling' : 'buying';
+    let effectiveRate = null;
+    if (Number(amount) > 0 && Number(convertedAmount) >= 0) {
+      effectiveRate = Number(convertedAmount) / Number(amount);
+    } else if (pairUsed) {
+      const quoted = mode === 'selling' ? pairUsed.sellingPrice : pairUsed.buyingPrice;
+      effectiveRate = Number(quoted);
+    }
+    if (!Number.isFinite(effectiveRate)) effectiveRate = 1;
+
+    const admin = await User.findByPk(adminId, { attributes: ['id', 'name', 'phone'] });
+    const adminName = admin?.name || 'Admin';
+
     const transaction = await Transaction.create({
       transactionId,
       senderId: adminId,
       amount,
       type: 'money_exchange',
       status: 'completed',
-      description: `${fromCurrency} to ${toCurrency}: ${amount} → ${convertedAmount} (${priceMode})`,
+      description:
+        description ||
+        `Money Exchange by ${adminName}: ${amount} ${fromCurrency} → ${convertedAmount} ${toCurrency} (${mode} @ ${effectiveRate})`,
       currencyCode: fromCurrency,
-      currencySymbol: pairUsed ? pairUsed.toCode : null,
-      exchangeRate: pairUsed ? (pairUsed.inverse ? (1 / pairUsed.buyingPrice) : pairUsed.buyingPrice) : 1
+      currencySymbol: pairUsed ? pairUsed.toCode : toCurrency,
+      toCurrencyCode: toCurrency,
+      convertedAmount,
+      exchangeMode: mode,
+      receiverCredit: convertedAmount,
+      exchangeRate: effectiveRate
     });
 
     res.status(201).json({
@@ -1661,10 +1821,12 @@ export const createMoneyExchangeTransaction = async (req, res) => {
         transactionId: transaction.transactionId,
         fromCurrency,
         toCurrency,
-        amount,
-        convertedAmount,
-        priceMode,
-        status: 'completed',
+        amount: transaction.amount,
+        convertedAmount: transaction.convertedAmount,
+        exchangeRate: transaction.exchangeRate,
+        exchangeMode: transaction.exchangeMode,
+        admin: { id: adminId, name: adminName },
+        status: transaction.status,
         createdAt: transaction.createdAt
       }
     });
@@ -1682,6 +1844,13 @@ export const convertMoneyExchange = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields: amount, fromCurrency, toCurrency, priceMode' });
     }
 
+    // Round to at most 6 decimals and drop trailing zeros. The previous
+    // Math.round() destroyed every sub-unit value (0.0125 USD became 0).
+    const fmt = (n) => {
+      if (!Number.isFinite(n)) return null;
+      return String(Number(n.toFixed(6)));
+    };
+
     const pairRates = await ExchangeRate.findAll();
     const currencies = await Currency.findAll();
 
@@ -1697,14 +1866,16 @@ export const convertMoneyExchange = async (req, res) => {
     if (pair) {
       const key = priceMode === 'buying' ? 'buyingPrice' : 'sellingPrice';
       const val = pair[key];
-      if (val !== undefined && val !== null && val !== '') {
-        convertedAmount = Math.round(amount / Number(val)).toString();
+      const rate = Number(val);
+      if (val !== undefined && val !== null && val !== '' && Number.isFinite(rate)) {
+        // direct pair: 1 fromCode = rate * toCode
+        convertedAmount = fmt(Number(amount) * rate);
         usedPair = { pair: pair.toJSON(), inverse: false };
       }
     }
 
     // Find inverse pair
-    if (!convertedAmount) {
+    if (convertedAmount === null || convertedAmount === undefined) {
       const inverse = pairRates.find(p => 
         (p.fromCode || '').toUpperCase() === toCurrency.toUpperCase() && 
         (p.toCode || '').toUpperCase() === fromCurrency.toUpperCase()
@@ -1713,15 +1884,17 @@ export const convertMoneyExchange = async (req, res) => {
       if (inverse) {
         const invKey = priceMode === 'buying' ? 'buyingPrice' : 'sellingPrice';
         const invVal = inverse[invKey];
-        if (invVal !== undefined && invVal !== null && invVal !== '' && Number(invVal) !== 0) {
-          convertedAmount = Math.round(amount / Number(invVal)).toString();
+        const invRate = Number(invVal);
+        if (invVal !== undefined && invVal !== null && invVal !== '' && Number.isFinite(invRate) && invRate !== 0) {
+          // stored the other way round: 1 toCode = invRate * fromCode
+          convertedAmount = fmt(Number(amount) / invRate);
           usedPair = { pair: inverse.toJSON(), inverse: true };
         }
       }
     }
 
     // Fallback to currency-level rates
-    if (!convertedAmount) {
+    if (convertedAmount === null || convertedAmount === undefined) {
       const f = currencies.find(c => (c.code || '').toUpperCase() === fromCurrency.toUpperCase());
       const t = currencies.find(c => (c.code || '').toUpperCase() === toCurrency.toUpperCase());
 
@@ -1741,12 +1914,12 @@ export const convertMoneyExchange = async (req, res) => {
         const toRate = priceMode === 'buying' ? getEff(t, 'buying') : getEff(t, 'selling');
 
         if (fromRate != null && toRate != null && Number(toRate) !== 0) {
-          convertedAmount = Math.round(amount * (Number(fromRate) / Number(toRate))).toString();
+          convertedAmount = fmt(Number(amount) * (Number(fromRate) / Number(toRate)));
         }
       }
     }
 
-    if (!convertedAmount) {
+    if (convertedAmount === null || convertedAmount === undefined) {
       return res.status(400).json({ message: 'Unable to convert currencies with available rates' });
     }
 

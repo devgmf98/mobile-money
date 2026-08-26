@@ -1,21 +1,58 @@
 import React from 'react';
+import { placeLabel } from '../utils/location';
 import { generateTransactionDocument } from '../utils/pdf';
+import mpLogo from '../assets/mp-logo.png';
 import '../styles/print-receipt.css';
+import { Download, FileText, Printer, X } from 'lucide-react';
+
+// Matches the Transaction.type enum exactly. Previously two divergent copies
+// of this map lived inside the component, and neither covered money_exchange,
+// so receipts printed the raw "money_exchange" string.
+const TRANSACTION_TYPES = {
+  transfer: 'Money Transfer',
+  topup: 'Account Top-up',
+  withdrawal: 'Withdrawal',
+  user_withdraw: 'User Withdrawal',
+  agent_deposit: 'Agent Deposit',
+  agent_cash_out_money: 'Agent Cash Out',
+  admin_push: 'Refunded by Admin',
+  admin_state_push: 'State Push',
+  money_exchange: 'Money Exchange',
+};
+
+const typeName = (t) => TRANSACTION_TYPES[t] || String(t || '').replace(/_/g, ' ');
+
+// DECIMAL columns arrive as strings, so coerce before any arithmetic.
+const n2 = (v) => {
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const money = (v, code) => code + ' ' + n2(v).toLocaleString(undefined, {
+  minimumFractionDigits: 2, maximumFractionDigits: 2,
+});
+
 
 export default function PrintReceipt({ transaction, onClose }) {
+  // The receipt hardcoded "SSP", so a USD transaction printed as SSP.
+  // Use whatever currency the row actually carries.
+  const curCode = transaction?.currencyCode || 'SSP';
+  // A money exchange has no commission and a second currency, so it needs a
+  // different set of rows from a transfer.
+  const isExchange = transaction?.type === 'money_exchange';
+  // The print iframe is written with document.write and has no base URL, so
+  // the logo needs an absolute src.
+  const logoUrl = typeof window !== 'undefined'
+    ? new URL(mpLogo, window.location.origin).href
+    : mpLogo;
+  const toCode = transaction?.toCurrencyCode || transaction?.currencySymbol || '';
+  const totalCommission = n2(transaction?.agentCommission) + n2(transaction?.companyCommission);
+  const hasCommission = totalCommission > 0;
   if (!transaction) return null;
 
-  const handleNativePrint = () => {
-    // Add print-specific class to body for CSS-based printing
-    document.body.classList.add('printing-receipt');
-    
-    // Use browser's native print
-    window.print();
-    
-    // Remove the class after printing
-    setTimeout(() => {
-      document.body.classList.remove('printing-receipt');
-    }, 1000);
+  // Renders the receipt into a hidden iframe and prints that, so the printout
+  // is the receipt alone rather than the whole admin page.
+  const handlePrint = () => {
     const formatDate = (date) => {
       return new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -26,31 +63,32 @@ export default function PrintReceipt({ transaction, onClose }) {
         second: '2-digit'
       });
     };
-    const getTransactionType = (type) => {
-      const types = {
-        send_money: 'Send Money',
-        receive_money: 'Receive Money',
-        withdraw: 'Withdrawal',
-        user_withdraw: 'User Withdrawal',
-        agent_cash_out_money: 'Admin Cash Out',
-        admin_push: 'Admin Push Money'
-      };
-      return types[type] || type;
-    };
-    const senderLocationHtml = transaction.senderLocation ? `<div class="receipt-row"><span class="label">From Location:</span><span class="value">${transaction.senderLocation.city || 'Unknown'}, ${transaction.senderLocation.country || 'Unknown'}</span></div>` : '';
-    const receiverLocationHtml = transaction.receiverLocation ? `<div class="receipt-row"><span class="label">To Location:</span><span class="value">${transaction.receiverLocation.city || 'Unknown'}, ${transaction.receiverLocation.country || 'Unknown'}</span></div>` : '';
-    const agentCommissionHtml = transaction.agentCommission !== undefined ? `<tr><td>Agent Commission (${transaction.agentCommissionPercent || 0}%)</td><td class="amount-cell">SSP ${ (parseFloat(transaction.agentCommission) || 0).toFixed(2) }</td></tr>` : '';
-    const companyCommissionHtml = transaction.companyCommission !== undefined ? `<tr><td>Company Commission (${transaction.companyCommissionPercent || 0}%)</td><td class="amount-cell">SSP ${ (parseFloat(transaction.companyCommission) || 0).toFixed(2) }</td></tr>` : '';
+    const getTransactionType = (type) => typeName(type);
+    /* The location fields are JSON strings, so reading .city off them gave
+       undefined and printed "Unknown, Unknown". When nothing can be resolved
+       the row is dropped rather than showing a placeholder. */
+    const senderPlace = placeLabel(transaction.senderLocation);
+    const receiverPlace = placeLabel(transaction.receiverLocation);
+    const senderLocationHtml = senderPlace ? `<div class="receipt-row"><span class="label">From Location:</span><span class="value">${senderPlace}</span></div>` : '';
+    const receiverLocationHtml = receiverPlace ? `<div class="receipt-row"><span class="label">To Location:</span><span class="value">${receiverPlace}</span></div>` : '';
+    // Only show commission rows that carry a value; an exchange has none.
+    const agentCommissionHtml = n2(transaction.agentCommission) > 0
+      ? `<tr><td>Agent Commission (${n2(transaction.agentCommissionPercent)}%)</td><td class="amount-cell">${money(transaction.agentCommission, curCode)}</td></tr>`
+      : '';
+    const companyCommissionHtml = n2(transaction.companyCommission) > 0
+      ? `<tr><td>Company Commission (${n2(transaction.companyCommissionPercent)}%)</td><td class="amount-cell">${money(transaction.companyCommission, curCode)}</td></tr>`
+      : '';
     const descriptionHtml = transaction.description ? `<div class="receipt-row"><span class="label">Description:</span><span class="value">${transaction.description}</span></div>` : '';
     // Use hidden iframe for printing (works without popup permissions)
     const styles = `
   /* Inline print styles for A4 receipt - match browser display */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { width: 100%; height: 100%; }
-  body { font-family: Arial, sans-serif; background: #fff; color: #000; line-height: 1.6; font-size: 12px; }
+  body { font-family: Arial, sans-serif; background: #fff; color: #000; line-height: 1.6; font-size: 11px; }
   .receipt-content { padding: 20px; border: 3px solid #000; margin: 0; background: #fff; }
   .receipt-logo { text-align: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #000; }
-  .receipt-logo h1 { font-size: 24px; font-weight: bold; color: #000; margin: 5px 0; }
+  .receipt-logo h1 { font-size: 21.5px; font-weight: bold; color: #000; margin: 5px 0; }
+  .receipt-logo-img { height: 46px; width: auto; max-width: 60%; display: block; margin: 0 auto 4px; }
   .receipt-section {
     margin-bottom: 15px;
     page-break-inside: avoid;
@@ -58,7 +96,7 @@ export default function PrintReceipt({ transaction, onClose }) {
     visibility: visible;
   }
   .receipt-section h3 {
-    font-size: 13px;
+    font-size: 11.5px;
     font-weight: bold;
     color: #000;
     text-transform: uppercase;
@@ -68,7 +106,7 @@ export default function PrintReceipt({ transaction, onClose }) {
     display: block;
     visibility: visible;
   }
-  .receipt-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 12px; color: #000; line-height: 1.5; }
+  .receipt-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 11px; color: #000; line-height: 1.5; }
   .receipt-row .label { font-weight: bold; color: #000; flex: 0 0 40%; min-width: 100px; }
   .receipt-row .value { text-align: right; flex: 1; color: #000; margin-left: 10px; word-break: break-word; }
   .receipt-footer { text-align: center; padding-top: 15px; margin-top: 20px; border-top: 2px solid #000; color: #000; font-size: 11px; font-weight: bold; line-height: 1.5; }
@@ -83,12 +121,13 @@ export default function PrintReceipt({ transaction, onClose }) {
     visibility: visible;
   }
   .receipt-table th { 
-    background: #000; 
-    color: #fff; 
+    background: transparent;
+    color: #000;
+    border-bottom: 1.5pt solid #000;
     padding: 8px 10px; 
     text-align: left; 
     font-weight: bold; 
-    font-size: 12px; 
+    font-size: 11px; 
     border: 1px solid #000; 
     line-height: 1.4; 
     display: table-cell;
@@ -96,7 +135,7 @@ export default function PrintReceipt({ transaction, onClose }) {
   .receipt-table td { 
     padding: 8px 10px; 
     border: 1px solid #000; 
-    font-size: 12px; 
+    font-size: 11px; 
     color: #000; 
     font-weight: 500; 
     line-height: 1.4; 
@@ -108,8 +147,19 @@ export default function PrintReceipt({ transaction, onClose }) {
   .receipt-table tr { display: table-row; }
   .receipt-table .amount-cell { text-align: right; font-weight: bold; }
   .receipt-table tr:nth-child(even) { background: #f9f9f9; }
-  .receipt-table tr.total-row { background: #000; color: #fff; font-weight: bold; }
-  .receipt-table tr.total-row td { color: #fff; border-color: #000; background: #000; }
+  /* Emphasis via weight, size and heavy rules — never a background fill,
+     which the browser discards when printing. */
+  .receipt-table tr.total-row { font-weight: bold; }
+  .receipt-table tr.total-row td {
+    background: transparent;
+    color: #000;
+    font-weight: bold;
+    font-size: 13px;
+    padding: 11px 10px;
+    border-top: 2pt solid #000;
+    border-bottom: 2pt solid #000;
+  }
+  .receipt-table tr.total-row td:last-child { font-size: 14px; }
   @page { size: A4; margin: 0.5in; padding: 0; }
   @media print {
     html { margin: 0; padding: 0; }
@@ -131,7 +181,7 @@ export default function PrintReceipt({ transaction, onClose }) {
       </head>
       <body>
         <div class="receipt-content">
-          <div class="receipt-logo"><h1>💳 MoneyPay</h1></div>
+          <div class="receipt-logo"><img src="${logoUrl}" alt="MoneyPay" class="receipt-logo-img" /></div>
 
           <div class="receipt-section">
             <h3>Receipt Details</h3>
@@ -152,14 +202,20 @@ export default function PrintReceipt({ transaction, onClose }) {
             <h3>Amount Details</h3>
             <table class="receipt-table">
               <thead>
-                <tr><th>Description</th><th>SSP</th></tr>
+                <tr><th>Description</th><th class="amount-cell">Amount</th></tr>
               </thead>
               <tbody>
-                <tr><td>Transaction Amount</td><td class="amount-cell">SSP ${ (parseFloat(transaction.amount) || 0).toFixed(2) }</td></tr>
-                ${agentCommissionHtml}
-                ${companyCommissionHtml}
-                <tr><td><strong>Total Commission Fee</strong></td><td class="amount-cell"><strong>SSP ${ ((parseFloat(transaction.agentCommission)||0)+(parseFloat(transaction.companyCommission)||0)).toFixed(2) }</strong></td></tr>
-                <tr class="total-row"><td><strong>TOTAL USER PAYS</strong></td><td class="amount-cell"><strong>SSP ${ ((parseFloat(transaction.amount)||0) + (parseFloat(transaction.agentCommission)||0) + (parseFloat(transaction.companyCommission)||0)).toFixed(2) }</strong></td></tr>
+                <tr><td>${isExchange ? 'Amount Converted' : 'Transaction Amount'}</td><td class="amount-cell">${money(transaction.amount, curCode)}</td></tr>
+                ${isExchange ? `
+                  ${transaction.exchangeRate ? `<tr><td>Rate Applied</td><td class="amount-cell">1 ${curCode} = ${n2(transaction.exchangeRate)} ${toCode}</td></tr>` : ''}
+                  ${transaction.exchangeMode ? `<tr><td>Exchange Mode</td><td class="amount-cell">${transaction.exchangeMode === 'buying' ? 'Buying' : 'Selling'}</td></tr>` : ''}
+                  <tr class="total-row"><td><strong>RECIPIENT RECEIVES</strong></td><td class="amount-cell"><strong>${money(transaction.convertedAmount ?? transaction.receiverCredit, toCode)}</strong></td></tr>
+                ` : `
+                  ${agentCommissionHtml}
+                  ${companyCommissionHtml}
+                  ${hasCommission ? `<tr><td><strong>Total Commission Fee</strong></td><td class="amount-cell"><strong>${money(totalCommission, curCode)}</strong></td></tr>` : ''}
+                  <tr class="total-row"><td><strong>TOTAL PAYMENT</strong></td><td class="amount-cell"><strong>${money(n2(transaction.amount) + totalCommission, curCode)}</strong></td></tr>
+                `}
               </tbody>
             </table>
           </div>
@@ -272,30 +328,19 @@ export default function PrintReceipt({ transaction, onClose }) {
     });
   };
 
-  const getTransactionType = (type) => {
-    const types = {
-      transfer: 'Money Transfer',
-      withdrawal: 'Withdrawal',
-      topup: 'Account Top-up',
-      agent_deposit: 'Agent Deposit',
-      user_withdraw: 'User Withdrawal',
-      agent_cash_out_money: 'Admin Cash Out',
-      admin_push: 'Admin Push Money'
-    };
-    return types[type] || type;
-  };
+  const getTransactionType = (type) => typeName(type);
 
   return (
     <div className="print-receipt-overlay" onClick={onClose}>
       <div className="print-receipt-modal" onClick={(e) => e.stopPropagation()}>
         <div className="print-receipt-header">
-          <h2>📄 Transaction Receipt</h2>
-          <button className="close-btn" onClick={onClose}>✕</button>
+          <h2><FileText size={18} /> Transaction Receipt</h2>
+          <button className="close-btn" onClick={onClose}><X size={18} /></button>
         </div>
 
         <div className="receipt-content">
           <div className="receipt-logo">
-            <h1>💳 MoneyPay</h1>
+            <img src={mpLogo} alt="MoneyPay" className="receipt-logo-img" />
           </div>
 
           <div className="receipt-section">
@@ -322,12 +367,10 @@ export default function PrintReceipt({ transaction, onClose }) {
                 {transaction.sender?.name || transaction.sender?.phone || 'System'}
               </span>
             </div>
-            {transaction.senderLocation && (
+            {placeLabel(transaction.senderLocation) && (
               <div className="receipt-row">
                 <span className="label">From Location:</span>
-                <span className="value">
-                  {transaction.senderLocation.city || 'Unknown'}, {transaction.senderLocation.country || 'Unknown'}
-                </span>
+                <span className="value">{placeLabel(transaction.senderLocation)}</span>
               </div>
             )}
             <div className="receipt-row">
@@ -336,12 +379,10 @@ export default function PrintReceipt({ transaction, onClose }) {
                 {transaction.receiver?.name || transaction.receiver?.phone || 'N/A'}
               </span>
             </div>
-            {transaction.receiverLocation && (
+            {placeLabel(transaction.receiverLocation) && (
               <div className="receipt-row">
                 <span className="label">To Location:</span>
-                <span className="value">
-                  {transaction.receiverLocation.city || 'Unknown'}, {transaction.receiverLocation.country || 'Unknown'}
-                </span>
+                <span className="value">{placeLabel(transaction.receiverLocation)}</span>
               </div>
             )}
           </div>
@@ -350,33 +391,59 @@ export default function PrintReceipt({ transaction, onClose }) {
             <h3>Amount Details</h3>
             <table className="receipt-table">
               <thead>
-                <tr><th>Description</th><th>SSP</th></tr>
+                <tr><th>Description</th><th className="amount-cell">Amount</th></tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Transaction Amount</td>
-                  <td className="amount-cell">SSP { (parseFloat(transaction.amount) || 0).toFixed(2) }</td>
+                  <td>{isExchange ? 'Amount Converted' : 'Transaction Amount'}</td>
+                  <td className="amount-cell">{money(transaction.amount, curCode)}</td>
                 </tr>
-                {transaction.agentCommission !== undefined && (
-                  <tr>
-                    <td>Agent Commission ({transaction.agentCommissionPercent}%)</td>
-                    <td className="amount-cell">SSP { (parseFloat(transaction.agentCommission) || 0).toFixed(2) }</td>
-                  </tr>
+
+                {isExchange ? (
+                  <>
+                    {transaction.exchangeRate && (
+                      <tr>
+                        <td>Rate Applied</td>
+                        <td className="amount-cell">1 {curCode} = {n2(transaction.exchangeRate)} {toCode}</td>
+                      </tr>
+                    )}
+                    {transaction.exchangeMode && (
+                      <tr>
+                        <td>Exchange Mode</td>
+                        <td className="amount-cell">{transaction.exchangeMode === 'buying' ? 'Buying' : 'Selling'}</td>
+                      </tr>
+                    )}
+                    <tr className="total-row">
+                      <td><strong>Recipient Receives</strong></td>
+                      <td className="amount-cell"><strong>{money(transaction.convertedAmount ?? transaction.receiverCredit, toCode)}</strong></td>
+                    </tr>
+                  </>
+                ) : (
+                  <>
+                    {n2(transaction.agentCommission) > 0 && (
+                      <tr>
+                        <td>Agent Commission ({n2(transaction.agentCommissionPercent)}%)</td>
+                        <td className="amount-cell">{money(transaction.agentCommission, curCode)}</td>
+                      </tr>
+                    )}
+                    {n2(transaction.companyCommission) > 0 && (
+                      <tr>
+                        <td>Company Commission ({n2(transaction.companyCommissionPercent)}%)</td>
+                        <td className="amount-cell">{money(transaction.companyCommission, curCode)}</td>
+                      </tr>
+                    )}
+                    {hasCommission && (
+                      <tr>
+                        <td><strong>Total Commission Fee</strong></td>
+                        <td className="amount-cell">{money(totalCommission, curCode)}</td>
+                      </tr>
+                    )}
+                    <tr className="total-row">
+                      <td><strong>TOTAL PAYMENT</strong></td>
+                      <td className="amount-cell"><strong>{money(n2(transaction.amount) + totalCommission, curCode)}</strong></td>
+                    </tr>
+                  </>
                 )}
-                {transaction.companyCommission !== undefined && (
-                  <tr>
-                    <td>Company Commission ({transaction.companyCommissionPercent}%)</td>
-                    <td className="amount-cell">SSP { (parseFloat(transaction.companyCommission) || 0).toFixed(2) }</td>
-                  </tr>
-                )}
-                <tr>
-                  <td><strong>Total Commission Fee</strong></td>
-                  <td className="amount-cell">SSP { ((parseFloat(transaction.agentCommission) || 0) + (parseFloat(transaction.companyCommission) || 0)).toFixed(2) }</td>
-                </tr>
-                <tr>
-                  <td><strong>Total User Pays</strong></td>
-                  <td className="amount-cell">SSP { ((parseFloat(transaction.amount) || 0) + (parseFloat(transaction.agentCommission) || 0) + (parseFloat(transaction.companyCommission) || 0)).toFixed(2) }</td>
-                </tr>
               </tbody>
             </table>
           </div>
@@ -403,10 +470,13 @@ export default function PrintReceipt({ transaction, onClose }) {
           </div>
         </div>
 
-        <div className="print-receipt-actions">
-          <button className="btn btn-primary" onClick={handlePrint}>🖨️ Print Receipt</button>
-          <button className="btn btn-secondary" onClick={handleNativePrint}>🖨️ Quick Print</button>
-          <button className="btn btn-primary" onClick={() => generateTransactionDocument(transaction)}>📥 Download PDF</button>
+        <div className="print-receipt-actions receipt-actions">
+          <button className="btn btn-primary" onClick={handlePrint} title="Print just this receipt">
+            <Printer size={14} /> Print receipt
+          </button>
+          <button className="btn btn-secondary" onClick={() => generateTransactionDocument(transaction)} title="Save as PDF">
+            <Download size={14} /> Download PDF
+          </button>
           <button className="btn btn-outline" onClick={onClose}>Close</button>
         </div>
       </div>

@@ -2,8 +2,17 @@
   display: grid;
   grid-template-columns: 250px 1fr;
   gap: 0;
+  height: 100vh;
   min-height: 100vh;
   background-color: var(--light);
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.admin-main {
+  min-width: 0;
+  min-height: 0;
+  height: 100vh;
 }
 
 .admin-sidebar {
@@ -29,11 +38,11 @@
 .sidebar-brand h2 {
   margin: 0;
   color: var(--primary);
-  font-size: 20px;
+  font-size: 16.5px;
 }
 
 .sidebar-brand p {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
   margin-top: 5px;
 }
@@ -48,7 +57,7 @@
   padding: 12px 20px;
   color: var(--text);
   font-weight: 500;
-  font-size: 13px;
+  font-size: 11.5px;
   transition: var(--transition);
   border-left: 3px solid transparent;
 }
@@ -76,30 +85,99 @@
   display: flex;
   justify-content: flex-end;
   box-shadow: var(--shadow-sm);
-  padding-right: 30px;
+  padding-right: 12px;
 }
 
 .admin-user-info {
   display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  color: var(--text);
+}
+
+.admin-user-info:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+}
+
+[data-theme="dark"] .admin-user-info:hover {
+  background: rgba(0, 168, 107, 0.1);
+}
+
+.admin-user-details {
+  display: flex;
   flex-direction: column;
-  text-align: right;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
 }
 
 .admin-user-name {
   font-weight: 600;
-  color: var(--dark);
+  color: var(--text);
+  font-size: 0.781rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .admin-user-name {
+  color: var(--text);
 }
 
 .admin-user-role {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-light);
   text-transform: capitalize;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .admin-user-role {
+  color: #64748B;
+}
+
+.admin-profile-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+  flex-shrink: 0;
+}
+
+.admin-profile-icon:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+}
+
+[data-theme="dark"] .admin-profile-icon:hover {
+  background: rgba(0, 168, 107, 0.1);
+}
+
+.admin-profile-icon svg {
+  color: #34C88E;
+  width: 28px;
+  height: 28px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+}
+
+.admin-profile-icon:hover svg {
+  color: #00A86B;
+  filter: drop-shadow(0 2px 8px rgba(0, 168, 107, 0.3));
+  transform: scale(1.1);
 }
 
 .admin-body {
   flex: 1;
   padding: 0;
   overflow-y: auto;
+  min-width: 0;
+  min-height: 0;
   scrollbar-width: none;
 }
 
@@ -113,20 +191,20 @@
   }
 
   .sidebar-brand h2 {
-    font-size: 18px;
+    font-size: 14.5px;
   }
 
   .sidebar-item {
     padding: 10px 15px;
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .admin-navbar {
-    padding: 15px 20px;
+    padding: 15px 12px;
   }
 
   .admin-body {
-    padding: 20px;
+    padding: 0;
   }
 }
 
@@ -135,12 +213,15 @@
     grid-template-columns: 1fr;
   }
 
+  /* The drawer below sets position/left; it must stay displayed or the
+     slide-in can never render. This used to be display:none, which is why the
+     admin had no reachable navigation on a phone. */
   .admin-sidebar {
-    display: none;
+    display: flex;
   }
 
   .admin-navbar {
-    padding: 12px 15px;
+    padding: 12px 10px;
   }
 
   .admin-user-info {
@@ -148,7 +229,7 @@
   }
 
   .admin-user-name {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .admin-user-role {
@@ -156,25 +237,25 @@
   }
 
   .admin-body {
-    padding: 15px;
+    padding: 0;
   }
 }
 
 @media (max-width: 480px) {
   .admin-navbar {
-    padding: 10px 12px;
+    padding: 10px 8px;
   }
 
   .admin-user-name {
-    font-size: 13px;
+    font-size: 11.5px;
   }
 
   .admin-user-role {
-    font-size: 10px;
+    font-size: 11px;
   }
 
   .admin-body {
-    padding: 10px;
+    padding: 0;
   }
 }
 
@@ -185,7 +266,7 @@
 }
 
 [data-theme="dark"] .admin-sidebar {
-  background: #1e293b;
+  background: #1E293B;
   border-right-color: var(--border);
 }
 
@@ -194,7 +275,7 @@
 }
 
 [data-theme="dark"] .sidebar-brand h2 {
-  color: #60a5fa;
+  color: #64748B;
 }
 
 [data-theme="dark"] .sidebar-brand p {
@@ -210,9 +291,9 @@
 }
 
 [data-theme="dark"] .sidebar-item:hover {
-  background-color: #334155;
-  border-left-color: #3b82f6;
-  color: #60a5fa;
+  background-color: #087443;
+  border-left-color: #34C88E;
+  color: #64748B;
 }
 
 [data-theme="dark"] .sidebar-footer {
@@ -220,7 +301,7 @@
 }
 
 [data-theme="dark"] .admin-navbar {
-  background: #0f172a;
+  background: #0F172A;
   border-bottom-color: var(--border);
   color: var(--text);
 }
@@ -259,12 +340,11 @@
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 0 16px 16px 0;
     box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15);
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.95);
+    background: #ffffff;
   }
 
   [data-theme="dark"] .admin-sidebar {
-    background: rgba(15, 23, 42, 0.95);
+    background: #0F172A;
   }
 
   .admin-sidebar.open {
@@ -277,12 +357,12 @@
   }
 
   .sidebar-brand h2 {
-    font-size: 22px;
+    font-size: 17.5px;
     font-weight: 700;
   }
 
   .sidebar-brand p {
-    font-size: 13px;
+    font-size: 11.5px;
   }
 
   .sidebar-menu {
@@ -293,40 +373,38 @@
     padding: 16px 24px;
     margin: 4px 12px;
     border-radius: 12px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
     position: relative;
   }
 
   .sidebar-item:hover {
-    transform: translateX(8px);
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 4px 15px rgba(0, 168, 107, 0.2);
   }
 
   .sidebar-item.active {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-    animation: pulse 2s infinite;
+    box-shadow: 0 4px 15px rgba(0, 168, 107, 0.3);
   }
 
   .sidebar-link {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 15px;
+    font-size: 12.5px;
   }
 
   .sidebar-icon {
-    font-size: 18px;
+    font-size: 14.5px;
     min-width: 20px;
   }
 
   .admin-main {
     padding: 16px;
     margin-top: 0;
-    animation: fadeIn 0.6s ease-in-out;
+    
   }
 
   .admin-header {
@@ -341,7 +419,6 @@
     position: sticky;
     top: 0;
     z-index: 100;
-    backdrop-filter: blur(10px);
   }
 
   [data-theme="dark"] .admin-header {
@@ -356,15 +433,15 @@
     border-radius: 50%;
     width: 44px;
     height: 44px;
-    font-size: 18px;
+    font-size: 14.5px;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 168, 107, 0.3);
   }
 
   .admin-menu-toggle:hover {
     transform: scale(1.1) rotate(90deg);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 6px 20px rgba(0, 168, 107, 0.4);
   }
 
   .admin-menu-overlay {
@@ -395,14 +472,14 @@
   .admin-stat-card {
     padding: 20px;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    animation: slideInFromBottom 0.6s ease-out;
+    
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
+    
   }
 
   .admin-stat-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    
   }
 
   .admin-content {
@@ -410,7 +487,7 @@
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-    animation: fadeIn 0.7s ease-in-out;
+    
   }
 
   [data-theme="dark"] .admin-content {
@@ -425,7 +502,7 @@
 
   .admin-table {
     min-width: 600px;
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .admin-form-grid {
@@ -455,7 +532,7 @@
   .admin-btn {
     width: 100%;
     padding: 16px;
-    font-size: 16px;
+    font-size: 13.5px;
     border-radius: 12px;
     min-height: 52px;
   }
@@ -464,7 +541,7 @@
 /* Tablet Admin Layout (834px - 1024px) */
 @media screen and (min-width: 834px) and (max-width: 1024px) {
   .admin-layout {
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 280px 1fr;
     gap: 24px;
   }
 
@@ -478,7 +555,7 @@
   }
 
   .sidebar-brand h2 {
-    font-size: 22px;
+    font-size: 17.5px;
   }
 
   .sidebar-menu {
@@ -489,23 +566,23 @@
     padding: 14px 20px;
     margin: 6px 16px;
     border-radius: 14px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   }
 
   .sidebar-item:hover {
     transform: translateX(6px) scale(1.02);
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 168, 107, 0.2);
   }
 
   .sidebar-link {
-    font-size: 15px;
+    font-size: 12.5px;
   }
 
   .admin-main {
     padding: 24px;
-    animation: fadeIn 0.7s ease-in-out;
+    
   }
 
   .admin-stats {
@@ -517,13 +594,13 @@
   .admin-stat-card {
     padding: 24px;
     border-radius: 18px;
-    transition: all 0.4s ease;
-    animation: slideInFromBottom 0.7s ease-out;
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease;
+    
   }
 
   .admin-stat-card:hover {
     transform: translateY(-6px) rotate(0.5deg);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    
   }
 
   .admin-content {
@@ -532,7 +609,7 @@
   }
 
   .admin-table {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .admin-form-grid {
@@ -562,7 +639,7 @@
   .admin-sidebar {
     border-radius: 20px;
     box-shadow: 8px 0 30px rgba(0, 0, 0, 0.1);
-    transition: all 0.4s ease;
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease, opacity 0.4s ease, filter 0.4s ease;
   }
 
   .admin-sidebar:hover {
@@ -576,12 +653,12 @@
   }
 
   .sidebar-brand h2 {
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 700;
   }
 
   .sidebar-brand p {
-    font-size: 14px;
+    font-size: 12px;
     margin-top: 8px;
   }
 
@@ -593,7 +670,7 @@
     padding: 18px 24px;
     margin: 8px 20px;
     border-radius: 16px;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), filter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
   }
@@ -602,44 +679,44 @@
     content: '';
     position: absolute;
     top: 0;
-    left: -100%;
+    left: 0;
     width: 100%;
     height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transition: left 0.5s;
+    transform: translateX(-100%);
+    transition: transform 0.5s;
   }
 
   .sidebar-item:hover::before {
-    left: 100%;
+    transform: translateX(100%);
   }
 
   .sidebar-item:hover {
-    transform: translateX(12px) scale(1.05);
+    transform: none;
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 8px 30px rgba(0, 168, 107, 0.3);
   }
 
   .sidebar-item.active {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    box-shadow: 0 8px 30px rgba(37, 99, 235, 0.3);
-    animation: pulse 3s infinite;
+    box-shadow: 0 8px 30px rgba(0, 168, 107, 0.3);
   }
 
   .sidebar-link {
-    font-size: 16px;
+    font-size: 13.5px;
     font-weight: 500;
   }
 
   .sidebar-icon {
-    font-size: 20px;
+    font-size: 16.5px;
     min-width: 24px;
   }
 
   .admin-main {
     padding: 40px;
-    animation: fadeIn 0.8s ease-in-out;
+    
   }
 
   .admin-stats {
@@ -651,8 +728,8 @@
   .admin-stat-card {
     padding: 32px;
     border-radius: 24px;
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: slideInFromBottom 0.8s ease-out;
+    transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), filter 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    
     position: relative;
     overflow: hidden;
   }
@@ -670,7 +747,7 @@
 
   .admin-stat-card:hover {
     transform: translateY(-10px) rotate(0.5deg) scale(1.02);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    
   }
 
   .admin-content {
@@ -680,7 +757,7 @@
   }
 
   .admin-table {
-    font-size: 15px;
+    font-size: 12.5px;
     border-radius: 16px;
   }
 
@@ -708,46 +785,13 @@
    ANIMATIONS FOR ADMIN LAYOUT
    ======================================== */
 
-@keyframes adminSlideIn {
-  from {
-    transform: translateX(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
+@keyframes adminSlideIn { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes adminFadeInUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
+@keyframes adminFadeInUp { from { opacity: 0; } to { opacity: 1; } }
 
-@keyframes adminScaleIn {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
+@keyframes adminScaleIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Stagger animations for admin stats */
-.admin-stats .admin-stat-card:nth-child(1) { animation-delay: 0.1s; }
-.admin-stats .admin-stat-card:nth-child(2) { animation-delay: 0.2s; }
-.admin-stats .admin-stat-card:nth-child(3) { animation-delay: 0.3s; }
-.admin-stats .admin-stat-card:nth-child(4) { animation-delay: 0.4s; }
-.admin-stats .admin-stat-card:nth-child(5) { animation-delay: 0.5s; }
-.admin-stats .admin-stat-card:nth-child(6) { animation-delay: 0.6s; }
 
 /* Loading states for admin */
 .admin-loading {
@@ -772,15 +816,1061 @@
 
 /* Success states */
 .admin-success {
-  animation: bounceIn 0.6s ease;
+  
   border: 2px solid var(--secondary);
-  background: rgba(16, 185, 129, 0.1);
+  background: rgba(22, 163, 74, 0.1);
 }
 
 /* Error states */
 .admin-error {
   animation: shake 0.5s ease;
   border: 2px solid var(--danger);
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(220, 38, 38, 0.1);
 }
 
+
+/* ==========================================================================
+   Icon colour consistency (admin)
+   lucide SVGs inherit `color`; make sidebar icons match their label.
+   ========================================================================== */
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-item svg {
+  color: inherit;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.sidebar-item:hover svg,
+.sidebar-item.active svg {
+  color: inherit;
+}
+
+.sidebar-brand .brand-icon,
+.sidebar-brand .brand-icon svg {
+  color: inherit;
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Sidebar density
+   Rows originally stacked padding AND margin (18px + 8px at >=1440px, ~68px a
+   row). This sits between that and the too-tight first pass: ~45px a row.
+   Appended last so it wins over the media-query blocks above.
+   ========================================================================== */
+
+.sidebar-menu {
+  padding: 0 0 12px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  margin: 2px 10px;
+  border-radius: 10px;
+  line-height: 1.4;
+  font-size: 12px;
+}
+
+.sidebar-item:hover {
+  transform: none;
+}
+
+@media screen and (min-width: 834px) and (max-width: 1024px) {
+  .sidebar-item {
+    padding: 10px 14px;
+    margin: 3px 10px;
+    border-radius: 10px;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  .sidebar-menu {
+    padding: 14px 0;
+  }
+
+  .sidebar-item {
+    padding: 11px 18px;
+    margin: 3px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+
+  /* the original translateX(12px) scale(1.05) made neighbouring rows collide
+     once the spacing came down */
+  .sidebar-item:hover {
+    transform: translateX(4px);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .sidebar-item {
+    padding: 12px 16px;
+    margin: 3px 10px;
+    border-radius: 10px;
+  }
+}
+
+/* ---- sidebar icons carry the brand colour ------------------------------- */
+/* (the brand lockup above keeps icon + wordmark unified; this is nav rows) */
+.sidebar-item svg {
+  color: var(--primary);
+  transition: color 0.2s ease;
+}
+
+/* rows turn into a green gradient when hovered/active, so the icon flips */
+.sidebar-item:hover svg,
+.sidebar-item.active svg {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .sidebar-item svg {
+  color: var(--primary);
+}
+
+/* The green hover/active fill was only declared inside media queries, so at
+   769-833px and 1025-1439px the base rule left it pale green — a white icon
+   would have vanished there. Declare it once for all widths. */
+.sidebar-item:hover,
+.sidebar-item.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #FFFFFF;
+  border-left-color: transparent;
+}
+
+.sidebar-item:hover svg,
+.sidebar-item.active svg {
+  color: #FFFFFF;
+}
+
+/* ==========================================================================
+   Active nav row
+   Nothing applied `.active` before (the layouts used plain <Link>), so all the
+   active rules below were dead. Now that NavLink sets it, hover and active
+   need to look different — otherwise hovering one row makes it indistinguish-
+   able from the row you are actually on.
+   ========================================================================== */
+
+/* hover on a row you are NOT on: a light hint */
+.sidebar-item:hover:not(.active) {
+  background: #E8F7F0;
+  color: var(--primary-dark);
+  box-shadow: none;
+}
+
+.sidebar-item:hover:not(.active) svg {
+  color: var(--primary-dark);
+}
+
+/* the row you are on: solid brand fill, no movement */
+.sidebar-item.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(0, 168, 107, 0.28);
+  transform: none;
+}
+
+.sidebar-item.active:hover {
+  transform: none;
+  filter: brightness(1.04);
+}
+
+.sidebar-item.active svg {
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .sidebar-item:hover:not(.active) {
+  background: #05512F;
+  color: #D1F0E3;
+}
+
+[data-theme="dark"] .sidebar-item:hover:not(.active) svg {
+  color: #34C88E;
+}
+
+/* ==========================================================================
+   Sidebar width
+   Widened, and made monotonic: 834-1024px previously got 300px while the
+   wider 1025-1439px range got only 250px. Mobile (<=768px) keeps its
+   full-width drawer, so these only start at 769px.
+   ========================================================================== */
+
+@media screen and (min-width: 769px) {
+  .admin-layout {
+    grid-template-columns: 240px 1fr;
+  }
+}
+
+@media screen and (min-width: 1025px) {
+  .admin-layout {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+@media screen and (min-width: 1440px) {
+  .admin-layout {
+    grid-template-columns: 340px 1fr;
+  }
+
+  /* a little more breathing room now that the column is wider */
+  .sidebar-item {
+    padding: 11px 20px;
+    margin: 3px 14px;
+  }
+}
+
+/* ==========================================================================
+   Sidebar display mode: full (icon + label) vs icons only
+   Default is the full lockup; the toggle stores the choice in localStorage.
+   .sidebar-collapsed is (0,2,0) so it beats the plain .admin-layout width
+   rules at every breakpoint without needing a copy inside each media query.
+   ========================================================================== */
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* ---- icons-only mode ---- */
+.admin-layout.sidebar-collapsed {
+  grid-template-columns: 78px 1fr;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-label {
+  display: none;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-item {
+  justify-content: center;
+  gap: 0;
+  padding: 11px 0;
+  margin: 3px 8px;
+}
+
+.admin-layout.sidebar-collapsed .brand-logo-full { display: none; }
+.admin-layout.sidebar-collapsed .brand-logo-mark { display: block; }
+
+.admin-layout.sidebar-collapsed .sidebar-toggle {
+  margin: 4px auto 6px;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-footer,
+.admin-layout.sidebar-collapsed .exchange-rate-widget {
+  display: none;
+}
+
+/* labels are hidden, so surface them on hover instead */
+.admin-layout.sidebar-collapsed .sidebar-item {
+  position: relative;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-item:hover::after {
+  content: attr(data-label);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #04331E;
+  color: #FFFFFF;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* on phones the sidebar is a drawer; icons-only would just be confusing */
+@media screen and (max-width: 768px) {
+  .admin-layout.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar-label { display: inline; }
+  .admin-layout.sidebar-collapsed .sidebar-item { justify-content: flex-start; gap: 12px; padding: 12px 16px; }
+  .admin-layout.sidebar-collapsed .brand-logo-full { display: block; }
+  .admin-layout.sidebar-collapsed .brand-logo-mark { display: none; }
+  .sidebar-toggle { display: none; }
+}
+
+/* ==========================================================================
+   Brand block polish
+   The outlined square button read as a detached form control; a soft filled
+   circle sits better next to the logo and in the collapsed rail.
+   ========================================================================== */
+
+.sidebar-toggle {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: #E8F7F0;
+  color: var(--primary-dark);
+  box-shadow: none;
+}
+
+.sidebar-toggle:hover {
+  background: var(--primary);
+  border-color: transparent;
+  color: #FFFFFF;
+}
+
+.sidebar-toggle:active {
+  transform: scale(0.94);
+}
+
+/* ---- expanded: logo left, toggle right, tidy divider ---- */
+/* ---- collapsed rail: mark over toggle, tightened ---- */
+.admin-layout.sidebar-collapsed .brand-logo-mark,
+.sidebar.collapsed .brand-logo-mark {
+  height: 38px;
+  width: 38px;
+}
+
+[data-theme="dark"] .sidebar-toggle {
+  background: #05512F;
+  color: #34C88E;
+}
+
+[data-theme="dark"] .sidebar-toggle:hover {
+  background: var(--primary);
+  color: #04331E;
+}
+
+/* base box for the toggle (the superseded duplicate carried these) */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease;
+}
+
+/* >=1440px still styled the brand for the old text lockup (40px padding and a
+   2px rule), which pushed the divider onto the toggle. */
+@media screen and (min-width: 1440px) {
+  .sidebar .sidebar-brand {
+    padding: 14px 16px 16px;
+    border-bottom-width: 1px;
+  }
+}
+
+/* ==========================================================================
+   Sidebar scrolling
+   .admin-sidebar had overflow-y:auto but no height, so as a grid item it
+   stretched to the height of the content beside it. On long pages (All
+   Transactions, Exchange Transactions) the lower nav items ended up below the
+   viewport, reachable only by scrolling the whole page.
+
+   Pinning it to the viewport and giving it its own scroll keeps every nav item
+   reachable regardless of how tall the table is.
+   ========================================================================== */
+
+@media screen and (min-width: 1033px) {
+  .admin-layout > .admin-sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* keep the nav from being flush against the bottom edge when scrolled */
+  .admin-layout > .admin-sidebar .sidebar-menu {
+    padding-bottom: 16px;
+  }
+}
+
+
+/* ==========================================================================
+   Horizontal overflow
+   Grid and flex items default to min-width:auto, so they refuse to shrink
+   below their content's intrinsic width. A wide table therefore stretched
+   .admin-main, which widened the grid column and made the whole PAGE scroll
+   sideways — cutting off the last table column instead of scrolling the table.
+
+   min-width:0 lets the column shrink, so overflow-x on the table wrapper is
+   what actually scrolls.
+   ========================================================================== */
+
+.admin-layout > .admin-main {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-main > .admin-body,
+.admin-main > .admin-navbar {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-body .page-container {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* the wrappers that should scroll instead of the page */
+.admin-body .table-wrap,
+.admin-body .table-responsive {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* NOTE: do not put overflow-x here. Any overflow value other than visible
+   makes this element a scroll container, which breaks the sticky sidebar.
+   min-width:0 above is what actually stops the sideways scroll. */
+
+
+/* ==========================================================================
+   Sidebar group headings
+   ========================================================================== */
+
+.sidebar-group {
+  display: block;
+  padding: 0 22px;
+  margin: 16px 0 6px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-light);
+  user-select: none;
+}
+
+/* no dead space above the first heading */
+.sidebar-menu .sidebar-group:first-child { margin-top: 0; }
+
+/* In the collapsed rail the label is hidden, so the heading becomes a rule —
+   the grouping stays legible without any text. */
+.admin-layout.sidebar-collapsed .sidebar-group {
+  padding: 0;
+  margin: 12px 14px 8px;
+  font-size: 0;              /* hides the text, keeps the element */
+  border-top: 1px solid var(--border);
+  height: 0;
+  overflow: hidden;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-menu .sidebar-group:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+[data-theme="dark"] .sidebar-group { color: #94A3B8; }
+[data-theme="dark"] .admin-layout.sidebar-collapsed .sidebar-group { border-top-color: #14532D; }
+
+@media screen and (min-width: 1440px) {
+  .sidebar-group { padding: 0 26px; }
+}
+
+/* ==========================================================================
+   Navbar page title — large screens only
+   The exact complement of .navbar-brand-admin: the logo owns the navbar at
+   768px and below, this owns it from 769px up, where the bar is otherwise
+   empty and the sidebar already carries the brand.
+
+   Plain text and icon, not a control — it is a label, so no background,
+   border or hover state.
+   ========================================================================== */
+
+.navbar-page-title {
+  display: none;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  color: var(--dark, #087443);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The winning .admin-navbar rule sets padding: 20px 0, so there is no left
+   padding to sit inside — the icon needs its own inset. */
+.navbar-page-title svg {
+  flex-shrink: 0;
+  margin-left: 20px;
+  color: var(--primary);
+}
+
+.navbar-page-title span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media screen and (min-width: 769px) {
+  .navbar-page-title { display: inline-flex; }
+}
+
+@media screen and (min-width: 1440px) {
+  .navbar-page-title { font-size: 14.5px; }
+  .navbar-page-title svg { margin-left: 26px; }
+}
+
+[data-theme="dark"] .navbar-page-title { color: #E2E8F0; }
+[data-theme="dark"] .navbar-page-title svg { color: #A9EBD1; }
+
+/* ==========================================================================
+   Sticky chrome — navbar and sidebar brand
+   The window is the scroll container (.admin-body sets overflow-y:auto but
+   never gets a height, so it never actually scrolls), which means plain
+   sticky works: no ancestor sets overflow, and html/body only hide their
+   scrollbars.
+
+   -webkit-sticky is declared first for Safari 12 and older, which shipped
+   sticky only behind the prefix; browsers that understand the unprefixed
+   value take the second declaration.
+   ========================================================================== */
+
+.admin-layout > .admin-main > .admin-navbar {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  /* above page content, below the mobile drawer (1000) and its backdrop (999) */
+  z-index: 500;
+}
+
+/* The brand row pins to the top of the sidebar's own scroll area. It has no
+   background of its own, so nav items would scroll through it — give it the
+   sidebar's background explicitly, in both themes. */
+.admin-layout .sidebar .sidebar-brand {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #FFFFFF;
+}
+
+[data-theme="dark"] .admin-layout .sidebar .sidebar-brand {
+  background: #1E293B;
+}
+
+
+/* shown when the selected pair has no configured rate, so the widget explains
+   itself instead of showing a bare em-dash */
+.exchange-rate-unset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 0;
+  text-align: center;
+}
+
+.exchange-rate-unset span {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.exchange-rate-unset a {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.exchange-rate-unset a:hover { color: #FFFFFF; }
+
+.admin-layout.sidebar-collapsed .exchange-rate-unset { display: none; }
+
+/* ==========================================================================
+   Mobile navigation — hamburger + drawer scrim
+
+   Below 769px the sidebar is an off-canvas drawer. These are the two pieces
+   that were missing: a control to open it, and a scrim to close it.
+   ========================================================================== */
+
+.admin-menu-btn {
+  display: none;               /* phones only — enabled in the query below */
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  margin-right: 4px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--primary-dark, #087443);
+  cursor: pointer;
+}
+
+.admin-menu-btn:hover { background: #E8F7F0; }
+
+.admin-menu-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .admin-menu-btn { border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .admin-menu-btn:hover { background: #05512F; }
+
+/* sits under the drawer (z-index 1000) but over everything else */
+.admin-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(4, 24, 14, 0.5);
+  border: none;
+}
+
+@media screen and (max-width: 1032px) {
+  /* grid, not flex: the button is square and the icon centres either way, but
+     `display: none` above means this has to re-state a display value. */
+  .admin-menu-btn { display: grid; }
+
+  /* the navbar packs left-to-right on a phone, so the menu button leads */
+  .admin-navbar { justify-content: flex-start; }
+}
+
+@media screen and (min-width: 1033px) {
+  /* never show either on a desktop, where the sidebar is permanent */
+  .admin-menu-btn,
+  .admin-scrim { display: none; }
+}
+
+/* ==========================================================================
+   Tablet uses the drawer too
+
+   The off-canvas rules live in a max-width:768px block, so between 769 and
+   1032 a tablet still got the permanent sidebar squeezed beside the content.
+   This re-applies the drawer across that range. It matches the app's existing
+   tablet boundary — the user shell already treats <=1032px as mobile/tablet.
+
+   `.admin-layout > .admin-sidebar` rather than a bare class: the sticky-sidebar
+   rule it has to beat is itself (0,2,0), so an equal-specificity selector that
+   comes later is what wins here.
+   ========================================================================== */
+
+@media screen and (min-width: 769px) and (max-width: 1032px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .admin-layout > .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 300px;
+    height: 100vh;
+    max-height: 100vh;
+    z-index: 1000;
+    display: flex;
+    overflow-y: auto;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0 16px 16px 0;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15);
+    background: #FFFFFF;
+  }
+
+  [data-theme="dark"] .admin-layout > .admin-sidebar { background: #0F172A; }
+
+  .admin-layout > .admin-sidebar.open { left: 0; }
+
+  /* collapsing to an icon rail is meaningless once it is a drawer */
+  .sidebar-toggle { display: none; }
+
+  /* the menu button leads the navbar, so it packs from the left */
+  .admin-navbar { justify-content: flex-start; }
+}
+
+/* ==========================================================================
+   Drawer mode ignores the collapse state
+
+   `.sidebar.collapsed { width: 72px }` has no media query, so it applied to
+   the off-canvas drawer as well and outranked its own `width` at (0,2,0) vs
+   (0,1,0). The collapse flag persists in localStorage, so an admin who had
+   collapsed the rail on desktop opened a 72px icon strip on their phone with
+   every label, the footer and the exchange widget hidden — indistinguishable
+   from the drawer not opening at all.
+
+   Collapsing is a desktop affordance; in drawer mode there is nothing to
+   reclaim, so it is neutralised here.
+   ========================================================================== */
+
+@media screen and (max-width: 1032px) {
+  .admin-layout > .admin-sidebar.collapsed,
+  .admin-layout.sidebar-collapsed > .admin-sidebar {
+    width: 300px;
+    max-width: 88vw;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar-label,
+  .admin-layout > .admin-sidebar.collapsed .sidebar-label {
+    display: inline;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar-group,
+  .admin-layout.sidebar-collapsed .sidebar-footer,
+  .admin-layout.sidebar-collapsed .exchange-rate-widget {
+    display: block;
+  }
+
+  .admin-layout.sidebar-collapsed .brand-logo-full { display: block; }
+  .admin-layout.sidebar-collapsed .brand-logo-mark { display: none; }
+
+  /* the hover-tooltip trick the collapsed rail uses has no place in a drawer */
+  .admin-layout.sidebar-collapsed .sidebar-item:hover .sidebar-label {
+    position: static;
+    left: auto;
+    width: auto;
+    background: none;
+    box-shadow: none;
+  }
+}
+
+/* ==========================================================================
+   Navbar on small phones
+
+   hamburger + logo + name + role + avatar is too much for a ~320px bar. The
+   name and role duplicate what the profile page shows, and the avatar still
+   links there, so they step aside and let the logo breathe.
+   ========================================================================== */
+
+@media screen and (max-width: 560px) {
+  .admin-navbar { gap: 6px; }
+  .admin-user-details { display: none; }
+  .admin-user-info { gap: 0; padding: 4px; }
+  .navbar-brand-admin .navbar-logo { height: 26px; }
+  .admin-menu-btn { width: 36px; height: 36px; }
+}
+
+/* ==========================================================================
+   Navbar height on phones
+
+   The base rule sets a fixed height:64px, and every responsive rule after it
+   only adjusts padding — so the bar stayed 64px tall on a 320px screen no
+   matter how tight the padding got. Height becomes intrinsic here, with a
+   min-height that still clears the 36px menu button and the avatar.
+   ========================================================================== */
+
+@media screen and (max-width: 768px) {
+  .admin-navbar {
+    height: auto;
+    min-height: 56px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .admin-navbar { min-height: 52px; }
+}
+
+/* ==========================================================================
+   Drawer close button + navbar harmony
+
+   The three navbar controls were each styled differently — an outlined green
+   square, a white logo chip and a bare circle — so the bar read as three
+   unrelated objects. They now share one shape language: same size, same
+   radius, same tinted fill, no borders.
+   ========================================================================== */
+
+.admin-drawer-close {
+  display: none;               /* drawer widths only, enabled below */
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  margin-left: auto;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary-dark, #087443);
+  cursor: pointer;
+}
+
+.admin-drawer-close:hover { background: #D1F0E3; }
+
+.admin-drawer-close:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .admin-drawer-close {
+  background: #05512F;
+  color: #A9EBD1;
+}
+
+[data-theme="dark"] .admin-drawer-close:hover { background: #087443; color: #FFFFFF; }
+
+@media screen and (max-width: 1032px) {
+  .admin-drawer-close { display: grid; }
+
+  /* the brand row becomes: logo … close */
+  .admin-layout > .admin-sidebar .sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 0;
+    height: 52px;
+    min-height: 52px;
+    padding-bottom: 0;
+  }
+
+  /* one shape language across the bar */
+  .admin-menu-btn {
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 11px;
+    background: var(--light, #E8F7F0);
+    color: var(--primary-dark, #087443);
+  }
+
+  .admin-menu-btn:hover { background: #D1F0E3; }
+
+  [data-theme="dark"] .admin-menu-btn {
+    background: #05512F;
+    color: #A9EBD1;
+  }
+
+  [data-theme="dark"] .admin-menu-btn:hover { background: #087443; color: #FFFFFF; }
+
+  .admin-profile-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--light, #E8F7F0);
+  }
+
+  [data-theme="dark"] .admin-profile-icon { background: #05512F; }
+
+  /* the logo keeps its plate — the artwork is dark navy and vanishes on the
+     dark bar without one — but it tightens to match the controls' height */
+  .navbar-brand-admin .navbar-logo {
+    height: 24px;
+    padding: 6px 9px;
+    border-radius: 9px;
+  }
+
+  .admin-navbar { gap: 10px; }
+}
+
+/* ==========================================================================
+   Appbar: flush edges, bare menu icon
+
+   The bar's own padding inset its controls while the page content below now
+   runs edge to edge, so the two did not line up. It drops to 6px — enough
+   that the icon is not literally touching the glass, but visually flush.
+
+   The menu button loses its plate and is just the icon. The 38px box is kept
+   deliberately: it is the tap target. Dropping to the icon's own ~20px would
+   leave a control well under the ~44px guideline and hard to hit. Only the
+   paint is removed, not the hit area.
+   ========================================================================== */
+
+@media screen and (max-width: 1032px) {
+  .admin-navbar {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .admin-menu-btn {
+    width: 38px;
+    height: 38px;
+    background: transparent;
+    border: none;
+    color: var(--primary-dark, #087443);
+  }
+
+  /* no plate on hover either — a faint tint would just reinstate the box */
+  .admin-menu-btn:hover { background: transparent; color: var(--primary); }
+
+  [data-theme="dark"] .admin-menu-btn {
+    background: transparent;
+    color: #34C88E;
+  }
+
+  [data-theme="dark"] .admin-menu-btn:hover {
+    background: transparent;
+    color: #A9EBD1;
+  }
+
+  /* the focus ring is the only remaining affordance, so it stays */
+  .admin-menu-btn:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .admin-navbar { padding-left: 4px; padding-right: 4px; }
+}
+
+/* The avatar plate was added only to match the menu button's plate. That plate
+   is gone, so this one has no reason to exist either — a bare icon next to a
+   filled one reads as unbalanced. Back to the bare icon it was before. */
+@media screen and (max-width: 1032px) {
+  .admin-profile-icon {
+    background: transparent;
+    border-radius: 11px;
+  }
+
+  [data-theme="dark"] .admin-profile-icon { background: transparent; }
+}
+
+/* ==========================================================================
+   Phone drawer: make it scrollable, and drop the navbar's side padding
+
+   The <=768px drawer sets height:100vh with no overflow rule, so with fifteen
+   nav items plus the exchange widget everything past the fold was unreachable
+   — the drawer opened but most of it could not be scrolled to. (The tablet
+   range already had overflow-y; the phone range never did.)
+
+   The navbar's side padding goes to 0. The menu button is a 38px box holding a
+   20px icon, so the icon still sits ~9px off the edge on its own — the padding
+   was stacking on top of that and pushing it visibly inward while the content
+   below ran flush.
+   ========================================================================== */
+
+@media screen and (max-width: 768px) {
+  .admin-layout > .admin-sidebar.admin-sidebar {
+    width: 300px;
+    max-width: 88vw;
+    padding-top: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;   /* stop the page behind scrolling with it */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* nothing inside can force the drawer wider than itself */
+  .admin-layout > .admin-sidebar > * { max-width: 100%; min-width: 0; }
+}
+
+@media screen and (max-width: 1032px) {
+  .admin-navbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* ==========================================================================
+   Main column runs flush; the navbar carries the only gap
+
+   `.admin-main` had padding:16px below 768px (24px at 834-1024). That is what
+   put space to the left, right and top of the navbar — and, because the body
+   sits in the same column, it was also insetting every page below it. That
+   inset is the right-edge gap that made the cards stop short of the screen.
+
+   With it removed the bar spans edge to edge, its own vertical padding goes to
+   zero (min-height still sets the bar's height and align-items centres the
+   controls), and the single remaining gap is a bottom margin separating it
+   from the page.
+   ========================================================================== */
+
+@media screen and (max-width: 1032px) {
+  .admin-main { padding: 0; }
+
+  .admin-navbar {
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: var(--page-gutter);
+  }
+}
+
+/* ==========================================================================
+   Drawer close button — made explicit
+
+   The control already existed but was never visible, because the drawer it
+   lives in was display:none until the .sidebar !important rule was scoped.
+   Now that it shows, it is sized to match the menu button that opens the
+   drawer (38px), so the open and close affordances are the same object.
+   ========================================================================== */
+
+@media screen and (max-width: 1032px) {
+  .admin-drawer-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  /* the logo must not crowd it — it may shrink, the button may not */
+  .admin-layout > .admin-sidebar .sidebar-brand .brand-logo-full {
+    max-width: calc(100% - 54px);
+  }
+
+  /* a visible edge so it reads as a control against the drawer surface */
+  .admin-drawer-close {
+    border: 1px solid var(--border);
+  }
+
+  [data-theme="dark"] .admin-drawer-close {
+    border-color: #14532D;
+  }
+}
+
+/* ==========================================================================
+   Drawer brand row: only one control
+
+   `.sidebar .sidebar-toggle` is (0,2,0), so the earlier `.sidebar-toggle
+   { display: none }` at (0,1,0) never took effect and the collapse toggle kept
+   rendering inside the drawer. The row then held logo + toggle + close, which
+   overflowed 300px — and with overflow-x:hidden on the drawer the close button
+   was clipped off the right edge. That is why it was invisible.
+
+   Collapsing is meaningless in a drawer, so the toggle goes for real this time
+   at (0,3,0), leaving the close button as the row's only control.
+   ========================================================================== */
+
+@media screen and (max-width: 1032px) {
+  .admin-layout > .admin-sidebar .sidebar-toggle {
+    display: none;
+  }
+
+  /* only the close button shares the row now, so the logo can have more */
+  .admin-layout > .admin-sidebar .sidebar-brand .brand-logo-full {
+    max-width: calc(100% - 50px);
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .admin-layout > .admin-sidebar > .sidebar-brand {
+    margin-top: 0;
+    padding-top: 0;
+  }
+}
+
+.admin-layout > .admin-sidebar > .sidebar-menu {
+  position: static !important;
+  top: auto;
+  z-index: 0;
+}
+
+.admin-layout > .admin-sidebar > .sidebar-brand {
+  z-index: 100;
+  overflow: hidden;
+  margin-top: 0;
+  border-top: 0;
+  box-shadow: none;
+}
+
+.admin-layout > .admin-sidebar.sidebar {
+  margin-top: 0;
+}
+
+@media screen and (max-width: 1032px) {
+  .admin-layout > .admin-sidebar.sidebar {
+    margin: 0;
+    z-index: 1000;
+  }
+}
