@@ -38,6 +38,32 @@ will build and then fail at boot:
 | `FRONTEND_URL` | `https://gpay-ss.netlify.app` — the Netlify site, **not** the Railway URL. Appended to the CORS allow-list. |
 | `API_URL` / `API_PRODUCTION_URL` | |
 
+### Creating the first admin
+
+A fresh database has tables but no accounts, so nobody can sign in and nothing
+can create the first admin. The server seeds one at startup **only if these are
+set and no admin exists yet**:
+
+| Variable | Notes |
+|---|---|
+| `ADMIN_EMAIL` | The sign-in email |
+| `ADMIN_PASSWORD` | Minimum 8 characters |
+| `ADMIN_NAME` | Optional, defaults to `Administrator` |
+| `ADMIN_PHONE` | Optional |
+
+It runs once — on later restarts it finds the existing admin and does nothing,
+so it will not overwrite a changed password. Credentials deliberately are not
+hardcoded: a well-known default would hand an admin account on a live money
+app to anyone who reads the source.
+
+The startup log says which happened:
+
+```
+Default admin created: admin@example.com (adminId 771796)
+Default admin not created — an admin already exists
+Default admin not created — no admin exists and ADMIN_EMAIL / ADMIN_PASSWORD are not set
+```
+
 Optional — only needed for SMS verification to actually send:
 `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`.
 

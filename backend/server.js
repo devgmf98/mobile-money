@@ -1,4 +1,5 @@
 import express from 'express';
+import { bootstrapAdmin } from './utils/bootstrapAdmin.js';
 import sequelize from './config/database.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -179,6 +180,21 @@ async function startServer() {
     // Sequelize alter preserves existing rows while bringing the schema up to date.
     await sequelize.sync({ alter: true });
     console.log('Database synchronized and schema updated');
+
+    /* A fresh deployment has tables but no accounts, so nobody can sign in and
+       nothing can create the first admin. Seed one from the environment. */
+    try {
+      const result = await bootstrapAdmin();
+      if (result.created) {
+        console.log(`Default admin created: ${result.email} (adminId ${result.adminId})`);
+      } else {
+        console.log(`Default admin not created — ${result.reason}`);
+      }
+    } catch (err) {
+      /* Never block startup on seeding: a running API with no admin is still
+         more useful than a container that will not boot. */
+      console.error('Admin bootstrap failed:', err.message);
+    }
 
     httpServer.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
