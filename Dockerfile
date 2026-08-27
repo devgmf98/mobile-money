@@ -30,10 +30,14 @@ COPY backend/ /app/backend/
 RUN mkdir -p /app/public
 COPY --from=frontend-builder /app/frontend/dist /app/public
 
-# Copy environment file
-COPY .env /app/
+# No .env is copied. It is not in the repository (it holds JWT_SECRET and
+# DB_PASSWORD), so COPY .env failed the build. Railway injects variables
+# straight into the container environment, and dotenv.config() silently does
+# nothing when the file is absent, leaving process.env intact — so every
+# variable the app needs must be set in the Railway dashboard.
 
-EXPOSE 5002
+# server.js listens on process.env.PORT; Railway sets it and routes to it.
+EXPOSE 8080
 
 # Set working directory to backend
 WORKDIR /app/backend
