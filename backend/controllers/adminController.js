@@ -871,6 +871,55 @@ export const getAdminStats = async (req, res) => {
       return acc;
     }, {});
 
+    /* Destination-send commission this admin earned, split by currency and
+       zero-filled from the Currencies table — a currency that has earned
+       nothing still gets a card, and a newly added currency gets one the
+       moment it exists, without another code change. */
+    const commissionRows = await Transaction.findAll({
+      attributes: [
+        'currencyCode',
+        [sequelize.fn('SUM', sequelize.col('commission')), 'total'],
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+      ],
+      where: {
+        type: 'admin_state_push',
+        senderId: req.userId,
+        commission: { [Op.gt]: 0 },
+      },
+      group: ['currencyCode'],
+      raw: true,
+    });
+
+    const currencies = await Currency.findAll({
+      attributes: ['code', 'name'],
+      order: [['code', 'ASC']],
+      raw: true,
+    });
+
+    const earned = commissionRows.reduce((acc, r) => {
+      /* Older rows predate the currency columns; SSP is the base currency
+         every balance is held in, so an unlabelled row belongs to it. */
+      const code = (r.currencyCode || 'SSP').toUpperCase();
+      acc[code] = acc[code] || { total: 0, count: 0 };
+      acc[code].total += Number(r.total) || 0;
+      acc[code].count += Number(r.count) || 0;
+      return acc;
+    }, {});
+
+    /* Union of configured currencies and any code that has actually earned,
+       so a commission booked against a since-deleted currency is not lost. */
+    const codes = [...new Set([
+      ...currencies.map((c) => (c.code || '').toUpperCase()).filter(Boolean),
+      ...Object.keys(earned),
+    ])].sort();
+
+    const myCommissionByCurrency = codes.map((code) => ({
+      code,
+      name: (currencies.find((c) => (c.code || '').toUpperCase() === code) || {}).name || code,
+      total: earned[code] ? earned[code].total : 0,
+      count: earned[code] ? earned[code].count : 0,
+    }));
+
     // Get company benefits (total company commission)
     const companyBenefits = await Transaction.sum('companyCommission', {
       where: { status: 'completed' }
@@ -881,6 +930,7 @@ export const getAdminStats = async (req, res) => {
       totalTransactions,
       totalVolume,
       totalTopupVolume,
+      myCommissionByCurrency,
       completedTransactions,
       pendingTransactions,
       usersByRole,

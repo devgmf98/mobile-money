@@ -20,13 +20,18 @@ const money = (v) => 'SSP ' + (Number(v) || 0).toLocaleString('en-US', {
 
 const count = (v) => (Number(v) || 0).toLocaleString('en-US');
 
+/* money() hardcodes SSP; these cards each carry their own currency. */
+const amount = (v, code) => (code || 'SSP') + ' ' + (Number(v) || 0).toLocaleString('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [commission, setCommission] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const user = useAuthStore((state) => state.user);
-  const [myCashedOut, setMyCashedOut] = useState(null);
   const [adminStateCommission, setAdminStateCommission] = useState(null);
   const [moneyExchangeTransactions, setMoneyExchangeTransactions] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
@@ -49,22 +54,26 @@ export default function AdminDashboard() {
     return Array.from(map.values());
   })();
 
-  const fetchMyCommission = async () => {
+  /* The commission cards come from getStats now, so a state send refreshes
+     them by refetching stats rather than a separate commission endpoint. */
+  const fetchStats = async () => {
     try {
-      const { data } = await adminAPI.getMyAdminCommission();
-      console.log('Commission response:', data);
-      const val = Number(data?.totalAdminCommission ?? data?.totalAdminCashOut);
-      console.log('Parsed commission value:', val);
-      setMyCashedOut(isNaN(val) ? 0 : val);
-    } catch (e) {
-      console.error('Failed to load my admin commission', e);
-      setMyCashedOut(0);
+      const { data } = await adminAPI.getStats();
+      setStats(data);
+    } catch (error) {
+      console.error('Failed to fetch admin stats:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   // One card per currency in the system. Codes that already carry exchanges are
   // unioned in, so a currency deleted from the table keeps showing its history
   // instead of the count silently vanishing.
+  /* Server-sorted and zero-filled from the Currencies table, so every
+     configured currency has a card even before it earns anything. */
+  const commissionByCurrency = stats?.myCommissionByCurrency || [];
+
   const exchangeCodes = (() => {
     const byCurrency = stats?.myExchangesByCurrency || {};
     const codes = new Set();
@@ -85,17 +94,6 @@ export default function AdminDashboard() {
   })();
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const { data } = await adminAPI.getStats();
-        setStats(data);
-      } catch (error) {
-        console.error('Failed to fetch admin stats:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const fetchMoneyExchangeTransactions = async () => {
       try {
         const { data } = await adminAPI.getAllTransactions();
@@ -125,7 +123,6 @@ export default function AdminDashboard() {
 
     fetchStats();
     fetchMoneyExchangeTransactions();
-    fetchMyCommission();
     fetchCurrencies();
 
     // fetch admin's assigned state commission percent
@@ -149,7 +146,7 @@ export default function AdminDashboard() {
 
     // Listen for commission refresh events
     const handleRefreshCommission = () => {
-      fetchMyCommission();
+      fetchStats();
     };
     window.addEventListener('mpay:refresh-admin-commission', handleRefreshCommission);
     
@@ -312,19 +309,42 @@ export default function AdminDashboard() {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon tone-primary"><Coins size={28} /></div>
-          <div className="stat-content">
-            <p className="stat-label">Admin State Send Commission</p>
-            <h3 className="stat-value">{money(myCashedOut)}</h3>
-          </div>
-        </div>
-        <div className="stat-card">
           <div className="stat-icon tone-success"><Landmark size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Company Benefits</p>
             <h3 className="stat-value">{money(stats?.companyBenefits)}</h3>
           </div>
         </div>
+      </div>
+
+      {/* One card per currency rather than a single blended figure: these
+          commissions are earned in different currencies and cannot be added
+          together. Driven by the Currencies table, so adding a currency adds
+          a card with no code change. */}
+      <div className="exchange-currency-row">
+        <div className="exchange-currency-head">
+          <h3><Coins size={17} /> Admin Destination Send Commission</h3>
+          <span>Earned on destination sends &middot; one card per currency</span>
+        </div>
+        {commissionByCurrency.length === 0 ? (
+          <div className="exchange-currency-empty">
+            <Coins size={20} />
+            <span>No currencies yet. Add one under Currencies and a card appears here.</span>
+          </div>
+        ) : (
+          <div className="dashboard-grid">
+            {commissionByCurrency.map((c) => (
+              <div className="stat-card" key={c.code}>
+                <div className="stat-icon tone-primary"><Coins size={28} /></div>
+                <div className="stat-content">
+                  <p className="stat-label">Admin Transfer Commission {c.code}</p>
+                  <h3 className="stat-value">{amount(c.total, c.code)}</h3>
+                  <p className="stat-sub">{count(c.count)} {c.count === 1 ? 'send' : 'sends'}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Exchanges made by THIS admin, split by currency. Kept out of Total
