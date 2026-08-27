@@ -28,9 +28,12 @@ const allowedOrigins = [
   'http://zainss.dpdns.org',
   'http://localhost:5173',
   'http://localhost:5174',
-  /* The Railway deployment. The container serves the built frontend from the
-     same origin, so this only matters when the frontend is hosted separately
-     — but hardcoding it means CORS works even if FRONTEND_URL is unset. */
+  /* The frontend is on Netlify and the API on Railway, so every browser call
+     is cross-origin — without this the deployed app cannot reach the API at
+     all. Hardcoded so CORS holds even when FRONTEND_URL is unset. */
+  'https://gpay-ss.netlify.app',
+  /* The Railway service itself, which also serves a copy of the built
+     frontend from the same origin. */
   'https://mobile-money-production-b493.up.railway.app'
 ];
 

@@ -1,7 +1,18 @@
 # Railway Deployment
 
-**Deployed at:** https://mobile-money-production-b493.up.railway.app
-(health check: `/api/health`)
+## Where things run
+
+| Part | Host | URL |
+|---|---|---|
+| API | Railway | https://mobile-money-production-b493.up.railway.app |
+| Frontend | Netlify | https://gpay-ss.netlify.app |
+
+Health check: `/api/health` on the Railway host.
+
+**They are different origins**, so every API call from the browser is
+cross-origin. `https://gpay-ss.netlify.app` is hardcoded in the backend's
+`allowedOrigins`; if the Netlify URL ever changes, that list and `FRONTEND_URL`
+both need updating or the app will fail every request with a CORS error.
 
 
 ## Environment variables
@@ -24,7 +35,7 @@ will build and then fail at boot:
 | `JWT_SECRET` | **Use a new value.** The previous secret is readable in this repository's git history, so reusing it leaves tokens forgeable. |
 | `PORT` | Railway sets this; `server.js` listens on it |
 | `NODE_ENV` | `production` |
-| `FRONTEND_URL` | Used for CORS |
+| `FRONTEND_URL` | `https://gpay-ss.netlify.app` — the Netlify site, **not** the Railway URL. Appended to the CORS allow-list. |
 | `API_URL` / `API_PRODUCTION_URL` | |
 
 Optional — only needed for SMS verification to actually send:
