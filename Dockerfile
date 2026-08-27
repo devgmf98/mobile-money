@@ -26,11 +26,8 @@ RUN npm install --omit=dev
 FROM node:20-alpine
 WORKDIR /app
 
-# Install PM2 globally for process management
-RUN npm install -g pm2
-
-# Copy backend
-COPY --from=backend-builder /app/backend /app/backend
+# Copy backend (node_modules from the builder stage, then the source over it)
+COPY --from=backend-builder /app/backend/node_modules /app/backend/node_modules
 COPY backend/ /app/backend/
 
 # Copy built frontend to public folder for serving
