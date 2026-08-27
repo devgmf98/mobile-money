@@ -4,16 +4,23 @@
 FROM node:20-alpine as frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm install
+# --include=dev is required: vite and @vitejs/plugin-react are devDependencies,
+# and railway.json sets NODE_ENV=production, under which `npm install` skips
+# devDependencies — leaving no node_modules/.bin/vite and failing the build on
+# the next line. Explicit here so the build does not depend on NODE_ENV.
+RUN npm install --include=dev
 COPY frontend/ .
-RUN chmod +x node_modules/.bin/vite
+# Tolerated rather than required: on a clean install npm already sets the
+# executable bit, and a missing file here should not abort the build.
+RUN chmod +x node_modules/.bin/vite || true
 RUN npm run build
 
 # Stage 2: Setup backend
 FROM node:20-alpine as backend-builder
 WORKDIR /app/backend
 COPY backend/package*.json ./
-RUN npm install
+# --omit=dev keeps the runtime image lean; the backend needs no build step.
+RUN npm install --omit=dev
 
 # Stage 3: Final image
 FROM node:20-alpine
