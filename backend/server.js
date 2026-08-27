@@ -27,7 +27,11 @@ const httpServer = createServer(app);
 const allowedOrigins = [
   'http://zainss.dpdns.org',
   'http://localhost:5173',
-  'http://localhost:5174'
+  'http://localhost:5174',
+  /* The Railway deployment. The container serves the built frontend from the
+     same origin, so this only matters when the frontend is hosted separately
+     — but hardcoding it means CORS works even if FRONTEND_URL is unset. */
+  'https://mobile-money-production-b493.up.railway.app'
 ];
 
 // Add production URLs from environment variables

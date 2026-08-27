@@ -2,7 +2,8 @@
 
 Complete reference for the MoneyPay backend — 71 endpoints across five routers, plus the Socket.IO channel. Every JSON example below is a real request or response captured against a running server, not an illustration.
 
-- **Base URL:** `http://localhost:8080/api` (the port comes from `PORT` in `.env`; the code falls back to `5000` if it is unset)
+- **Base URL (production):** `https://mobile-money-production-b493.up.railway.app/api`
+- **Base URL (local):** `http://localhost:8080/api` (the port comes from `PORT` in `.env`; the code falls back to `5000` if it is unset)
 - **Health check:** `GET /api/health` — the only unauthenticated endpoint outside `/api/auth`
 - **Content type:** `application/json` for every request with a body
 

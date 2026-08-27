@@ -1,5 +1,9 @@
 # Railway Deployment
 
+**Deployed at:** https://mobile-money-production-b493.up.railway.app
+(health check: `/api/health`)
+
+
 ## Environment variables
 
 The image contains **no `.env`**. It holds `JWT_SECRET` and `DB_PASSWORD`, so it
