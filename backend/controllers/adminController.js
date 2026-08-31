@@ -1576,20 +1576,27 @@ export const getMyAdminCommission = async (req, res) => {
 export const getPendingSendByState = async (req, res) => {
   try {
     const adminId = req.userId;
-    // Fetch admin to get their state
     const admin = await User.findByPk(adminId);
     if (!admin || !admin.state) {
       return res.json({ pending: [] });
     }
 
-    // Return admin_state_push transactions that match the admin's state
-    // Include pending, completed and cancelled so rows remain visible after actions.
-    // Only show transactions where toStateName matches admin's state
+    const stateName = admin.state;
+
+    // The pending screen is relevant to both sides of the transfer:
+    // - destination-state admins receive those requests
+    // - sender admins need to see the request they created
+    // - admins from the same source state may also need to review/cancel it
     const pending = await Transaction.findAll({
-      where: { 
+      where: {
         type: 'admin_state_push',
-        toStateName: admin.state,
-        status: { [Op.in]: ['pending', 'completed', 'cancelled'] }
+        status: { [Op.in]: ['pending', 'completed', 'cancelled'] },
+        [Op.or]: [
+          { toStateName: stateName },
+          { fromStateName: stateName },
+          { senderId: adminId },
+          { receiverId: adminId }
+        ]
       },
       include: [
         { model: User, as: 'sender', attributes: ['name', 'phone'] },
@@ -1658,8 +1665,22 @@ export const receiveSendByState = async (req, res) => {
 export const getPendingSendByStateCount = async (req, res) => {
   try {
     const adminId = req.userId;
+    const admin = await User.findByPk(adminId);
+    if (!admin || !admin.state) {
+      return res.json({ count: 0 });
+    }
+
     const count = await Transaction.count({
-      where: { type: 'admin_state_push', status: 'pending', receiverId: adminId }
+      where: {
+        type: 'admin_state_push',
+        status: 'pending',
+        [Op.or]: [
+          { senderId: adminId },
+          { receiverId: adminId },
+          { fromStateName: admin.state },
+          { toStateName: admin.state }
+        ]
+      }
     });
     res.json({ count });
   } catch (err) {
