@@ -245,3 +245,26 @@
 
   .summary-total strong { font-size: 15.5px; }
 }
+
+/* The origin is stated, not chosen — it comes from the signed-in admin's
+   account, so it reads as a fact rather than an empty control. */
+.ss-origin {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 11px 13px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface-2, #F7FAF9);
+}
+
+.ss-origin strong { font-size: 14px; color: var(--text-dark, #16302B); }
+.ss-origin small { font-size: 11.5px; color: var(--text-light, #5B6B66); }
+.ss-origin-missing { color: var(--error, #DC2626); font-weight: 600; }
+
+[data-theme="dark"] .ss-origin {
+  border-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+}
+[data-theme="dark"] .ss-origin strong { color: #E6F2EC; }
+[data-theme="dark"] .ss-origin small { color: #9FB3AB; }

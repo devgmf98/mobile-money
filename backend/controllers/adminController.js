@@ -335,7 +335,11 @@ export const deleteStateSetting = async (req, res) => {
 export const sendMoneyBetweenAdminsByState = async (req, res) => {
   try {
     const senderId = req.userId;
-    const { toAdminId, amount: amtRaw, stateId, deductCommissionFromAmount, currencyId } = req.body;
+    /* stateId is no longer read from the request. The origin is a property of
+       who is sending, not something the sender chooses per transfer — letting
+       it be picked meant an admin could book commission against a destination
+       they have nothing to do with. */
+    const { toAdminId, amount: amtRaw, deductCommissionFromAmount, currencyId } = req.body;
     const amount = parseFloat(amtRaw);
     if (!toAdminId || isNaN(amount) || amount <= 0) return res.status(400).json({ message: 'toAdminId and valid amount required' });
 
@@ -344,8 +348,22 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
     if (!sender || sender.role !== 'admin') return res.status(403).json({ message: 'Sender must be an admin' });
     if (!receiver || receiver.role !== 'admin') return res.status(404).json({ message: 'Destination admin not found' });
 
-    const state = await StateSetting.findByPk(stateId);
-    const percent = state ? Number(state.commissionPercent || 0) : 0;
+    /* FROM is the sender's own destination, assigned when their account was
+       created; TO is the destination of the admin being paid. Both are stored
+       on the transaction so a transfer reads as "Juba -> Wau" later. */
+    const fromState = sender.state ? await StateSetting.findByPk(sender.state) : null;
+    const toState = receiver.state ? await StateSetting.findByPk(receiver.state) : null;
+
+    if (!fromState) {
+      return res.status(400).json({
+        message:
+          'Your account has no destination assigned, so commission cannot be calculated. ' +
+          'Ask an administrator to set your destination.',
+      });
+    }
+
+    /* Commission belongs to the origin — the destination the money leaves. */
+    const percent = Number(fromState.commissionPercent || 0);
     const commissionAmount = Math.round((amount * (percent / 100)) * 100) / 100; // 2 decimals
 
     // Apply transfer logic (admins have unlimited send rights - no balance check needed)
@@ -399,9 +417,15 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
       type: 'admin_state_push',
       status: 'pending',
       /* "Destination" is what this is called throughout the UI — Send To
-         Destination, Destination Settings — so the recorded description now
-         matches rather than calling it a state. */
-      description: `Admin transfer from ${state?.name || stateId}`,
+         Destination, Destination Settings — so the description matches rather
+         than calling it a state. It now names both ends of the journey. */
+      description: toState
+        ? `Admin transfer from ${fromState.name} to ${toState.name}`
+        : `Admin transfer from ${fromState.name}`,
+      fromStateId: fromState.id,
+      fromStateName: fromState.name,
+      toStateId: toState ? toState.id : null,
+      toStateName: toState ? toState.name : null,
       commission: senderCommissionGiven,
       commissionPercent: senderCommissionGiven ? percent : 0,
       companyCommission: companyCommission,

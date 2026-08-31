@@ -7,7 +7,10 @@ import { Op } from 'sequelize';
 
 export const register = async (req, res) => {
   try {
-    const { name, email, phone, password, role, agentId } = req.body;
+    /* adminState is the destination an admin belongs to. Transfers between
+       admins take their origin — and their commission rate — from it, so it
+       belongs on the account rather than being chosen per transfer. */
+    const { name, email, phone, password, role, agentId, adminState } = req.body;
 
     const existingUser = await User.findOne({ where: { [Op.or]: [{ email }, { phone }] } });
     if (existingUser) {
@@ -68,6 +71,8 @@ export const register = async (req, res) => {
       role: role || 'user',
       agentId: finalAgentId,
       adminId: finalAdminId,
+      /* Accepts adminState, or `state` for callers already using that name. */
+      state: isAdmin ? (adminState ?? req.body.state ?? null) : null,
       isVerified: isAdmin,
       verificationCode: isAdmin ? null : verificationCode,
       verificationExpiry: isAdmin ? null : new Date(Date.now() + 10 * 60000),
@@ -94,7 +99,9 @@ export const register = async (req, res) => {
          the caller previously had to infer that from the message text. */
       isVerified: user.isVerified,
       agentId: finalAgentId || null,
-      adminId: finalAdminId || null
+      adminId: finalAdminId || null,
+      /* Echoed back so the caller can see whether the destination took. */
+      adminState: user.state ?? null
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -294,6 +301,9 @@ export const login = async (req, res) => {
         isVerified: user.isVerified,
         agentId: user.agentId || null,
         adminId: user.adminId || null,
+        /* The admin's assigned destination. State transfers take their origin
+           from here, so the client needs it to show where money leaves from. */
+        state: user.state ?? null,
         autoAdminCashout: user.autoAdminCashout || false,
         adminLocationConsent: user.adminLocationConsent || false,
         theme: user.theme || 'light',

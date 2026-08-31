@@ -144,9 +144,14 @@ export default function TransactionDetails({ transaction: tx, onClose }) {
           <section className="td-section">
             <h4>Parties</h4>
             <div className="td-flow">
-              <Party tag="From" person={tx.sender} fallbackId={tx.senderId} place={placeLabel(tx.senderLocation)} />
+              {/* Admin state transfers carry their own recorded origin and
+                  destination. Those beat the GPS reading, which for an admin
+                  working at a desk is usually absent and renders "Unknown". */}
+              <Party tag="From" person={tx.sender} fallbackId={tx.senderId}
+                place={tx.fromStateName || placeLabel(tx.senderLocation)} />
               <span className="td-flow-arrow"><ArrowDown size={14} /></span>
-              <Party tag="To" person={tx.receiver} fallbackId={tx.receiverId} place={placeLabel(tx.receiverLocation)} />
+              <Party tag="To" person={tx.receiver} fallbackId={tx.receiverId}
+                place={tx.toStateName || placeLabel(tx.receiverLocation)} />
             </div>
           </section>
 

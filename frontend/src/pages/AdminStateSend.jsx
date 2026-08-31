@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuthStore } from '../context/store';
 import { adminAPI } from '../utils/api';
 import Toast from '../components/Toast';
 import { ArrowRight, Banknote, Coins, Map, Send, User } from 'lucide-react';
@@ -8,7 +9,11 @@ import '../styles/admin-state-send.css';
 export default function AdminStateSend() {
   const [states, setStates] = useState([]);
   const [admins, setAdmins] = useState([]);
-  const [stateId, setStateId] = useState('');
+  /* The origin is a property of the signed-in admin, set when their account
+     was created — not something to pick per transfer. Picking it meant an
+     admin could book commission against a destination they have no part in. */
+  const user = useAuthStore((state) => state.user);
+  const myStateId = user?.state ?? null;
   const [toAdminId, setToAdminId] = useState('');
   const [amount, setAmount] = useState('');
   const [deduct, setDeduct] = useState(true);
@@ -43,7 +48,7 @@ export default function AdminStateSend() {
 
   useEffect(() => {
     const amt = parseFloat(amount) || 0;
-    const st = states.find(s => String(s.id) === String(stateId));
+    const st = states.find(s => String(s.id) === String(myStateId));
     const pct = st ? Number(st.commissionPercent || 0) : 0;
     const comm = Math.round((amt * (pct / 100)) * 100) / 100;
     setCommission(comm);
@@ -54,18 +59,19 @@ export default function AdminStateSend() {
       // Full mode: Receiver gets full amount, you send (amount - commission)
       setReceiverAmount(amt);
     }
-  }, [amount, stateId, deduct, states]);
+  }, [amount, myStateId, deduct, states]);
 
-  const selectedState = states.find(s => String(s.id) === String(stateId));
+  const myState = states.find(s => String(s.id) === String(myStateId));
   const symbol = selectedCurrency?.symbol || selectedCurrency?.code || 'SSP';
   const amountValid = parseFloat(amount) > 0;
-  const canSend = Boolean(stateId && toAdminId && currencyId && amountValid) && !loading;
+  const canSend = Boolean(myState && toAdminId && currencyId && amountValid) && !loading;
 
   const handleSend = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const payload = { toAdminId, amount: Number(amount), stateId, deductCommissionFromAmount: deduct, currencyId };
+      /* The server reads the origin from the sender's account. */
+      const payload = { toAdminId, amount: Number(amount), deductCommissionFromAmount: deduct, currencyId };
       const res = await adminAPI.adminSendState(payload);
       setToast({ type: 'success', message: 'Transfer completed successfully!' });
       // Signal dashboard to refresh commission
@@ -103,18 +109,20 @@ export default function AdminStateSend() {
         <div className="card-body">
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="ss-state"><Map size={14} /> Destination (commission source)</label>
-              <Select
-                id="ss-state"
-                value={stateId}
-                onChange={setStateId}
-                placeholder="Select destination"
-                ariaLabel="Destination (commission source)"
-                options={states.map(s => ({ value: String(s.id), label: s.name, hint: `${s.commissionPercent}% commission` }))}
-              />
-              {selectedState && (
-                <small>Commission rate: <strong>{selectedState.commissionPercent}%</strong></small>
-              )}
+              <label><Map size={14} /> From destination</label>
+              <div className="ss-origin">
+                {myState ? (
+                  <>
+                    <strong>{myState.name}</strong>
+                    <small>Your destination · {myState.commissionPercent}% commission</small>
+                  </>
+                ) : (
+                  <small className="ss-origin-missing">
+                    No destination is assigned to your account, so commission cannot be
+                    calculated. Ask an administrator to set it.
+                  </small>
+                )}
+              </div>
             </div>
 
             <div className="form-group">
@@ -240,7 +248,7 @@ export default function AdminStateSend() {
           </button>
 
           {!canSend && !loading && (
-            <p className="form-hint">Select a destination, destination admin, currency and an amount to continue.</p>
+            <p className="form-hint">Select a destination admin, a currency and an amount to continue.</p>
           )}
         </div>
 

@@ -103,6 +103,27 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  /* Where an admin_state_push came FROM and went TO. The ids point at
+     StateSettings, and the names are copied alongside them on purpose: a
+     destination that is later renamed or deleted would otherwise erase the
+     meaning of every transaction that referenced it, and these are financial
+     records that have to keep reading correctly years later. */
+  fromStateId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  fromStateName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  toStateId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  toStateName: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   senderBalance: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
