@@ -113,6 +113,7 @@ import ExchangeRate from './models/ExchangeRate.js';
 import SendMoneyCommissionTier from './models/SendMoneyCommissionTier.js';
 import WithdrawalCommissionTier from './models/WithdrawalCommissionTier.js';
 import Verification from './models/Verification.js';
+import { migrateStateToName } from './migrations/stateToName.js';
 
 // Set up associations
 const models = { User, Transaction, Notification, WithdrawalRequest, StateSetting, Currency, ExchangeRate, SendMoneyCommissionTier, WithdrawalCommissionTier, Verification };
@@ -175,6 +176,20 @@ async function startServer() {
   try {
     await sequelize.authenticate();
     console.log('MySQL connected via Sequelize');
+
+    /* Schema changes sync() cannot make for itself, run before it does. The
+       destination column had to change type while a foreign key still held
+       it, which sync() cannot do — it fails and takes the process down with
+       it, so a deployment would answer 502 until someone ran a script by
+       hand. Doing it here means a deploy repairs itself. */
+    try {
+      const result = await migrateStateToName(sequelize);
+      if (result.changed) console.log('Migration (destination column): ' + result.changed.join('; '));
+    } catch (err) {
+      /* Reported, not swallowed: sync() is about to fail for the same reason,
+         and this line is what explains why. */
+      console.error('Migration (destination column) failed:', err.message);
+    }
 
     // Create missing tables and add missing model columns on every startup.
     // Sequelize alter preserves existing rows while bringing the schema up to date.
