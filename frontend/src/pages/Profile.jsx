@@ -193,9 +193,36 @@ export default function Profile() {
       setShowCameraModal(true);
       setCameraRunning(false); // Reset first
       
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
+      if (!navigator.mediaDevices?.getUserMedia) {
+        /* getUserMedia only exists in a secure context. Over plain http on a
+           phone the API is simply absent, which otherwise surfaced as the same
+           "check permissions" message and sent people to look in the wrong
+           place. */
+        throw Object.assign(new Error('insecure-context'), { name: 'InsecureContextError' });
+      }
+
+      /* Progressively simpler constraints. A phone that has no front camera,
+         or cannot deliver 1280x720, rejects the first request outright — and
+         the old single attempt reported that as a permissions problem. */
+      const attempts = [
+        { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } },
+        { video: { facingMode: 'user' } },
+        { video: true },
+      ];
+
+      let stream = null;
+      let lastErr = null;
+      for (const constraints of attempts) {
+        try {
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+          break;
+        } catch (err) {
+          lastErr = err;
+          /* A refusal will not be cured by asking for less, so stop. */
+          if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') throw err;
+        }
+      }
+      if (!stream) throw lastErr;
 
       // Track the stream before anything else can fail. Previously this lived
       // inside the `if (videoRef.current)` branch, so when that branch was
@@ -223,8 +250,28 @@ export default function Profile() {
       };
       attach();
     } catch (err) {
-      console.error('Failed to access camera:', err);
-      setToastMessage('Unable to access camera. Please check permissions.');
+      console.error('Failed to access camera:', err?.name, err);
+
+      /* Name the actual cause. "Check permissions" is wrong and unactionable
+         when the camera is busy, absent, or the page is not on https. */
+      const reason = {
+        NotAllowedError:
+          'Camera access was blocked. Tap the padlock in the address bar, allow Camera, then try again.',
+        PermissionDeniedError:
+          'Camera access was blocked. Tap the padlock in the address bar, allow Camera, then try again.',
+        NotFoundError: 'No camera was found on this device.',
+        DevicesNotFoundError: 'No camera was found on this device.',
+        NotReadableError:
+          'The camera is already in use by another app. Close it and try again.',
+        TrackStartError:
+          'The camera is already in use by another app. Close it and try again.',
+        OverconstrainedError: 'This camera does not support the requested video size.',
+        SecurityError: 'The browser blocked camera access on this page.',
+        InsecureContextError:
+          'The camera needs a secure connection. Open this site over https and try again.',
+      }[err?.name] || 'Could not open the camera. Please try again.';
+
+      setToastMessage(reason);
       setToastType('error');
       setShowCameraModal(false);
     }

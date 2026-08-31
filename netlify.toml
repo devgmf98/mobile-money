@@ -7,3 +7,12 @@
   for = "/assets/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
+
+# Chrome blocks getUserMedia when a Permissions-Policy withholds it. Nothing
+# here set one, so the browser default applied — but stating it means a header
+# added later (by a plugin, or another rule) cannot silently disable the
+# camera on the profile page.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "camera=(self), microphone=(), geolocation=(self)"
