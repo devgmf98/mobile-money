@@ -103,7 +103,8 @@
 @media (min-width: 700px) and (max-width: 1032px) {
   .bottomNav { height: 92px; }
   .navItem { gap: 6px; }
-  .icon svg { width: 26px; height: 26px; }
+  /* Trimmed with the phone size, keeping the tablet bar a step larger. */
+  .icon svg { width: 22px; height: 22px; }
   .label { font-size: 0.75rem; }
 }
 
