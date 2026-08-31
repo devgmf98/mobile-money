@@ -1209,3 +1209,9 @@
   background: #1E293B;
   border-color: var(--border);
 }
+/* Hide the fixed bottom tab bar while the selfie camera is open. The bar is a
+   CSS-module class, so it is matched by substring; the modal is full-screen on
+   phones and the bar would otherwise cover Capture and Cancel. */
+body.camera-open nav[class*="bottomNav"] {
+  display: none !important;
+}

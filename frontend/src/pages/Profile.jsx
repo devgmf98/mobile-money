@@ -34,6 +34,15 @@ export default function Profile() {
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState('info');
   const [showCameraModal, setShowCameraModal] = useState(false);
+
+  /* The bottom tab bar is fixed and lives in its own stacking context, so
+     out-ranking it with z-index depends on nothing else interfering. While the
+     camera is open the bar has nothing to do anyway, so it is hidden outright
+     — the Capture and Cancel buttons sit exactly where it used to be. */
+  useEffect(() => {
+    document.body.classList.toggle('camera-open', showCameraModal);
+    return () => document.body.classList.remove('camera-open');
+  }, [showCameraModal]);
   const [cameraRunning, setCameraRunning] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const videoRef = useRef(null);
