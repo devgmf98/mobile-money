@@ -123,22 +123,21 @@ export default function AdminStatePending() {
     if (s === 'cancelled') return <span className="action-note">—</span>;
     if (s === 'completed') return <span className="action-note is-done"><Check size={14} /> Settled</span>;
 
-    // Only the sender may cancel; only the receiver may mark as received.
-    const userPhone = user?.phone;
-    const senderPhone = tx.sender?.phone || tx.sender;
-    const receiverPhone = tx.receiver?.phone || tx.receiver;
-    const isSender = userPhone && senderPhone && userPhone === senderPhone;
-    const isReceiver = userPhone && receiverPhone && userPhone === receiverPhone;
+    // Any admin in the destination state can receive the transfer. Any admin in
+    // the source state can also cancel it, along with the original sender.
+    const isSender = Number(user?.id) === Number(tx.senderId);
+    const isSameStateAdmin = user?.role === 'admin' && user?.state && tx.fromStateName && user.state === tx.fromStateName;
+    const isReceiverForDestination = user?.role === 'admin' && user?.state && tx.toStateName && user.state === tx.toStateName;
     const busy = actionLoading === tx.id;
 
-    if (isReceiver) {
+    if (isReceiverForDestination) {
       return (
         <button className="btn btn-primary btn-sm" onClick={() => handleReceive(tx.id)} disabled={busy}>
           {busy ? 'Processing…' : <><Check size={14} /> Mark received</>}
         </button>
       );
     }
-    if (isSender) {
+    if (isSender || isSameStateAdmin) {
       return (
         <button className="btn btn-outline btn-danger btn-sm" onClick={() => handleCancel(tx.id)} disabled={busy}>
           {busy ? 'Processing…' : <><X size={14} /> Cancel</>}
@@ -240,8 +239,8 @@ export default function AdminStatePending() {
                 <thead>
                   <tr>
                     <th>Txn ID</th>
-                    <th>From</th>
-                    <th>To</th>
+                    <th>From Destination</th>
+                    <th>To Destination</th>
                     <th className="num">Amount</th>
                     <th className="num">Receiver gets</th>
                     <th className="num">Commission</th>
@@ -253,15 +252,15 @@ export default function AdminStatePending() {
                   {filtered.map(tx => (
                     <tr key={tx.id}>
                       <td><code className="txn-id">{tx.transactionId || tx.id}</code></td>
-                      <td>{party(tx.sender)}</td>
-                      <td>{party(tx.receiver)}</td>
+                      <td>{tx.fromStateName || party(tx.sender)}</td>
+                      <td>{tx.toStateName || party(tx.receiver)}</td>
                       <td className="num">
                         <span className="cur">{tx.currencyCode || 'SSP'}</span> {Number(tx.amount).toFixed(2)}
                       </td>
                       <td className="num strong">
                         <span className="cur">{tx.currencyCode || 'SSP'}</span> {Number(tx.receiverCredit || tx.amount).toFixed(2)}
                       </td>
-                      <td className="num credit">{Number(tx.commission || 0).toFixed(2)}</td>
+                      <td className="num credit">{Number(tx.commission || tx.receiverCommission || 0).toFixed(2)}</td>
                       <td>{statusBadge(tx.status)}</td>
                       <td className="action-cell">{renderAction(tx)}</td>
                     </tr>

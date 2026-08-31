@@ -47,6 +47,10 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.DECIMAL(10, 2),
     defaultValue: 0
   },
+  receiverCommission: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
+  },
   commissionPercent: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 0

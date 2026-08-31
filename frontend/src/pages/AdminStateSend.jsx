@@ -16,6 +16,7 @@ export default function AdminStateSend() {
   const user = useAuthStore((state) => state.user);
   const myStateName = user?.state ?? null;
   const [toAdminId, setToAdminId] = useState('');
+  const [toDestination, setToDestination] = useState('');
   const [amount, setAmount] = useState('');
   const [deduct, setDeduct] = useState(true);
   const [commission, setCommission] = useState(0);
@@ -50,14 +51,14 @@ export default function AdminStateSend() {
   useEffect(() => {
     const amt = parseFloat(amount) || 0;
     const st = findDestination(states, myStateName);
-    const pct = st ? Number(st.commissionPercent || 0) : 0;
+    const pct = st ? parseFloat(st.commissionPercent) || 0 : 0;
     const comm = Math.round((amt * (pct / 100)) * 100) / 100;
     setCommission(comm);
     if (deduct) {
       // Deduct mode: You send full amount, receiver gets (amount - commission)
       setReceiverAmount(Math.round((amt - comm) * 100) / 100);
     } else {
-      // Full mode: Receiver gets full amount, you send (amount - commission)
+      // Full mode: You send full amount, receiver gets full amount, commission credited to your card
       setReceiverAmount(amt);
     }
   }, [amount, myStateName, deduct, states]);
@@ -65,14 +66,21 @@ export default function AdminStateSend() {
   const myState = findDestination(states, myStateName);
   const symbol = selectedCurrency?.symbol || selectedCurrency?.code || 'SSP';
   const amountValid = parseFloat(amount) > 0;
-  const canSend = Boolean(myState && toAdminId && currencyId && amountValid) && !loading;
+  const canSend = Boolean(myState && toDestination && currencyId && amountValid) && !loading;
 
   const handleSend = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      // Find the admin with the selected destination
+      const receiverAdmin = admins.find(a => a.state === toDestination);
+      if (!receiverAdmin) {
+        setToast({ type: 'error', message: 'No admin found for the selected destination' });
+        setLoading(false);
+        return;
+      }
       /* The server reads the origin from the sender's account. */
-      const payload = { toAdminId, amount: Number(amount), deductCommissionFromAmount: deduct, currencyId };
+      const payload = { toAdminId: receiverAdmin.id, amount: Number(amount), deductCommissionFromAmount: deduct, currencyId };
       const res = await adminAPI.adminSendState(payload);
       setToast({ type: 'success', message: 'Transfer completed successfully!' });
       // Signal dashboard to refresh commission
@@ -86,7 +94,7 @@ export default function AdminStateSend() {
       } catch (e) {
         console.error('Auto-reload failed', e);
       }
-      setAmount(''); setToAdminId(''); setStateId(''); setCurrencyId(''); setSelectedCurrency(null);
+      setAmount(''); setToDestination(''); setCurrencyId(''); setSelectedCurrency(null);
     } catch (err) {
       console.error(err);
       setToast({ type: 'error', message: err?.response?.data?.message || 'Send failed' });
@@ -113,10 +121,7 @@ export default function AdminStateSend() {
               <label><Map size={14} /> From destination</label>
               <div className="ss-origin">
                 {myState ? (
-                  <>
-                    <strong>{myState.name}</strong>
-                    <small>Your destination · {myState.commissionPercent}% commission</small>
-                  </>
+                  <strong>{myState.name}</strong>
                 ) : (
                   <small className="ss-origin-missing">
                     No destination is assigned to your account, so commission cannot be
@@ -127,14 +132,18 @@ export default function AdminStateSend() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="ss-admin"><User size={14} /> Destination admin</label>
+              <label htmlFor="ss-admin"><Map size={14} /> To Destination</label>
               <Select
                 id="ss-admin"
-                value={toAdminId}
-                onChange={setToAdminId}
-                placeholder="Select destination admin"
-                ariaLabel="Destination admin"
-                options={admins.map(a => ({ value: String(a.id), label: a.name, hint: a.phone }))}
+                value={toDestination}
+                onChange={setToDestination}
+                placeholder="Select To Destination"
+                ariaLabel="To Destination"
+                options={states.map(s => ({
+                  value: s.name,
+                  label: s.name,
+                  hint: `${parseFloat(s.commissionPercent || 0).toFixed(2)}% commission`
+                }))}
               />
             </div>
           </div>
@@ -187,9 +196,11 @@ export default function AdminStateSend() {
                 {deduct ? 'Deduct commission' : 'Give full amount'}
               </span>
               <span className="commission-mode-hint">
-                {deduct
-                  ? 'You send 100, receiver gets 95, you keep 5 as commission.'
-                  : 'You send 100, receiver gets 100 — commission is credited to you.'}
+                {myState 
+                  ? (deduct
+                      ? `You send 100, receiver gets ${(100 - parseFloat(myState.commissionPercent)).toFixed(2)}, you keep ${parseFloat(myState.commissionPercent).toFixed(2)}% commission.`
+                      : `You send 100, receiver gets 100 — you keep the ${parseFloat(myState.commissionPercent).toFixed(2)}% commission.`)
+                  : 'No destination assigned to your account'}
               </span>
             </div>
             <div className="segmented" role="group" aria-label="Commission mode">
@@ -232,12 +243,16 @@ export default function AdminStateSend() {
             ) : (
               <>
                 <div className="summary-row">
+                  <span>You send</span>
+                  <strong>{symbol} {(parseFloat(amount) || 0).toFixed(2)}</strong>
+                </div>
+                <div className="summary-row">
                   <span>Commission <em>credited to your Admin Cash</em></span>
                   <strong className="is-credit">+{symbol} {commission.toFixed(2)}</strong>
                 </div>
                 <div className="summary-row summary-total">
                   <span>Receiver gets <ArrowRight size={14} /></span>
-                  <strong>{symbol} {receiverAmount.toFixed(2)}</strong>
+                  <strong>{symbol} {(parseFloat(amount) || 0).toFixed(2)}</strong>
                 </div>
               </>
             )}
@@ -249,7 +264,7 @@ export default function AdminStateSend() {
           </button>
 
           {!canSend && !loading && (
-            <p className="form-hint">Select a destination admin, a currency and an amount to continue.</p>
+            <p className="form-hint">Select a To Destination, a currency and an amount to continue.</p>
           )}
         </div>
 

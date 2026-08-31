@@ -346,7 +346,7 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
     const sender = await User.findByPk(senderId);
     const receiver = await User.findByPk(toAdminId);
     if (!sender || sender.role !== 'admin') return res.status(403).json({ message: 'Sender must be an admin' });
-    if (!receiver || receiver.role !== 'admin') return res.status(404).json({ message: 'Destination admin not found' });
+    if (!receiver || receiver.role !== 'admin') return res.status(404).json({ message: 'To Destination not found' });
 
     /* FROM is the sender's own destination, assigned when their account was
        created; TO is the destination of the admin being paid. Both are stored
@@ -362,25 +362,27 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
       });
     }
 
-    /* Commission belongs to the origin — the destination the money leaves. */
-    const percent = Number(fromState.commissionPercent || 0);
+    /* Commission is based on the sender's own destination (From Destination) */
+    const percent = fromState ? parseFloat(fromState.commissionPercent) || 0 : 0;
     const commissionAmount = Math.round((amount * (percent / 100)) * 100) / 100; // 2 decimals
 
     // Apply transfer logic (admins have unlimited send rights - no balance check needed)
     let companyCommission = 0;
     let senderCommissionGiven = 0;
+    let receiverCommissionGiven = 0;
     let senderDebit = amount;
     let receiverCredit = amount;
 
     if (deductCommissionFromAmount) {
-      // receiver gets amount less commission, sender gets commission as admin commission
+      // Deduct mode: receiver gets amount less commission, sender gets the commission
       senderCommissionGiven = commissionAmount;
-      receiverCredit = Math.round((amount - commissionAmount) * 100) / 100;
+      receiverCredit = Math.round((amount - commissionAmount) * 100) / 100);
       senderDebit = amount;
     } else {
-      // sender sends (amount - commission), receiver gets full amount, sender gets commission credit
+      // Full amount mode: sender sends full amount, receiver gets full amount,
+      // commission is added to sender's card
       senderCommissionGiven = commissionAmount;
-      senderDebit = Math.round((amount - commissionAmount) * 100) / 100;
+      senderDebit = amount;
       receiverCredit = amount;
     }
 
@@ -427,6 +429,7 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
       toStateId: toState ? toState.id : null,
       toStateName: toState ? toState.name : null,
       commission: senderCommissionGiven,
+      receiverCommission: receiverCommissionGiven,
       commissionPercent: senderCommissionGiven ? percent : 0,
       companyCommission: companyCommission,
       companyCommissionPercent: companyCommission ? percent : 0,
@@ -1556,10 +1559,13 @@ export const getMyAdminCashOut = async (req, res) => {
 export const getMyAdminCommission = async (req, res) => {
   try {
     const adminId = req.userId;
-    const total = await Transaction.sum('commission', {
-      where: { senderId: adminId, commission: { [Op.gt]: 0 } }
+    
+    // All commission goes to sender (both deduct and full amount modes)
+    const totalCommission = await Transaction.sum('commission', {
+      where: { senderId: adminId, type: 'admin_state_push', commission: { [Op.gt]: 0 } }
     }) || 0;
-    res.json({ totalAdminCommission: parseFloat(total) });
+    
+    res.json({ totalAdminCommission: parseFloat(totalCommission) });
   } catch (err) {
     console.error('getMyAdminCommission error:', err);
     res.status(500).json({ message: err.message });
@@ -1569,11 +1575,20 @@ export const getMyAdminCommission = async (req, res) => {
 // Get pending send-by-state transactions
 export const getPendingSendByState = async (req, res) => {
   try {
-    // Return admin_state_push transactions that are still relevant to the pending UI.
+    const adminId = req.userId;
+    // Fetch admin to get their state
+    const admin = await User.findByPk(adminId);
+    if (!admin || !admin.state) {
+      return res.json({ pending: [] });
+    }
+
+    // Return admin_state_push transactions that match the admin's state
     // Include pending, completed and cancelled so rows remain visible after actions.
+    // Only show transactions where toStateName matches admin's state
     const pending = await Transaction.findAll({
       where: { 
         type: 'admin_state_push',
+        toStateName: admin.state,
         status: { [Op.in]: ['pending', 'completed', 'cancelled'] }
       },
       include: [
@@ -1597,12 +1612,14 @@ export const receiveSendByState = async (req, res) => {
     if (!tx) return res.status(404).json({ message: 'Transaction not found' });
     if (tx.type !== 'admin_state_push') return res.status(400).json({ message: 'Invalid transaction type' });
     if (tx.status !== 'pending') return res.status(400).json({ message: 'Transaction is not pending' });
-    if (tx.receiverId !== adminId) return res.status(403).json({ message: 'Only the receiver can mark as received' });
 
     const receiver = await User.findByPk(adminId);
-    if (!receiver) return res.status(404).json({ message: 'Receiver not found' });
+    if (!receiver || receiver.role !== 'admin') return res.status(403).json({ message: 'Only admins can mark this transfer as received' });
+    if (!receiver.state || !tx.toStateName || receiver.state !== tx.toStateName) {
+      return res.status(403).json({ message: 'Only admins in the destination state can mark this transfer as received' });
+    }
 
-    // Credit receiver with stored receiverCredit
+    // Credit the acting admin in the receiving destination.
     const receiverCredit = Number(tx.receiverCredit || tx.amount || 0);
     receiver.balance = Math.round(((parseFloat(receiver.balance) || 0) + receiverCredit) * 100) / 100;
     await receiver.update({ balance: receiver.balance });
@@ -1659,11 +1676,18 @@ export const cancelSendByState = async (req, res) => {
     if (!tx) return res.status(404).json({ message: 'Transaction not found' });
     if (tx.type !== 'admin_state_push') return res.status(400).json({ message: 'Invalid transaction type' });
     if (tx.status !== 'pending') return res.status(400).json({ message: 'Transaction is not pending' });
-    if (tx.senderId !== adminId) return res.status(403).json({ message: 'Only the sender can cancel this transfer' });
 
+    const actingAdmin = await User.findByPk(adminId);
     const sender = await User.findByPk(tx.senderId);
     const receiver = await User.findByPk(tx.receiverId);
+    if (!actingAdmin || actingAdmin.role !== 'admin') return res.status(403).json({ message: 'Only admins can cancel this transfer' });
     if (!sender) return res.status(404).json({ message: 'Sender not found' });
+
+    const isSender = Number(tx.senderId) === Number(adminId);
+    const isSameStateAdmin = Boolean(actingAdmin.state && tx.fromStateName && actingAdmin.state === tx.fromStateName);
+    if (!isSender && !isSameStateAdmin) {
+      return res.status(403).json({ message: 'Only the sender or an admin from the same state can cancel this transfer' });
+    }
 
     // Compute how much was debited from sender when creating the pending tx
     const amount = Number(tx.amount || 0);
@@ -1681,6 +1705,7 @@ export const cancelSendByState = async (req, res) => {
     tx.cancelledAt = new Date();
     tx.senderBalance = sender.balance;
     tx.commission = 0;
+    tx.receiverCommission = 0;
     tx.commissionPercent = 0;
     tx.companyCommission = 0;
     tx.companyCommissionPercent = 0;
@@ -1742,41 +1767,47 @@ export const editSendByState = async (req, res) => {
     const sender = await User.findByPk(tx.senderId);
     if (!sender) return res.status(404).json({ message: 'Sender not found' });
 
-    // Determine commission percent from existing tx (fallback to 0)
-    const percent = Number(tx.commissionPercent || tx.companyCommissionPercent || 0);
-
-    // Compute original sender debit
-    const origCommission = Number(tx.commission || 0);
-    const origCompanyCommission = Number(tx.companyCommission || 0);
-    const originalSenderDebit = origCompanyCommission > 0 ? Number(tx.amount || 0) : Math.round(((Number(tx.amount || 0) - origCommission) * 100)) / 100;
-
-    let newAmount = typeof amount !== 'undefined' ? parseFloat(amount) : Number(tx.amount || 0);
-    if (isNaN(newAmount) || newAmount <= 0) newAmount = Number(tx.amount || 0);
-
-    // If receiver changed, validate
+    // If receiver changed, validate their existence
     let newReceiverId = tx.receiverId;
     if (toAdminId) {
       const newReceiver = await User.findByPk(toAdminId);
-      if (!newReceiver || newReceiver.role !== 'admin') return res.status(404).json({ message: 'Destination admin not found' });
+      if (!newReceiver || newReceiver.role !== 'admin') return res.status(404).json({ message: 'To Destination not found' });
       newReceiverId = newReceiver.id;
     }
+
+    // Determine commission percent from sender's state (From Destination)
+    const senderState = sender.state ? await StateSetting.findOne({ where: { name: sender.state } }) : null;
+    const percent = senderState ? parseFloat(senderState.commissionPercent) || 0 : 0;
+
+    // Compute original sender debit
+    const origCommission = Number(tx.commission || 0);
+    const origReceiverCommission = Number(tx.receiverCommission || 0);
+    const origAmount = Number(tx.amount || 0);
+    // In both modes, sender debited for full amount
+    const originalSenderDebit = origAmount;
+
+    let newAmount = typeof amount !== 'undefined' ? parseFloat(amount) : Number(tx.amount || 0);
+    if (isNaN(newAmount) || newAmount <= 0) newAmount = Number(tx.amount || 0);
 
     const commissionAmount = Math.round((newAmount * (percent / 100)) * 100) / 100;
 
     let companyCommission = 0;
     let senderCommissionGiven = 0;
+    let receiverCommissionGiven = 0;
     let senderDebit = newAmount;
     let receiverCredit = newAmount;
 
     const deduct = deductCommissionFromAmount === true || deductCommissionFromAmount === 'true' || (typeof deductCommissionFromAmount === 'undefined' ? (origCompanyCommission > 0) : false);
 
     if (deduct) {
-      companyCommission = commissionAmount;
+      // Deduct mode: receiver gets amount less commission, sender gets the commission
+      senderCommissionGiven = commissionAmount;
       receiverCredit = Math.round((newAmount - commissionAmount) * 100) / 100;
       senderDebit = newAmount;
     } else {
+      // Full amount mode: receiver gets full amount, sender gets commission added to their card
       senderCommissionGiven = commissionAmount;
-      senderDebit = Math.round((newAmount - commissionAmount) * 100) / 100;
+      senderDebit = newAmount;
       receiverCredit = newAmount;
     }
 
@@ -1798,6 +1829,7 @@ export const editSendByState = async (req, res) => {
     tx.receiver = newReceiverId;
     tx.description = typeof description !== 'undefined' ? description : tx.description;
     tx.commission = senderCommissionGiven;
+    tx.receiverCommission = receiverCommissionGiven;
     tx.commissionPercent = senderCommissionGiven ? percent : 0;
     tx.companyCommission = companyCommission;
     tx.companyCommissionPercent = companyCommission ? percent : 0;
