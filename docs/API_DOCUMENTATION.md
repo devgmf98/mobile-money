@@ -161,27 +161,60 @@ fields shown are the only required ones for every role.
 ```
 
 ```json
-// request — an admin, created through the API
+// request — an admin, created through the API.
+// adminState is the destination this admin belongs to. Transfers they send
+// take their origin, and their commission rate, from it. Give the
+// destination's name or its id — "JUBA", "juba" and 1 all work.
 {
   "name": "Juba Admin",
   "email": "admin@example.com",
   "phone": "+211912300777",
   "password": "secret123",
-  "role": "admin"
+  "role": "admin",
+  "adminState": "JUBA"
 }
 ```
 
 ```json
-// 201 — isVerified is TRUE: no SMS code, sign in straight away
+// 201 — isVerified is TRUE: no SMS code, sign in straight away.
+// adminState / adminStateName echo the destination that was stored, so you
+// can confirm the name resolved to the one you meant.
 {
   "message": "Admin registered. You can sign in now.",
-  "userId": 23,
-  "phone": "+211912302001",
+  "userId": 40,
+  "phone": "+211912300991",
   "isVerified": true,
   "agentId": null,
-  "adminId": 214712
+  "adminId": 792223,
+  "adminState": 1,
+  "adminStateName": "JUBA"
 }
 ```
+
+`adminState` is optional, but an admin without one **cannot send state
+transfers** — `POST /admin/send-state` rejects them, because there is no
+origin to charge the commission against. It is ignored for users and agents.
+
+```json
+// 400 — the destination does not exist. The reply lists the ones that do,
+// which is more use than "not found".
+{
+  "message": "Unknown destination \"ATLANTIS\". Available: JUBA, TEREKEKA, WAU, YEI"
+}
+```
+
+To assign a destination to an admin that already exists, match on the
+destination's name rather than looking its id up by hand:
+
+```sql
+UPDATE Users u
+  JOIN StateSettings s ON s.name = 'JUBA'
+  SET u.state = s.id
+  WHERE u.email = 'admin@gcash.com';
+```
+
+The column stores the destination's id, not its name — renaming a destination
+would otherwise silently detach every admin assigned to it.
 
 **400** when the email or phone is already registered.
 

@@ -9,8 +9,7 @@ const StateSetting = sequelize.define('StateSetting', {
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   commissionPercent: {
     type: DataTypes.DECIMAL(5, 2),
@@ -18,8 +17,11 @@ const StateSetting = sequelize.define('StateSetting', {
   }
 }, {
   timestamps: true,
+  /* Named so sync({ alter: true }) can recognise it. Unnamed unique indexes
+     come back as `name`, `name_2`, `name_3`… on every boot until the table hits
+     MySQL's 64-key limit and the server stops starting. */
   indexes: [
-    { unique: true, fields: ['name'] }
+    { unique: true, name: 'state_settings_name_unique', fields: ['name'] }
   ]
 });
 

@@ -9,8 +9,7 @@ const Transaction = sequelize.define('Transaction', {
   },
   transactionId: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   senderId: {
     type: DataTypes.INTEGER,
@@ -142,8 +141,11 @@ const Transaction = sequelize.define('Transaction', {
   }
 }, {
   timestamps: true,
+  /* Named so sync({ alter: true }) can recognise it. Unnamed unique indexes
+     come back as `transactionId`, `transactionId_2`, `transactionId_3`… on every boot until the table hits
+     MySQL's 64-key limit and the server stops starting. */
   indexes: [
-    { unique: true, fields: ['transactionId'] },
+    { unique: true, name: 'transactions_transaction_id_unique', fields: ['transactionId'] },
     { fields: ['senderId'] },
     { fields: ['receiverId'] },
     { fields: ['status'] },

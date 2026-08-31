@@ -13,13 +13,11 @@ const User = sequelize.define('User', {
   },
   email: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   phone: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
+    allowNull: false
   },
   password: {
     type: DataTypes.STRING,
@@ -63,13 +61,11 @@ const User = sequelize.define('User', {
   },
   agentId: {
     type: DataTypes.STRING,
-    allowNull: true,
-    unique: true
+    allowNull: true
   },
   adminId: {
     type: DataTypes.STRING,
-    allowNull: true,
-    unique: true
+    allowNull: true
   },
   state: {
     type: DataTypes.INTEGER,
@@ -92,7 +88,19 @@ const User = sequelize.define('User', {
     defaultValue: 'light'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  /* Declared here with explicit names rather than as `unique: true` on the
+     column. An unnamed unique constraint is created by MySQL as `email`,
+     `email_2`, `email_3`… and sync({ alter: true }) could not tell that it
+     already existed, so every boot added another one — 64 of them reached
+     MySQL's per-table key limit and the server stopped starting. A fixed name
+     is recognisable, so it is created once and matched from then on. */
+  indexes: [
+    { unique: true, name: 'users_email_unique', fields: ['email'] },
+    { unique: true, name: 'users_phone_unique', fields: ['phone'] },
+    { unique: true, name: 'users_agent_id_unique', fields: ['agentId'] },
+    { unique: true, name: 'users_admin_id_unique', fields: ['adminId'] }
+  ]
 });
 
 // Define associations

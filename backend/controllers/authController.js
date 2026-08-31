@@ -4,6 +4,7 @@ import { hashPassword, comparePassword, generateToken, generateVerificationCode,
 import { sendVerificationCode, sendSMS } from '../utils/sms.js';
 import Verification from '../models/Verification.js';
 import { Op } from 'sequelize';
+import { resolveDestination } from '../utils/destinations.js';
 
 export const register = async (req, res) => {
   try {
@@ -15,6 +16,14 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({ where: { [Op.or]: [{ email }, { phone }] } });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
+    }
+
+    /* Resolved up front: a misspelled destination should fail before the
+       account exists, not leave behind an admin who cannot send. Accepts the
+       destination's name ("JUBA") or its id — callers think in names. */
+    const destination = await resolveDestination(adminState ?? req.body.state);
+    if (destination.error) {
+      return res.status(400).json({ message: destination.error });
     }
 
     // If role is agent but no agentId provided, generate one
@@ -71,8 +80,7 @@ export const register = async (req, res) => {
       role: role || 'user',
       agentId: finalAgentId,
       adminId: finalAdminId,
-      /* Accepts adminState, or `state` for callers already using that name. */
-      state: isAdmin ? (adminState ?? req.body.state ?? null) : null,
+      state: isAdmin ? destination.id : null,
       isVerified: isAdmin,
       verificationCode: isAdmin ? null : verificationCode,
       verificationExpiry: isAdmin ? null : new Date(Date.now() + 10 * 60000),
@@ -100,8 +108,10 @@ export const register = async (req, res) => {
       isVerified: user.isVerified,
       agentId: finalAgentId || null,
       adminId: finalAdminId || null,
-      /* Echoed back so the caller can see whether the destination took. */
-      adminState: user.state ?? null
+      /* Echoed back by name as well as id, so the caller can see that the
+         destination took and which one it landed on. */
+      adminState: user.state ?? null,
+      adminStateName: isAdmin ? destination.name : null
     });
   } catch (error) {
     console.error('Registration error:', error);
