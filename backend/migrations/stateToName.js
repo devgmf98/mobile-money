@@ -36,7 +36,36 @@ export async function migrateStateToName(sequelize) {
   );
   /* No table yet — a brand new database. sync() will build it from the model,
      which already declares the column as a string. */
-  if (!col) return { skipped: 'users table does not exist yet' };
+  if (!col) {
+    const [userTable] = await sequelize.query('SHOW TABLES LIKE ?', {
+      replacements: ['users']
+    });
+    if (!userTable.length) return { skipped: 'users table does not exist yet' };
+
+    const changed = [];
+    await sequelize.query(
+      'ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `state` VARCHAR(255) ' +
+      'CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL'
+    );
+    changed.push('added missing state column');
+
+    const [stateTable] = await sequelize.query('SHOW TABLES LIKE ?', {
+      replacements: ['statesettings']
+    });
+    if (stateTable.length) {
+      const existing = await foreignKeysOnState(sequelize, db);
+      if (!existing.includes(FK)) {
+        await sequelize.query(
+          'ALTER TABLE `users` ADD CONSTRAINT `' + FK + '` ' +
+          'FOREIGN KEY (`state`) REFERENCES `statesettings` (`name`) ' +
+          'ON DELETE SET NULL ON UPDATE CASCADE'
+        );
+        changed.push('added ' + FK + ' -> statesettings.name');
+      }
+    }
+
+    return { changed };
+  }
 
   const existing = await foreignKeysOnState(sequelize, db);
   const isInt = col.t.startsWith('int');
