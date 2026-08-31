@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SkeletonRows from '../components/SkeletonRows';
 import { useAuthStore } from '../context/store';
 import { transactionAPI } from '../utils/api';
 import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, CreditCard, Files, Hand, Inbox, Landmark, RefreshCw, Smartphone, Upload, Wallet } from 'lucide-react';
@@ -168,7 +169,7 @@ export default function AgentDashboard() {
             <a href="/agent/transactions" className={styles.seeAllLink}>See all</a>
           </div>
           {loading ? (
-            <div className={styles.loadingText}>Loading transactions...</div>
+            <SkeletonRows count={4} />
           ) : transactions.length > 0 ? (
             <div className={styles.transactionsList}>
               {transactions.map(tx => (
@@ -256,7 +257,7 @@ export default function AgentDashboard() {
         </div>
         <div className="card-body">
           {loading ? (
-            <p className="recent-tx-empty">Loading transactions…</p>
+            <SkeletonRows count={4} />
           ) : transactions.length === 0 ? (
             <div className="recent-tx-empty-state">
               <span className="recent-tx-empty-icon"><Files size={22} /></span>

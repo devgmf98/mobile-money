@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import SkeletonRows from '../components/SkeletonRows';
 import { useSearchParams } from 'react-router-dom';
 import { ArrowDown, ArrowRightLeft, ArrowUp, Banknote, CircleCheck, CreditCard, Download, Eye, Inbox, Printer, Search, Store, Upload, X } from 'lucide-react';
 import Footer from '../components/Footer';
@@ -209,7 +210,7 @@ export default function Transactions() {
 
           <div className="card-body tx-body">
             {loading ? (
-              <div className="tx-empty"><h3>Loading transactions…</h3></div>
+              <SkeletonRows count={5} />
             ) : filtered.length === 0 ? (
               <div className="tx-empty">
                 <span className="tx-empty-icon"><Inbox size={22} /></span>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import SkeletonRows from '../components/SkeletonRows';
 import styles from './UserDashboard.module.css';
 import '../styles/user-dashboard.css';
 import { ArrowDown, ArrowUp, Banknote, ChartColumn, Clock, Files, Hand, HandCoins, Inbox, Landmark, MapPin, Send, Upload, User, Wallet } from 'lucide-react';
@@ -151,7 +152,7 @@ export default function UserDashboard() {
         </div>
         <div className={styles.transactionsList}>
           {loadingTx ? (
-            <p style={{ textAlign: 'center', color: '#64748B' }}>Loading transactions...</p>
+            <SkeletonRows count={4} />
           ) : transactions.length === 0 ? (
             <p style={{ textAlign: 'center', color: '#64748B' }}>No transactions yet</p>
           ) : (
@@ -251,7 +252,7 @@ export default function UserDashboard() {
           </div>
           <div className="card-body">
             {loadingTx ? (
-              <p className="recent-tx-empty">Loading transactions…</p>
+              <SkeletonRows count={4} />
             ) : transactions.length === 0 ? (
               <div className="recent-tx-empty-state">
                 <span className="recent-tx-empty-icon"><Files size={22} /></span>

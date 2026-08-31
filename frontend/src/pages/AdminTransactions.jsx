@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SkeletonRows from '../components/SkeletonRows';
 import { adminAPI } from '../utils/api';
 import Footer from '../components/Footer';
 import TransactionDetails from '../components/TransactionDetails';
@@ -178,7 +179,7 @@ export default function AdminTransactions() {
           {loading ? (
             <div className="empty-state">
               <span className="empty-icon"><RefreshCw size={22} className="spin" /></span>
-              <h3>Loading transactions…</h3>
+              <SkeletonRows count={5} />
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div className="empty-state">

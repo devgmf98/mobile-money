@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SkeletonRows from '../components/SkeletonRows';
 import { adminAPI } from '../utils/api';
 import PrintReceipt from '../components/PrintReceipt';
 import Footer from '../components/Footer';
@@ -534,7 +535,7 @@ export default function AdminDashboard() {
         </div>
         <div className="card-body">
           {loadingRecent ? (
-            <p className="recent-tx-empty">Loading transactions…</p>
+            <SkeletonRows count={5} />
           ) : recentTransactions.length === 0 ? (
             <div className="recent-tx-empty-state">
               <span className="recent-tx-empty-icon"><Files size={22} /></span>

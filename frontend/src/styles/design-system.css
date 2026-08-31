@@ -818,3 +818,90 @@ a:focus:not(:focus-visible),
   outline: none;
   box-shadow: none;
 }
+
+/* ---------- loading skeletons ----------------------------------------------
+   Shimmer is a LOADING state, not decoration. An infinite animation left
+   running on every card would undo the work of stripping hundreds of
+   perpetual animations out of this app — so these elements exist only while
+   data is in flight and disappear the moment it arrives. */
+.skeleton {
+  /* The markup uses <span>, and an inline element ignores width and height —
+     the lines rendered at zero width until this was set. */
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-2, #F1F6F3);
+  border-radius: 8px;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.65),
+    transparent
+  );
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+/* translateX rather than animating `left`: a transform is composited, so the
+   sweep does not force layout on every frame the way the older shimmer did. */
+@keyframes skeleton-sweep {
+  100% { transform: translateX(100%); }
+}
+
+.skeleton-line { height: 12px; margin-bottom: 8px; }
+.skeleton-line:last-child { margin-bottom: 0; }
+.skeleton-line.is-sm { height: 10px; }
+.skeleton-line.is-lg { height: 18px; }
+.skeleton-line.w-40 { width: 40%; }
+.skeleton-line.w-60 { width: 60%; }
+.skeleton-line.w-80 { width: 80%; }
+
+.skeleton-circle { border-radius: 50%; }
+
+/* A stand-in for one list row: avatar, two lines of text, a figure. */
+.skeleton-row {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+}
+
+.skeleton-row:last-child { border-bottom: none; }
+.skeleton-row .skeleton-avatar { width: 40px; height: 40px; }
+.skeleton-row .skeleton-amount { height: 14px; }
+
+[data-theme="dark"] .skeleton { background: rgba(255, 255, 255, 0.06); }
+[data-theme="dark"] .skeleton::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.12),
+    transparent
+  );
+}
+
+/* Motion sensitivity: keep the placeholder, drop the sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}
+
+/* Visible to screen readers only — the shimmer conveys nothing to them. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
