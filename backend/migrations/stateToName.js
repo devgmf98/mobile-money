@@ -16,48 +16,56 @@
  */
 const FK = 'users_state_destination_fk';
 
-async function foreignKeysOnState(sequelize, db) {
+async function actualTableName(sequelize, db, baseName) {
+  const [rows] = await sequelize.query(
+    `SELECT TABLE_NAME AS tableName FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = ? AND LOWER(TABLE_NAME) = LOWER(?)
+      ORDER BY TABLE_NAME LIMIT 1`,
+    { replacements: [db, baseName] }
+  );
+  return rows[0]?.tableName || null;
+}
+
+async function foreignKeysOnState(sequelize, db, usersTableName) {
   const [rows] = await sequelize.query(
     `SELECT DISTINCT CONSTRAINT_NAME n FROM information_schema.KEY_COLUMN_USAGE
-      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users'
-        AND COLUMN_NAME = 'state' AND REFERENCED_TABLE_NAME IS NOT NULL`,
-    { replacements: [db] }
+      WHERE TABLE_SCHEMA = ? AND LOWER(TABLE_NAME) = LOWER(?)
+        AND LOWER(COLUMN_NAME) = 'state' AND REFERENCED_TABLE_NAME IS NOT NULL`,
+    { replacements: [db, usersTableName] }
   );
   return rows.map(r => r.n);
 }
 
 export async function migrateStateToName(sequelize) {
   const db = sequelize.getDatabaseName();
+  const usersTableName = await actualTableName(sequelize, db, 'users');
+  const statesTableName = await actualTableName(sequelize, db, 'statesettings');
+
+  if (!usersTableName) {
+    return { skipped: 'users table does not exist yet' };
+  }
 
   const [[col]] = await sequelize.query(
     `SELECT COLUMN_TYPE t FROM information_schema.COLUMNS
-      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND COLUMN_NAME = 'state'`,
-    { replacements: [db] }
+      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = 'state'`,
+    { replacements: [db, usersTableName] }
   );
   /* No table yet — a brand new database. sync() will build it from the model,
      which already declares the column as a string. */
   if (!col) {
-    const [userTable] = await sequelize.query('SHOW TABLES LIKE ?', {
-      replacements: ['users']
-    });
-    if (!userTable.length) return { skipped: 'users table does not exist yet' };
-
     const changed = [];
     await sequelize.query(
-      'ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `state` VARCHAR(255) ' +
+      'ALTER TABLE `' + usersTableName + '` ADD COLUMN IF NOT EXISTS `state` VARCHAR(255) ' +
       'CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL'
     );
     changed.push('added missing state column');
 
-    const [stateTable] = await sequelize.query('SHOW TABLES LIKE ?', {
-      replacements: ['statesettings']
-    });
-    if (stateTable.length) {
-      const existing = await foreignKeysOnState(sequelize, db);
+    if (statesTableName) {
+      const existing = await foreignKeysOnState(sequelize, db, usersTableName);
       if (!existing.includes(FK)) {
         await sequelize.query(
-          'ALTER TABLE `users` ADD CONSTRAINT `' + FK + '` ' +
-          'FOREIGN KEY (`state`) REFERENCES `statesettings` (`name`) ' +
+          'ALTER TABLE `' + usersTableName + '` ADD CONSTRAINT `' + FK + '` ' +
+          'FOREIGN KEY (`state`) REFERENCES `' + statesTableName + '` (`name`) ' +
           'ON DELETE SET NULL ON UPDATE CASCADE'
         );
         changed.push('added ' + FK + ' -> statesettings.name');
@@ -67,7 +75,7 @@ export async function migrateStateToName(sequelize) {
     return { changed };
   }
 
-  const existing = await foreignKeysOnState(sequelize, db);
+  const existing = await foreignKeysOnState(sequelize, db, usersTableName);
   const isInt = col.t.startsWith('int');
 
   /* Already text with exactly the one key: nothing to do, which is the case on
@@ -83,33 +91,33 @@ export async function migrateStateToName(sequelize) {
      the one already there. */
   if (existing.length) {
     for (const name of existing) {
-      await sequelize.query('ALTER TABLE `users` DROP FOREIGN KEY `' + name + '`');
+      await sequelize.query('ALTER TABLE `' + usersTableName + '` DROP FOREIGN KEY `' + name + '`');
     }
     done.push(`dropped ${existing.length} foreign key(s)`);
   }
 
   if (isInt) {
     await sequelize.query(
-      'ALTER TABLE `users` MODIFY `state` VARCHAR(255) ' +
+      'ALTER TABLE `' + usersTableName + '` MODIFY `state` VARCHAR(255) ' +
       'CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL'
     );
     await sequelize.query(
-      'UPDATE `users` u JOIN `statesettings` s ON s.id = u.`state` SET u.`state` = s.name'
+      'UPDATE `' + usersTableName + '` u JOIN `' + statesTableName + '` s ON s.id = u.`state` SET u.`state` = s.name'
     );
     done.push('rewrote ids as destination names');
 
     /* An id with no matching destination cannot be expressed as a name and
        would fail the new key. An empty field beats a wrong one. */
     const [orphans] = await sequelize.query(
-      'UPDATE `users` u LEFT JOIN `statesettings` s ON s.name = u.`state` ' +
+      'UPDATE `' + usersTableName + '` u LEFT JOIN `' + statesTableName + '` s ON s.name = u.`state` ' +
       'SET u.`state` = NULL WHERE u.`state` IS NOT NULL AND s.name IS NULL'
     );
     if (orphans.affectedRows) done.push(`cleared ${orphans.affectedRows} unmatched row(s)`);
   }
 
   await sequelize.query(
-    'ALTER TABLE `users` ADD CONSTRAINT `' + FK + '` ' +
-    'FOREIGN KEY (`state`) REFERENCES `statesettings` (`name`) ' +
+    'ALTER TABLE `' + usersTableName + '` ADD CONSTRAINT `' + FK + '` ' +
+    'FOREIGN KEY (`state`) REFERENCES `' + statesTableName + '` (`name`) ' +
     'ON DELETE SET NULL ON UPDATE CASCADE'
   );
   done.push('added ' + FK + ' -> statesettings.name');
