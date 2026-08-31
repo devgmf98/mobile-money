@@ -203,8 +203,14 @@ origin to charge the commission against. It is ignored for users and agents.
 }
 ```
 
-To assign a destination to an admin that already exists, match on the
-destination's name rather than looking its id up by hand:
+To assign a destination to an admin that already exists:
+
+```bash
+node scripts/setAdminDestination.js --list             # who has what
+node scripts/setAdminDestination.js admin@gcash.com JUBA
+```
+
+Or in SQL, matching on the name rather than looking the id up by hand:
 
 ```sql
 UPDATE Users u
@@ -214,7 +220,20 @@ UPDATE Users u
 ```
 
 The column stores the destination's id, not its name — renaming a destination
-would otherwise silently detach every admin assigned to it.
+would otherwise silently detach every admin assigned to it. That is also why
+the obvious `SET state = 'JUBA'` must not be used: MySQL is not running in
+strict mode here, so it evaluates the string as the number `0` instead of
+rejecting it, and the write then dies on the foreign key with a message that
+never mentions the real mistake:
+
+```
+#1452 Cannot add or update a child row: a foreign key constraint fails
+(`gcash`.`users`, CONSTRAINT `users_ibfk_1` FOREIGN KEY (`state`)
+REFERENCES `statesettings` (`id`))
+```
+
+The same error means the same thing for a plain id that does not exist, such
+as `SET state = 5`.
 
 **400** when the email or phone is already registered.
 
