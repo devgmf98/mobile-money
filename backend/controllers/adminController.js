@@ -376,7 +376,7 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
     if (deductCommissionFromAmount) {
       // Deduct mode: receiver gets amount less commission, sender gets the commission
       senderCommissionGiven = commissionAmount;
-      receiverCredit = Math.round((amount - commissionAmount) * 100) / 100);
+      receiverCredit = Math.round((amount - commissionAmount) * 100) / 100;
       senderDebit = amount;
     } else {
       // Full amount mode: sender sends full amount, receiver gets full amount,
