@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { usePageMeta } from '../utils/pageMeta';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { authAPI } from '../utils/api';
@@ -13,6 +14,15 @@ import mpLogo from '../assets/mp-logo.png';
    ========================================================================== */
 
 export default function ForgotPassword() {
+  /* Its own title, description and canonical, so this page can rank as
+     itself instead of as a duplicate of every other route. */
+  usePageMeta({
+    title: 'Reset Your MoneyPay Password',
+    description:
+      'Forgotten your MoneyPay password? Enter your email and we will send you a reset code.',
+    path: '/forgot-password',
+  });
+
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');

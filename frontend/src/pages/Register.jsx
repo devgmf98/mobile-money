@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { usePageMeta } from '../utils/pageMeta';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 import '../styles/auth.css';
@@ -8,6 +9,15 @@ import { Eye, EyeOff } from 'lucide-react';
 import { COUNTRIES, DEFAULT_COUNTRY, flagOf } from '../data/countries';
 
 export default function Register() {
+  /* Its own title, description and canonical, so this page can rank as
+     itself instead of as a duplicate of every other route. */
+  usePageMeta({
+    title: 'Create a MoneyPay Account — Free Mobile Money Sign Up',
+    description:
+      'Open a free MoneyPay account in minutes. Send money across South Sudan, cash out at any agent and manage your wallet from your phone.',
+    path: '/register',
+  });
+
   /* Sign-in sends people here when their account was never verified, landing
      straight on step 2 with the number they registered. */
   const location = useLocation();

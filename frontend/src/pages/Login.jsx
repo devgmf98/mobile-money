@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { usePageMeta } from '../utils/pageMeta';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI } from '../utils/api';
 import { useAuthStore } from '../context/store';
@@ -7,6 +8,15 @@ import mpLogo from '../assets/mp-logo.png';
 import { Eye, EyeOff, ShieldCheck, Store, Zap } from 'lucide-react';
 
 export default function Login() {
+  /* Its own title, description and canonical, so this page can rank as
+     itself instead of as a duplicate of every other route. */
+  usePageMeta({
+    title: 'Sign In to MoneyPay — Mobile Money for South Sudan',
+    description:
+      'Sign in to your MoneyPay account to send money, cash out through an agent and track your transactions.',
+    path: '/login',
+  });
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
