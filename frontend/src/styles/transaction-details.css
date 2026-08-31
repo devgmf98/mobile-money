@@ -6,7 +6,9 @@
 .td-scrim {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  /* Above the bottom tab bar, which is also 1200 — a tie leaves the
+     outcome to DOM order rather than intent. */
+  z-index: 1300;
   display: flex;
   align-items: center;
   justify-content: center;

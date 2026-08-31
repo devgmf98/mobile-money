@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ArrowDown, ArrowRightLeft, ArrowUp, Banknote, CreditCard, Download, Eye, Inbox, Printer, Search, Store, Upload, X } from 'lucide-react';
+import { ArrowDown, ArrowRightLeft, ArrowUp, Banknote, CircleCheck, CreditCard, Download, Eye, Inbox, Printer, Search, Store, Upload, X } from 'lucide-react';
 import Footer from '../components/Footer';
 import TransactionDetails from '../components/TransactionDetails';
 import PrintReceipt from '../components/PrintReceipt';
@@ -240,14 +240,34 @@ export default function Transactions() {
                         <strong className="tx-title">{titleOf(tx)}</strong>
                         <span className="tx-meta">
                           <span className="tx-ref">{tx.transactionId}</span>
+                          {/* The type earns a slot only when it says something the
+                              title does not — on a top-up both read "Account
+                              top-up", which wrapped and doubled the row height
+                              for no information. */}
+                          {(TYPE_LABELS[tx.type] || tx.type) !== titleOf(tx) && (
+                            <>
+                              <span className="tx-dot">·</span>
+                              <span className="tx-type-label">{TYPE_LABELS[tx.type] || tx.type}</span>
+                            </>
+                          )}
                           <span className="tx-dot">·</span>
-                          <span>{TYPE_LABELS[tx.type] || tx.type}</span>
+                          {/* The date rides the meta line rather than owning a
+                              column, which is what forced the reference to
+                              truncate to "TXN5…" on a phone. */}
+                          {/* Two spellings of the same moment, swapped by CSS: the
+                              year costs ~35px, which on a phone is the difference
+                              between showing "TXN265771339" and "T…". */}
+                          <span className="tx-when tx-when-full">
+                            {new Date(tx.createdAt).toLocaleDateString()}
+                            {' '}
+                            {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <span className="tx-when tx-when-short">
+                            {new Date(tx.createdAt).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}
+                            {' '}
+                            {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </span>
-                      </div>
-
-                      <div className="tx-when">
-                        {new Date(tx.createdAt).toLocaleDateString()}
-                        <span>{new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
 
                       <div className="tx-right">
@@ -255,7 +275,10 @@ export default function Transactions() {
                         <strong className={'tx-amount ' + (out ? 'is-out' : 'is-in')}>
                           {out ? '−' : '+'} {money(tx.amount)}
                         </strong>
-                        <span className={'tx-status is-' + tone}>{tx.status}</span>
+                        <span className={'tx-status is-' + tone}>
+                          {tx.status === 'completed' && <CircleCheck size={12} />}
+                          {tx.status}
+                        </span>
                       </div>
 
                       <div className="tx-actions">
@@ -270,6 +293,7 @@ export default function Transactions() {
                         </button>
                         <button
                           type="button"
+                          className="icon-btn"
                           onClick={() => generateTransactionDocument(tx)}
                           title="Download receipt"
                           aria-label={`Download receipt for ${tx.transactionId}`}
@@ -278,6 +302,7 @@ export default function Transactions() {
                         </button>
                         <button
                           type="button"
+                          className="icon-btn"
                           onClick={() => setSelectedTransaction(tx)}
                           title="View and print receipt"
                           aria-label={`Open receipt for ${tx.transactionId}`}

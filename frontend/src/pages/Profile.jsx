@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Toast from '../components/Toast';
@@ -416,8 +417,11 @@ export default function Profile() {
       {error && <div className="alert alert-danger">{error}</div>}
       {message && <div className="alert alert-success">{message}</div>}
 
-      {/* Camera Modal */}
-      {showCameraModal && (
+      {/* Camera Modal — rendered onto document.body. A position:fixed element is
+          positioned against the nearest transformed ancestor rather than the
+          viewport, so nesting inside a transformed layout can trap it and push
+          the action row out of sight. A portal removes that dependency. */}
+      {showCameraModal && createPortal(
         <div className="camera-modal-overlay">
           <div className="camera-modal">
             <div className="camera-modal-header">
@@ -466,7 +470,8 @@ export default function Profile() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <canvas ref={canvasRef} style={{ display: 'none' }} />

@@ -141,26 +141,35 @@
   padding: 0;
 }
 
+/* Each transaction is its own card rather than a row in a ruled list: the
+   separation does the work the border-bottom was doing, and the actions get a
+   divider of their own so they read as controls, not content. */
 .tx-row {
   display: grid;
-  grid-template-columns: auto 1fr auto auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 14px;
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
-  transition: background 0.16s ease;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
 }
 
-.tx-row:last-child { border-bottom: none; }
-.tx-row:hover { background: var(--light, #E8F7F0); }
+.tx-row:last-child { margin-bottom: 0; }
+
+.tx-row:hover {
+  box-shadow: 0 6px 18px -10px rgba(9, 20, 16, 0.28);
+}
 
 .tx-icon {
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 46px;
+  height: 46px;
   flex-shrink: 0;
-  border-radius: 11px;
+  border-radius: 15px;
 }
 
 .tx-icon.is-out { background: #FEE2E2; color: #DC2626; }
@@ -169,12 +178,12 @@
 .tx-main {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 }
 
 .tx-title {
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--text);
   white-space: nowrap;
@@ -182,46 +191,54 @@
   text-overflow: ellipsis;
 }
 
+/* One line, always. Wrapping split it after the separator and left a dangling
+   "·" hanging at the end of the first line. */
 .tx-meta {
   display: flex;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-light);
   min-width: 0;
 }
 
+/* The reference is the only part that may give way — the date and time stay
+   whole, because a half-printed timestamp is worse than a shortened id. */
 .tx-ref {
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 210px;
+  min-width: 0;
 }
 
-.tx-dot { opacity: 0.5; }
+.tx-dot,
+.tx-page .tx-when,
+.tx-type-label { flex-shrink: 0; }
+
+/* The reference may shorten, but never past a recognisable prefix — an id
+   clipped to "T…" identifies nothing. */
+.tx-ref { min-width: 74px; }
+
+.tx-page .tx-when-short { display: none; }
+
+.tx-dot { opacity: 0.45; }
 
 .tx-page .tx-when {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  font-size: 12px;
-  color: var(--text-light);
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
-
-.tx-page .tx-when span { font-size: 11px; opacity: 0.8; }
 
 .tx-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 6px;
 }
 
 .tx-amount {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -230,10 +247,22 @@
 .tx-amount.is-out { color: #DC2626; }
 .tx-amount.is-in { color: #16A34A; }
 
+/* A rule between the figures and the buttons, as in the target design. */
+.tx-page .tx-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 14px;
+  border-left: 1px solid var(--border);
+}
+
 .tx-status {
-  padding: 2px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: capitalize;
 }
@@ -296,26 +325,58 @@
 
 /* ---------- responsive ---------------------------------------------------- */
 @media (max-width: 820px) {
+  .tx-row { gap: 12px; padding: 13px 14px; }
+  .tx-page .tx-actions { padding-left: 10px; gap: 6px; }
+}
+
+/* ---------- phones ----------
+   Four columns cannot share 390px, so the actions drop to their own line with
+   the divider rotated to sit above them. The date stays on the meta line, which
+   is what stops the reference truncating to "TXN5…". */
+@media (max-width: 620px) {
   .tx-row {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     row-gap: 10px;
+    padding: 14px;
   }
 
-  /* date drops under the title; amount and actions keep the right edge */
-  .tx-page .tx-when {
-    grid-column: 2;
-    grid-row: 2;
-    align-items: flex-start;
-    flex-direction: row;
-    gap: 6px;
-  }
-
+  .tx-main { grid-column: 2; grid-row: 1; }
   .tx-right { grid-column: 3; grid-row: 1; }
-  .tx-page .tx-actions { grid-column: 3; grid-row: 2; }
+
+  .tx-page .tx-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-end;
+    padding-left: 0;
+    padding-top: 10px;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .tx-title { font-size: 13.5px; }
+  /* 390px cannot hold a reference and a timestamp on one line — forcing it
+     pushed the time under the amount column, where it was clipped mid-digit.
+     They stack instead, and the separator goes with the single line. */
+  .tx-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    font-size: 11.5px;
+    overflow: hidden;
+  }
+
+  .tx-dot { display: none; }
+  .tx-ref { min-width: 0; max-width: 100%; }
+  .tx-type-label { white-space: nowrap; }
+
+  /* Room for the year again, now that the date has its own line. */
+  .tx-page .tx-when-full { display: inline; }
+  .tx-page .tx-when-short { display: none; }
+  .tx-icon { width: 42px; height: 42px; border-radius: 14px; }
+  .tx-amount { font-size: 14.5px; }
 }
 
 @media (max-width: 520px) {
-  .tx-ref { max-width: 130px; }
   .tx-summary-item { flex: 1; min-width: 104px; }
 }
 
