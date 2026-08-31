@@ -67,13 +67,14 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  /* The destination's name, not its id — 'JUBA' rather than 1, so the value
+     means something wherever it is read. StateSettings.name is unique, so the
+     foreign key points at it directly and validity is still enforced;
+     ON UPDATE CASCADE rewrites every admin here when a destination is
+     renamed, which is the one thing storing a name would otherwise cost. */
   state: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'StateSettings',
-      key: 'id'
-    }
+    type: DataTypes.STRING,
+    allowNull: true
   },
   currentLocation: {
     type: DataTypes.JSON,
@@ -110,7 +111,14 @@ User.associate = (models) => {
   User.hasMany(models.Notification, { foreignKey: 'recipientId', as: 'notifications' });
   User.hasMany(models.WithdrawalRequest, { foreignKey: 'agentId', as: 'agentRequests' });
   User.hasMany(models.WithdrawalRequest, { foreignKey: 'userId', as: 'userRequests' });
-  User.belongsTo(models.StateSetting, { foreignKey: 'state', as: 'stateSetting' });
+  /* constraints: false leaves the foreign key to the database. Sequelize
+     cannot recognise a constraint it did not name, so sync({ alter: true })
+     added another on every boot — the same way it did with the unique
+     indexes, and heading for the same 64-key wall. The real key, with its
+     ON UPDATE CASCADE, is created once by scripts/migrateStateToName.js. */
+  User.belongsTo(models.StateSetting, {
+    foreignKey: 'state', targetKey: 'name', as: 'stateSetting', constraints: false
+  });
 };
 
 export default User;

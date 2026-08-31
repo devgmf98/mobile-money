@@ -3,15 +3,13 @@
  *   node scripts/setAdminDestination.js --list
  *   node scripts/setAdminDestination.js admin@gcash.com JUBA
  *
- * Doing this in SQL is deceptively easy to get wrong. `SET state = 'JUBA'`
- * looks right, but the column holds the StateSettings id, and MySQL — not in
- * strict mode here — quietly evaluates the string as the number 0 rather than
- * complaining. No destination has id 0, so the write dies on the foreign key
- * with an error that says nothing about the actual mistake:
+ * The column stores the destination's name, so plain SQL works too:
  *
- *   #1452 Cannot add or update a child row: a foreign key constraint fails
+ *   UPDATE Users SET state = 'JUBA' WHERE email = 'admin@gcash.com';
  *
- * This resolves the name properly and refuses anything it cannot match.
+ * This is still the safer route: it checks the account is an admin, matches
+ * the destination whatever case you type, and names the valid ones when it
+ * cannot find a match — where SQL would only report a foreign key failure.
  */
 import dotenv from 'dotenv';
 import path from 'path';
@@ -30,13 +28,13 @@ const fail = (msg) => { console.error('\n  ' + msg + '\n'); process.exit(1); };
 async function listing() {
   const states = await StateSetting.findAll({ order: [['name', 'ASC']] });
   const admins = await User.findAll({ where: { role: 'admin' }, order: [['id', 'ASC']] });
-  const nameFor = (id) => (states.find(s => s.id === id) || {}).name || '— none —';
+  const nameOf = (v) => v || '— none —';
 
   console.log('\n  Destinations');
   states.forEach(s => console.log(`    ${String(s.id).padEnd(4)}${s.name.padEnd(12)}${s.commissionPercent}%`));
 
   console.log('\n  Admins');
-  admins.forEach(a => console.log(`    ${a.email.padEnd(26)}${nameFor(a.state)}`));
+  admins.forEach(a => console.log(`    ${a.email.padEnd(26)}${nameOf(a.state)}`));
 
   const unassigned = admins.filter(a => !a.state);
   if (unassigned.length) {
@@ -52,13 +50,11 @@ async function assign(email, destination) {
 
   const target = await resolveDestination(destination);
   if (target.error) fail(target.error);
-  if (target.id === null) fail('Give a destination name, for example JUBA.');
+  if (target.name === null) fail('Give a destination name, for example JUBA.');
 
-  const before = admin.state
-    ? (await StateSetting.findByPk(admin.state))?.name || String(admin.state)
-    : '— none —';
+  const before = admin.state || '— none —';
 
-  await admin.update({ state: target.id });
+  await admin.update({ state: target.name });
   console.log(`\n  ${email}\n    ${before}  ->  ${target.name}\n`);
 }
 

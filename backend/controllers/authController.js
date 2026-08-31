@@ -80,7 +80,7 @@ export const register = async (req, res) => {
       role: role || 'user',
       agentId: finalAgentId,
       adminId: finalAdminId,
-      state: isAdmin ? destination.id : null,
+      state: isAdmin ? destination.name : null,
       isVerified: isAdmin,
       verificationCode: isAdmin ? null : verificationCode,
       verificationExpiry: isAdmin ? null : new Date(Date.now() + 10 * 60000),
@@ -108,10 +108,11 @@ export const register = async (req, res) => {
       isVerified: user.isVerified,
       agentId: finalAgentId || null,
       adminId: finalAdminId || null,
-      /* Echoed back by name as well as id, so the caller can see that the
-         destination took and which one it landed on. */
+      /* Echoed back so the caller can see that the destination took, and
+         which one the name resolved to. Both keys carry the name; the second
+         is kept because callers were already reading it. */
       adminState: user.state ?? null,
-      adminStateName: isAdmin ? destination.name : null
+      adminStateName: user.state ?? null
     });
   } catch (error) {
     console.error('Registration error:', error);

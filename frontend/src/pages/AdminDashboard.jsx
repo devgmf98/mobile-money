@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import SkeletonRows from '../components/SkeletonRows';
 import { adminAPI } from '../utils/api';
+import { findDestination } from '../utils/destination';
 import PrintReceipt from '../components/PrintReceipt';
 import Footer from '../components/Footer';
 import CompositionChart from '../components/CompositionChart';
@@ -131,14 +132,8 @@ export default function AdminDashboard() {
       try {
         const statesRes = await adminAPI.getStateSettings();
         const states = statesRes.data.states || [];
-        const myStateId = user?.state;
-        if (myStateId) {
-          const found = states.find(s => s.id === myStateId || String(s.id) === String(myStateId));
-          if (found) setAdminStateCommission(Number(found.commissionPercent || 0));
-          else setAdminStateCommission(null);
-        } else {
-          setAdminStateCommission(null);
-        }
+        const found = findDestination(states, user?.state);
+        setAdminStateCommission(found ? Number(found.commissionPercent || 0) : null);
       } catch (err) {
         console.error('Failed to load state settings', err);
         setAdminStateCommission(null);

@@ -351,8 +351,8 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
     /* FROM is the sender's own destination, assigned when their account was
        created; TO is the destination of the admin being paid. Both are stored
        on the transaction so a transfer reads as "Juba -> Wau" later. */
-    const fromState = sender.state ? await StateSetting.findByPk(sender.state) : null;
-    const toState = receiver.state ? await StateSetting.findByPk(receiver.state) : null;
+    const fromState = sender.state ? await StateSetting.findOne({ where: { name: sender.state } }) : null;
+    const toState = receiver.state ? await StateSetting.findOne({ where: { name: receiver.state } }) : null;
 
     if (!fromState) {
       return res.status(400).json({

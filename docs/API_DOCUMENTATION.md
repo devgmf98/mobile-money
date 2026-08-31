@@ -177,16 +177,17 @@ fields shown are the only required ones for every role.
 
 ```json
 // 201 — isVerified is TRUE: no SMS code, sign in straight away.
-// adminState / adminStateName echo the destination that was stored, so you
-// can confirm the name resolved to the one you meant.
+// adminState echoes the destination that was stored, so you can confirm the
+// name resolved to the one you meant. adminStateName carries the same value
+// and is kept only because callers were already reading it.
 {
   "message": "Admin registered. You can sign in now.",
-  "userId": 40,
-  "phone": "+211912300991",
+  "userId": 41,
+  "phone": "+211900000021",
   "isVerified": true,
   "agentId": null,
-  "adminId": 792223,
-  "adminState": 1,
+  "adminId": 741381,
+  "adminState": "JUBA",
   "adminStateName": "JUBA"
 }
 ```
@@ -210,30 +211,36 @@ node scripts/setAdminDestination.js --list             # who has what
 node scripts/setAdminDestination.js admin@gcash.com JUBA
 ```
 
-Or in SQL, matching on the name rather than looking the id up by hand:
+Or in SQL, which now says what it means — the column holds the destination's
+name:
 
 ```sql
-UPDATE Users u
-  JOIN StateSettings s ON s.name = 'JUBA'
-  SET u.state = s.id
-  WHERE u.email = 'admin@gcash.com';
+UPDATE Users SET state = 'JUBA' WHERE email = 'admin@gcash.com';
 ```
 
-The column stores the destination's id, not its name — renaming a destination
-would otherwise silently detach every admin assigned to it. That is also why
-the obvious `SET state = 'JUBA'` must not be used: MySQL is not running in
-strict mode here, so it evaluates the string as the number `0` instead of
-rejecting it, and the write then dies on the foreign key with a message that
-never mentions the real mistake:
+`Users.state` is a foreign key onto `StateSettings.name`, which is unique, so
+storing the name costs nothing in integrity:
+
+- a destination that does not exist is still refused;
+- `ON UPDATE CASCADE` means renaming a destination rewrites every admin
+  assigned to it in the same statement;
+- `ON DELETE SET NULL` means deleting one clears those admins rather than
+  leaving them pointing at nothing.
+
+A destination that does not exist fails like this — the name is the thing
+being rejected, not a type problem:
 
 ```
 #1452 Cannot add or update a child row: a foreign key constraint fails
-(`gcash`.`users`, CONSTRAINT `users_ibfk_1` FOREIGN KEY (`state`)
-REFERENCES `statesettings` (`id`))
+(`gcash`.`users`, CONSTRAINT `users_state_destination_fk` FOREIGN KEY
+(`state`) REFERENCES `statesettings` (`name`))
 ```
 
-The same error means the same thing for a plain id that does not exist, such
-as `SET state = 5`.
+Databases created before this change store the id instead. Convert them once:
+
+```bash
+node scripts/migrateStateToName.js
+```
 
 **400** when the email or phone is already registered.
 

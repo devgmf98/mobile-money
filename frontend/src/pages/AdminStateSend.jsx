@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../context/store';
 import { adminAPI } from '../utils/api';
+import { findDestination } from '../utils/destination';
 import Toast from '../components/Toast';
 import { ArrowRight, Banknote, Coins, Map, Send, User } from 'lucide-react';
 import Select from '../components/Select';
@@ -13,7 +14,7 @@ export default function AdminStateSend() {
      was created — not something to pick per transfer. Picking it meant an
      admin could book commission against a destination they have no part in. */
   const user = useAuthStore((state) => state.user);
-  const myStateId = user?.state ?? null;
+  const myStateName = user?.state ?? null;
   const [toAdminId, setToAdminId] = useState('');
   const [amount, setAmount] = useState('');
   const [deduct, setDeduct] = useState(true);
@@ -48,7 +49,7 @@ export default function AdminStateSend() {
 
   useEffect(() => {
     const amt = parseFloat(amount) || 0;
-    const st = states.find(s => String(s.id) === String(myStateId));
+    const st = findDestination(states, myStateName);
     const pct = st ? Number(st.commissionPercent || 0) : 0;
     const comm = Math.round((amt * (pct / 100)) * 100) / 100;
     setCommission(comm);
@@ -59,9 +60,9 @@ export default function AdminStateSend() {
       // Full mode: Receiver gets full amount, you send (amount - commission)
       setReceiverAmount(amt);
     }
-  }, [amount, myStateId, deduct, states]);
+  }, [amount, myStateName, deduct, states]);
 
-  const myState = states.find(s => String(s.id) === String(myStateId));
+  const myState = findDestination(states, myStateName);
   const symbol = selectedCurrency?.symbol || selectedCurrency?.code || 'SSP';
   const amountValid = parseFloat(amount) > 0;
   const canSend = Boolean(myState && toAdminId && currencyId && amountValid) && !loading;
