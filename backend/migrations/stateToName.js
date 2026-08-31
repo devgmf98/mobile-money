@@ -56,7 +56,7 @@ export async function migrateStateToName(sequelize) {
     const changed = [];
     await sequelize.query(
       'ALTER TABLE `' + usersTableName + '` ADD COLUMN IF NOT EXISTS `state` VARCHAR(255) ' +
-      'CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL'
+      'CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL'
     );
     changed.push('added missing state column');
 
@@ -99,7 +99,7 @@ export async function migrateStateToName(sequelize) {
   if (isInt) {
     await sequelize.query(
       'ALTER TABLE `' + usersTableName + '` MODIFY `state` VARCHAR(255) ' +
-      'CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL'
+      'CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL'
     );
     await sequelize.query(
       'UPDATE `' + usersTableName + '` u JOIN `' + statesTableName + '` s ON s.id = u.`state` SET u.`state` = s.name'
