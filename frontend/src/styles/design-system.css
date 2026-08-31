@@ -783,3 +783,38 @@ body::-webkit-scrollbar {
   min-height: 0;
   padding: 0;
 }
+
+/* ---------- touch feedback -------------------------------------------------
+   Mobile browsers paint a translucent grey rectangle over whatever you tap —
+   it follows the element's box, so on a card-shaped button it reads as a
+   stray container flashing up behind the content. Suppressed here rather than
+   per component, because it applies to every tappable thing in the app.
+
+   Loaded last (see main.jsx), so this wins without !important. */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+label,
+select,
+summary,
+[role="button"],
+.btn,
+.icon-btn {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* A tap leaves focus on the control, so any :focus styling stays lit after the
+   finger lifts — the highlight that "won't go away" after pressing a button.
+   :focus-visible keeps the ring for keyboard users, where it is the only way
+   to see where you are. */
+button:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible),
+.btn:focus:not(:focus-visible),
+.icon-btn:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
