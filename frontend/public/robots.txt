@@ -1,0 +1,14 @@
+User-agent: *
+
+# Everything behind a login is noise in an index and leaks route structure.
+# Only the pages a signed-out visitor can actually reach are crawlable.
+Disallow: /user/
+Disallow: /agent/
+Disallow: /admin/
+
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /forgot-password
+
+Sitemap: https://gpay-ss.netlify.app/sitemap.xml
