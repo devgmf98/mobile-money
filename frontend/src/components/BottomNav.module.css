@@ -73,6 +73,14 @@
   justify-content: center;
 }
 
+/* Lucide renders width/height attributes on the SVG and defaults to 24px, so
+   the font-size above never affected it. Sized here rather than by passing a
+   prop to each of the fifteen icons across the three role variants. */
+.icon svg {
+  width: 20px;
+  height: 20px;
+}
+
 .active .icon {
   color: #087443;
 }
