@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { canAccess, isSubAdmin } from '../utils/roles';
+import { canAccess, isStaff, isSubAdmin } from '../utils/roles';
 import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CircleUserRound, CreditCard, Handshake, Inbox, Landmark, Lock, Map, Menu, PanelLeftClose, PanelLeftOpen, Plane, Repeat, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
@@ -137,7 +137,11 @@ export default function AdminLayout() {
     let mounted = true;
     const loadPending = async () => {
       try {
-        if (!user || user.role !== 'admin') return setPendingCount(0);
+        /* Sub-admins have this page and their own pending transfers, so they
+           get the badge too. The test was written before the role existed and
+           bailed for anyone who was not exactly 'admin', so the count never
+           loaded for them and the badge stayed hidden. */
+        if (!isStaff(user)) return setPendingCount(0);
         const { data } = await adminAPI.getPendingStateSendsCount();
         if (mounted) setPendingCount(Number(data.count || 0));
       } catch (err) {
