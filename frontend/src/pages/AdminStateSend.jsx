@@ -51,7 +51,11 @@ export default function AdminStateSend() {
 
   useEffect(() => {
     const amt = parseFloat(amount) || 0;
-    const st = findDestination(states, myStateName);
+    /* The RECEIVING destination sets the rate. Until one is chosen there is no
+       rate to apply, so the preview shows nothing rather than quoting the
+       sender's — which is what made it display a commission before any
+       destination had been picked. */
+    const st = findDestination(states, toDestination);
     const pct = st ? parseFloat(st.commissionPercent) || 0 : 0;
     const comm = Math.round((amt * (pct / 100)) * 100) / 100;
     setCommission(comm);
@@ -62,9 +66,11 @@ export default function AdminStateSend() {
       // Full mode: You send full amount, receiver gets full amount, commission credited to your card
       setReceiverAmount(amt);
     }
-  }, [amount, myStateName, deduct, states]);
+  }, [amount, toDestination, deduct, states]);
 
   const myState = findDestination(states, myStateName);
+  /* The destination being sent to, which carries the rate. */
+  const destState = findDestination(states, toDestination);
   const symbol = selectedCurrency?.symbol || selectedCurrency?.code || 'SSP';
   const amountValid = parseFloat(amount) > 0;
   const canSend = Boolean(myState && toDestination && currencyId && amountValid) && !loading;
@@ -122,7 +128,10 @@ export default function AdminStateSend() {
               <label><Map size={14} /> From destination</label>
               <div className="ss-origin">
                 {myState ? (
-                  <strong>{myState.name}</strong>
+                  <>
+                    <strong>{myState.name}</strong>
+                    <small>Where this transfer leaves from</small>
+                  </>
                 ) : (
                   <small className="ss-origin-missing">
                     No destination is assigned to your account, so commission cannot be
@@ -140,6 +149,9 @@ export default function AdminStateSend() {
                 onChange={setToDestination}
                 placeholder="Select To Destination"
                 ariaLabel="To Destination"
+                /* Each destination shows its own rate, which is the rate that
+                   will be charged — the transfer is priced on where it is
+                   going. */
                 options={states.map(s => ({
                   value: s.name,
                   label: s.name,
@@ -197,11 +209,11 @@ export default function AdminStateSend() {
                 {deduct ? 'Deduct commission' : 'Give full amount'}
               </span>
               <span className="commission-mode-hint">
-                {myState 
+                {destState
                   ? (deduct
-                      ? `You send 100, receiver gets ${(100 - parseFloat(myState.commissionPercent)).toFixed(2)}, you keep ${parseFloat(myState.commissionPercent).toFixed(2)}% commission.`
-                      : `You send 100, receiver gets 100 — you keep the ${parseFloat(myState.commissionPercent).toFixed(2)}% commission.`)
-                  : 'No destination assigned to your account'}
+                      ? `You send 100, receiver gets ${(100 - parseFloat(destState.commissionPercent)).toFixed(2)}, you keep ${parseFloat(destState.commissionPercent).toFixed(2)}% commission.`
+                      : `You send 100, receiver gets 100 — you keep the ${parseFloat(destState.commissionPercent).toFixed(2)}% commission.`)
+                  : 'Choose a To Destination to see its commission rate'}
               </span>
             </div>
             <div className="segmented" role="group" aria-label="Commission mode">

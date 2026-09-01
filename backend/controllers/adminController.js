@@ -357,13 +357,24 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
     if (!fromState) {
       return res.status(400).json({
         message:
-          'Your account has no destination assigned, so commission cannot be calculated. ' +
-          'Ask an administrator to set your destination.',
+          'Your account has no destination assigned, so the origin of this ' +
+          'transfer cannot be recorded. Ask an administrator to set your destination.',
       });
     }
 
-    /* Commission is based on the sender's own destination (From Destination) */
-    const percent = fromState ? parseFloat(fromState.commissionPercent) || 0 : 0;
+    /* Commission is the RECEIVING destination's rate — the price of moving
+       money into that destination, not out of this one. Priced on the sender's
+       own rate, the same transfer cost a different amount depending on who
+       sent it, and choosing a destination on the form changed nothing. */
+    if (!toState) {
+      return res.status(400).json({
+        message:
+          'The admin you are sending to has no destination assigned, so the ' +
+          'commission rate cannot be determined.',
+      });
+    }
+
+    const percent = parseFloat(toState.commissionPercent) || 0;
     const commissionAmount = Math.round((amount * (percent / 100)) * 100) / 100; // 2 decimals
 
     // Apply transfer logic (admins have unlimited send rights - no balance check needed)
@@ -1962,9 +1973,13 @@ export const editSendByState = async (req, res) => {
       newReceiverId = newReceiver.id;
     }
 
-    // Determine commission percent from sender's state (From Destination)
-    const senderState = sender.state ? await StateSetting.findOne({ where: { name: sender.state } }) : null;
-    const percent = senderState ? parseFloat(senderState.commissionPercent) || 0 : 0;
+    /* Repricing an edited transfer uses the destination it is now going to, so
+       an edit that changes the recipient reprices with it. */
+    const editReceiver = await User.findByPk(newReceiverId);
+    const destState = editReceiver && editReceiver.state
+      ? await StateSetting.findOne({ where: { name: editReceiver.state } })
+      : null;
+    const percent = destState ? parseFloat(destState.commissionPercent) || 0 : 0;
 
     // Compute original sender debit
     const origCommission = Number(tx.commission || 0);
