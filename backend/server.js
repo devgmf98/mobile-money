@@ -113,7 +113,7 @@ import ExchangeRate from './models/ExchangeRate.js';
 import SendMoneyCommissionTier from './models/SendMoneyCommissionTier.js';
 import WithdrawalCommissionTier from './models/WithdrawalCommissionTier.js';
 import Verification from './models/Verification.js';
-import { migrateStateToName } from './migrations/stateToName.js';
+import { migrateStateToName, ensureColumns } from './migrations/stateToName.js';
 
 // Set up associations
 const models = { User, Transaction, Notification, WithdrawalRequest, StateSetting, Currency, ExchangeRate, SendMoneyCommissionTier, WithdrawalCommissionTier, Verification };
@@ -185,6 +185,9 @@ async function startServer() {
     try {
       const result = await migrateStateToName(sequelize);
       if (result.changed) console.log('Migration (destination column): ' + result.changed.join('; '));
+
+      const added = await ensureColumns(sequelize);
+      if (added.length) console.log('Migration (columns added): ' + added.join(', '));
     } catch (err) {
       /* Reported, not swallowed: sync() is about to fail for the same reason,
          and this line is what explains why. */

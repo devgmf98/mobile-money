@@ -127,6 +127,24 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  /* When a pending destination transfer was settled — marked received or
+     cancelled. createdAt says when it was requested, and updatedAt moves for
+     any later edit, so neither answers "when did this close". */
+  settledAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  /* And by whom. The email is stored beside the id for the same reason the
+     destination names are: an account that is later renamed or removed would
+     otherwise erase who acted on a financial record. */
+  settledById: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  settledByEmail: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   senderBalance: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true

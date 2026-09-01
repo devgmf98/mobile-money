@@ -98,7 +98,13 @@ export const getTransactionAnalytics = async (req, res) => {
        on the row, so this is the same slice grouped a different way rather
        than a second definition of commission that could drift from the
        dashboard card. */
-    const commissionQuery = { ...where, commission: { [Op.gt]: 0 } };
+    const commissionQuery = {
+      ...where,
+      /* A cancelled transfer earned nothing, and its commission is left on the
+         row rather than zeroed, so it is excluded here by status. */
+      status: { [Op.ne]: 'cancelled' },
+      commission: { [Op.gt]: 0 },
+    };
 
     const [totals, byType, byStatus, byDestination, byStaffRows, byCompanyRows, count] = await Promise.all([
       Transaction.findAll({ where, attributes: ['currencyCode', money, rows], group: ['currencyCode'], raw: true }),

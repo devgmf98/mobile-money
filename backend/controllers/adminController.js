@@ -981,6 +981,9 @@ export const getAdminStats = async (req, res) => {
            send anyone made. A sub-admin sees only their own — the same split
            their transaction list and exchange cards already use. */
         ...(req.userRole === 'sub-admin' ? { senderId: req.userId } : {}),
+        /* A cancelled transfer earned nothing. Its commission stays on the row
+           so the record is honest, so it has to be excluded here by status. */
+        status: { [Op.ne]: 'cancelled' },
         commission: { [Op.gt]: 0 },
       },
       group: ['currencyCode'],
@@ -1632,7 +1635,12 @@ export const getMyAdminCommission = async (req, res) => {
     
     // All commission goes to sender (both deduct and full amount modes)
     const totalCommission = await Transaction.sum('commission', {
-      where: { senderId: adminId, type: 'admin_state_push', commission: { [Op.gt]: 0 } }
+      where: {
+          senderId: adminId,
+          type: 'admin_state_push',
+          status: { [Op.ne]: 'cancelled' },
+          commission: { [Op.gt]: 0 },
+        }
     }) || 0;
     
     res.json({ totalAdminCommission: parseFloat(totalCommission) });
@@ -1647,26 +1655,35 @@ export const getPendingSendByState = async (req, res) => {
   try {
     const adminId = req.userId;
     const admin = await User.findByPk(adminId);
-    if (!admin || !admin.state) {
-      return res.json({ pending: [] });
-    }
+    if (!admin) return res.json({ pending: [] });
+
+    /* An admin oversees every destination, so they see every transfer. A
+       sub-admin works one destination and sees what touches it:
+       - the destination they receive into
+       - the requests they created themselves
+       - transfers leaving their own destination, which they may need to
+         review or cancel
+       A sub-admin with no destination assigned has nothing to show. */
+    const isSub = req.userRole === 'sub-admin';
+    if (isSub && !admin.state) return res.json({ pending: [] });
 
     const stateName = admin.state;
+    const scope = isSub
+      ? {
+          [Op.or]: [
+            { toStateName: stateName },
+            { fromStateName: stateName },
+            { senderId: adminId },
+            { receiverId: adminId },
+          ],
+        }
+      : {};
 
-    // The pending screen is relevant to both sides of the transfer:
-    // - destination-state admins receive those requests
-    // - sender admins need to see the request they created
-    // - admins from the same source state may also need to review/cancel it
     const pending = await Transaction.findAll({
       where: {
         type: 'admin_state_push',
         status: { [Op.in]: ['pending', 'completed', 'cancelled'] },
-        [Op.or]: [
-          { toStateName: stateName },
-          { fromStateName: stateName },
-          { senderId: adminId },
-          { receiverId: adminId }
-        ]
+        ...scope,
       },
       include: [
         { model: User, as: 'sender', attributes: ['name', 'phone'] },
@@ -1690,13 +1707,26 @@ export const receiveSendByState = async (req, res) => {
     if (tx.type !== 'admin_state_push') return res.status(400).json({ message: 'Invalid transaction type' });
     if (tx.status !== 'pending') return res.status(400).json({ message: 'Transaction is not pending' });
 
-    const receiver = await User.findByPk(adminId);
-    if (!receiver || !isStaffRole(receiver.role)) return res.status(403).json({ message: 'Only admins can mark this transfer as received' });
-    if (!receiver.state || !tx.toStateName || receiver.state !== tx.toStateName) {
+    const actor = await User.findByPk(adminId);
+    if (!actor || !isStaffRole(actor.role)) return res.status(403).json({ message: 'Only admins can mark this transfer as received' });
+
+    /* An admin can settle any transfer; a sub-admin only one addressed to them
+       or arriving at the destination they work. */
+    const addressedToActor = Number(tx.receiverId) === Number(adminId);
+    const atActorsDestination = Boolean(actor.state && tx.toStateName && actor.state === tx.toStateName);
+    if (actor.role !== 'admin' && !addressedToActor && !atActorsDestination) {
       return res.status(403).json({ message: 'Only admins in the destination state can mark this transfer as received' });
     }
 
-    // Credit the acting admin in the receiving destination.
+    /* The money goes to the admin the transfer was addressed to, not to whoever
+       pressed the button. This used to credit the acting account, which the
+       destination check happened to contain — but it already meant any admin
+       sharing that destination could take a colleague's transfer, and once an
+       admin may settle ANY transfer it would have become a way to collect money
+       addressed to anyone. */
+    const receiver = tx.receiverId ? await User.findByPk(tx.receiverId) : null;
+    if (!receiver) return res.status(404).json({ message: 'The admin this transfer was addressed to no longer exists' });
+
     const receiverCredit = Number(tx.receiverCredit || tx.amount || 0);
     receiver.balance = Math.round(((parseFloat(receiver.balance) || 0) + receiverCredit) * 100) / 100;
     await receiver.update({ balance: receiver.balance });
@@ -1736,11 +1766,20 @@ export const receiveSendByState = async (req, res) => {
     }
 
     // Update transaction
-    await tx.update({ status: 'completed', receiverBalance: receiver.balance, senderBalance });
+    await tx.update({
+      status: 'completed',
+      receiverBalance: receiver.balance,
+      senderBalance,
+      /* Who closed it, which is not always who it was addressed to — an admin
+         can settle on another destination's behalf. */
+      settledAt: new Date(),
+      settledById: actor.id,
+      settledByEmail: actor.email,
+    });
 
     // Notifications
     await Notification.create({
-      recipientId: adminId,
+      recipientId: receiver.id,
       title: 'Transfer Received',
       message: `You received SSP ${receiverCredit.toFixed(2)} from admin transfer`,
       type: 'system',
@@ -1753,7 +1792,7 @@ export const receiveSendByState = async (req, res) => {
     try {
       const io = getIO();
       if (io) {
-        io.to(`user-${adminId}`).emit('balance-updated', { userId: adminId, balance: parseFloat(receiver.balance) });
+        io.to(`user-${receiver.id}`).emit('balance-updated', { userId: receiver.id, balance: parseFloat(receiver.balance) });
       }
     } catch (err) {
       console.error('Socket emit failed:', err);
@@ -1770,21 +1809,30 @@ export const getPendingSendByStateCount = async (req, res) => {
   try {
     const adminId = req.userId;
     const admin = await User.findByPk(adminId);
-    if (!admin || !admin.state) {
-      return res.json({ count: 0 });
-    }
+    if (!admin) return res.json({ count: 0 });
+
+    /* The badge counts exactly what the page lists, so the two cannot
+       disagree — a "7" over a page showing 12 rows is worse than no badge. */
+    const isSub = req.userRole === 'sub-admin';
+    if (isSub && !admin.state) return res.json({ count: 0 });
+
+    const scope = isSub
+      ? {
+          [Op.or]: [
+            { senderId: adminId },
+            { receiverId: adminId },
+            { fromStateName: admin.state },
+            { toStateName: admin.state },
+          ],
+        }
+      : {};
 
     const count = await Transaction.count({
       where: {
         type: 'admin_state_push',
         status: 'pending',
-        [Op.or]: [
-          { senderId: adminId },
-          { receiverId: adminId },
-          { fromStateName: admin.state },
-          { toStateName: admin.state }
-        ]
-      }
+        ...scope,
+      },
     });
     res.json({ count });
   } catch (err) {
@@ -1808,9 +1856,12 @@ export const cancelSendByState = async (req, res) => {
     if (!actingAdmin || !isStaffRole(actingAdmin.role)) return res.status(403).json({ message: 'Only admins can cancel this transfer' });
     if (!sender) return res.status(404).json({ message: 'Sender not found' });
 
+    /* An admin can cancel any pending transfer; a sub-admin only their own or
+       one leaving the destination they work. The refund goes to the sender
+       either way, so widening this moves no money sideways. */
     const isSender = Number(tx.senderId) === Number(adminId);
     const isSameStateAdmin = Boolean(actingAdmin.state && tx.fromStateName && actingAdmin.state === tx.fromStateName);
-    if (!isSender && !isSameStateAdmin) {
+    if (actingAdmin.role !== 'admin' && !isSender && !isSameStateAdmin) {
       return res.status(403).json({ message: 'Only the sender or an admin from the same state can cancel this transfer' });
     }
 
@@ -1831,15 +1882,20 @@ export const cancelSendByState = async (req, res) => {
     sender.balance = Math.round(((parseFloat(sender.balance) || 0) + senderDebit) * 100) / 100;
     await sender.save();
 
-    // Zero out any commission values so cancelled tx doesn't count toward aggregates
     tx.status = 'cancelled';
-    tx.cancelledAt = new Date();
+    /* Was `tx.cancelledAt`, which is neither a model field nor a column — the
+       assignment went nowhere and no cancellation was ever timestamped. */
+    tx.settledAt = new Date();
+    tx.settledById = actingAdmin.id;
+    tx.settledByEmail = actingAdmin.email;
     tx.senderBalance = sender.balance;
-    tx.commission = 0;
-    tx.receiverCommission = 0;
-    tx.commissionPercent = 0;
-    tx.companyCommission = 0;
-    tx.companyCommissionPercent = 0;
+    /* The commission figures are left on the row. They used to be zeroed here
+       so a cancelled transfer would not count toward the totals, but that also
+       erased what the commission on the request had been — the row then read
+       "0.00" as though none was ever charged, which is not what happened.
+
+       The totals exclude cancelled transfers by status instead, which says the
+       same thing without destroying the record. */
     await tx.save();
 
     // Notifications

@@ -119,33 +119,54 @@ export default function AdminStatePending() {
     return <span className="badge badge-warning"><Clock size={13} /> Pending</span>;
   };
 
+  const settledOn = (v) => {
+    const d = new Date(v);
+    if (isNaN(d)) return '';
+    return d.toLocaleString(undefined, {
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+  };
+
   const renderAction = (tx) => {
     const s = normalizeStatus(tx.status);
     if (s === 'cancelled') return <span className="action-note">—</span>;
     if (s === 'completed') return <span className="action-note is-done"><Check size={14} /> Settled</span>;
 
-    // Any admin in the destination state can receive the transfer. Any admin in
-    // the source state can also cancel it, along with the original sender.
+    /* An admin oversees every destination and can settle or cancel any pending
+       transfer, so they get both actions on every row. A sub-admin acts only
+       where they work: receiving what arrives at their destination or is
+       addressed to them, cancelling their own or what leaves their
+       destination.
+
+       Marking received credits the admin the transfer was ADDRESSED to, not
+       whoever presses the button, so an admin settling on someone's behalf
+       does not collect their money. */
+    const isFullAdmin = user?.role === 'admin';
     const isSender = Number(user?.id) === Number(tx.senderId);
+    const isAddressedToMe = Number(user?.id) === Number(tx.receiverId);
     const isSameStateAdmin = isStaff(user) && user?.state && tx.fromStateName && user.state === tx.fromStateName;
     const isReceiverForDestination = isStaff(user) && user?.state && tx.toStateName && user.state === tx.toStateName;
     const busy = actionLoading === tx.id;
 
-    if (isReceiverForDestination) {
-      return (
-        <button className="btn btn-primary btn-sm" onClick={() => handleReceive(tx.id)} disabled={busy}>
-          {busy ? 'Processing…' : <><Check size={14} /> Mark received</>}
-        </button>
-      );
-    }
-    if (isSender || isSameStateAdmin) {
-      return (
-        <button className="btn btn-outline btn-danger btn-sm" onClick={() => handleCancel(tx.id)} disabled={busy}>
-          {busy ? 'Processing…' : <><X size={14} /> Cancel</>}
-        </button>
-      );
-    }
-    return <span className="action-note">No action</span>;
+    const canReceive = isFullAdmin || isAddressedToMe || isReceiverForDestination;
+    const canCancel = isFullAdmin || isSender || isSameStateAdmin;
+
+    if (!canReceive && !canCancel) return <span className="action-note">No action</span>;
+
+    return (
+      <div className="action-pair">
+        {canReceive ? (
+          <button className="btn btn-primary btn-sm" onClick={() => handleReceive(tx.id)} disabled={busy}>
+            {busy ? 'Processing…' : <><Check size={14} /> Mark received</>}
+          </button>
+        ) : null}
+        {canCancel ? (
+          <button className="btn btn-outline btn-danger btn-sm" onClick={() => handleCancel(tx.id)} disabled={busy}>
+            {busy ? 'Processing…' : <><X size={14} /> Cancel</>}
+          </button>
+        ) : null}
+      </div>
+    );
   };
 
   const party = (p) => {
@@ -246,6 +267,7 @@ export default function AdminStatePending() {
                     <th className="num">Receiver gets</th>
                     <th className="num">Commission</th>
                     <th>Status</th>
+                    <th>Settled</th>
                     <th>Action</th>
                   </tr>
                 </thead>
@@ -263,6 +285,20 @@ export default function AdminStatePending() {
                       </td>
                       <td className="num credit">{Number(tx.commission || tx.receiverCommission || 0).toFixed(2)}</td>
                       <td>{statusBadge(tx.status)}</td>
+                      {/* When it closed and who closed it. Blank while still
+                          pending, because there is nothing to report yet. */}
+                      <td className="settled-cell">
+                        {tx.settledAt ? (
+                          <>
+                            <span className="settled-when">{settledOn(tx.settledAt)}</span>
+                            {tx.settledByEmail ? (
+                              <span className="settled-by" title={tx.settledByEmail}>{tx.settledByEmail}</span>
+                            ) : null}
+                          </>
+                        ) : (
+                          <span className="action-note">—</span>
+                        )}
+                      </td>
                       <td className="action-cell">{renderAction(tx)}</td>
                     </tr>
                   ))}

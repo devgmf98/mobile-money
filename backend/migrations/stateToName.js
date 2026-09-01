@@ -36,6 +36,33 @@ async function foreignKeysOnState(sequelize, db, usersTableName) {
   return rows.map(r => r.n);
 }
 
+/* Columns the app needs that a deployment may not have yet. sync({ alter: true })
+   does add new columns, but it runs after this and can be turned off; a report
+   that silently shows an empty column because a deploy skipped it is worse than
+   one that fails loudly, so the ones the UI reads are ensured here by name. */
+export async function ensureColumns(sequelize) {
+  const db = sequelize.getDatabaseName();
+  const wanted = [
+    { table: 'transactions', column: 'settledAt', ddl: 'DATETIME NULL' },
+    { table: 'transactions', column: 'settledById', ddl: 'INT NULL' },
+    { table: 'transactions', column: 'settledByEmail', ddl: 'VARCHAR(255) NULL' },
+  ];
+  const added = [];
+  for (const w of wanted) {
+    const [[found]] = await sequelize.query(
+      `SELECT COUNT(*) n FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+      { replacements: [db, w.table, w.column] }
+    );
+    if (found && Number(found.n) > 0) continue;
+    await sequelize.query(
+      'ALTER TABLE `' + w.table + '` ADD COLUMN `' + w.column + '` ' + w.ddl
+    );
+    added.push(w.table + '.' + w.column);
+  }
+  return added;
+}
+
 export async function migrateStateToName(sequelize) {
   const db = sequelize.getDatabaseName();
   const usersTableName = await actualTableName(sequelize, db, 'users');

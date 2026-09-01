@@ -214,3 +214,82 @@
 @media (max-width: 640px) {
   .sort-select-wrap { width: 100%; }
 }
+
+/* Two actions where a role allows both, kept on one line. Left to wrap they
+   broke onto two rows — the pair needs ~209px and the column was giving it
+   146 — which made every admin row twice as tall for no reason. The cell is
+   sized to its content instead, and the buttons stop shrinking. */
+.action-pair {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.action-pair .btn { flex: 0 0 auto; }
+
+.pending-table th:last-child,
+.pending-table td.action-cell {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Below the table's own breakpoint the row becomes a stacked card, where two
+   full-width buttons read better than two cramped ones. */
+@media (max-width: 640px) {
+  .action-pair { flex-wrap: wrap; justify-content: flex-start; }
+  .action-pair .btn { flex: 1 1 auto; }
+}
+
+/* When a transfer closed, and who closed it. The email sits under the date in
+   a lighter weight — it answers "who" only once "when" has been read. */
+.pending-table td.settled-cell { white-space: nowrap; }
+
+.settled-when {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+.settled-by {
+  display: block;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
+  color: var(--text-light, #5B6B66);
+}
+
+[data-theme="dark"] .settled-when { color: #E6F2EC; }
+[data-theme="dark"] .settled-by { color: #9FB3AB; }
+
+/* Adding the Settled column pushed the table past its container, and the
+   actions — the reason this page exists — ended up off-screen behind a
+   horizontal scroll. The Action column is pinned to the right edge instead, so
+   it is reachable at any width while the rest of the row scrolls under it.
+
+   Sticky cells need their own background or the scrolling content shows
+   through them. */
+.pending-table th:last-child,
+.pending-table td.action-cell {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background: var(--surface, #fff);
+  box-shadow: -6px 0 8px -8px rgba(9, 20, 16, 0.35);
+}
+
+.pending-table thead th:last-child { z-index: 3; background: var(--surface-2, #F7FAF9); }
+.pending-table tbody tr:hover td.action-cell { background: var(--surface-2, #F7FAF9); }
+
+[data-theme="dark"] .pending-table th:last-child,
+[data-theme="dark"] .pending-table td.action-cell { background: #14201B; }
+[data-theme="dark"] .pending-table tbody tr:hover td.action-cell { background: #1B2A24; }
+
+/* Stacked cards below this width, where sticky has nothing to stick to. */
+@media (max-width: 640px) {
+  .pending-table th:last-child,
+  .pending-table td.action-cell { position: static; box-shadow: none; }
+}
