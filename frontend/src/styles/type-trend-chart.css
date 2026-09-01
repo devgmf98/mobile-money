@@ -108,7 +108,8 @@
 
 .ttc-axis {
   fill: var(--ttc-axis);
-  font-size: 10.5px;
+  /* Smaller now that a full period is labelled rather than three points. */
+  font-size: 9.5px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -121,6 +122,17 @@
 }
 
 .ttc-area { stroke: none; }
+
+/* Data points. Filled with the surface so overlapping series stay countable
+   where two lines meet. */
+.ttc-point { stroke-width: 2; fill: var(--ttc-tip-bg); }
+
+.ttc-s1 .ttc-point { stroke: var(--ttc-s1); }
+.ttc-s2 .ttc-point { stroke: var(--ttc-s2); }
+.ttc-s3 .ttc-point { stroke: var(--ttc-s3); }
+.ttc-s4 .ttc-point { stroke: var(--ttc-s4); }
+.ttc-s5 .ttc-point { stroke: var(--ttc-s5); }
+.ttc-s6 .ttc-point { stroke: var(--ttc-s6); }
 
 /* Hovering one series recedes the rest rather than hiding them, so the shape
    being compared stays in context. */
@@ -136,12 +148,12 @@
 
 /* Gradient stops carry the hue; the fill is faint so six overlapping areas
    still read as lines rather than mud. */
-.ttc-stop-a.ttc-s1 { stop-color: var(--ttc-s1); stop-opacity: 0.26; }
-.ttc-stop-a.ttc-s2 { stop-color: var(--ttc-s2); stop-opacity: 0.26; }
-.ttc-stop-a.ttc-s3 { stop-color: var(--ttc-s3); stop-opacity: 0.26; }
-.ttc-stop-a.ttc-s4 { stop-color: var(--ttc-s4); stop-opacity: 0.26; }
-.ttc-stop-a.ttc-s5 { stop-color: var(--ttc-s5); stop-opacity: 0.26; }
-.ttc-stop-a.ttc-s6 { stop-color: var(--ttc-s6); stop-opacity: 0.26; }
+.ttc-stop-a.ttc-s1 { stop-color: var(--ttc-s1); stop-opacity: 0.16; }
+.ttc-stop-a.ttc-s2 { stop-color: var(--ttc-s2); stop-opacity: 0.16; }
+.ttc-stop-a.ttc-s3 { stop-color: var(--ttc-s3); stop-opacity: 0.16; }
+.ttc-stop-a.ttc-s4 { stop-color: var(--ttc-s4); stop-opacity: 0.16; }
+.ttc-stop-a.ttc-s5 { stop-color: var(--ttc-s5); stop-opacity: 0.16; }
+.ttc-stop-a.ttc-s6 { stop-color: var(--ttc-s6); stop-opacity: 0.16; }
 
 .ttc-stop-b.ttc-s1, .ttc-stop-b.ttc-s2, .ttc-stop-b.ttc-s3,
 .ttc-stop-b.ttc-s4, .ttc-stop-b.ttc-s5, .ttc-stop-b.ttc-s6 {

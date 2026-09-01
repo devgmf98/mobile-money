@@ -65,6 +65,9 @@ function rangeModel(range) {
     return {
       starts: Array.from({ length: 24 }, (_, h) => base + h * HOUR),
       keyOf: startOfHour,
+      /* Every third hour. All 24 collide at this width, and three-hour marks
+         still let a reader place any point in the day. */
+      tickEvery: 3,
       /* "09:00" rather than a bare "9" — an axis of loose numbers under a
          count axis of loose numbers is ambiguous. */
       tick: (t) => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
@@ -82,6 +85,7 @@ function rangeModel(range) {
     return {
       starts,
       keyOf: startOfMonth,
+      tickEvery: 1,          // all twelve months
       tick: (t) => new Date(t).toLocaleDateString(undefined, { month: 'short' }),
       full: (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }),
     };
@@ -92,33 +96,23 @@ function rangeModel(range) {
   return {
     starts: Array.from({ length: days }, (_, i) => base - (days - 1 - i) * DAY),
     keyOf: startOfDay,
+    /* Every day across a week; every fifth across a month, where thirty dates
+       would overlap. */
+    tickEvery: range === 'week' ? 1 : 5,
     tick: (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
     full: (t) => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
   };
 }
 
-/* A smooth cubic through the points, like the reference. The control points
-   are clamped to each segment so the curve cannot dip below zero between two
-   low counts the way a plain cardinal spline does. */
-function smoothPath(pts) {
+/* Straight segments between the points, not a smooth curve.
+
+   A cubic through sparse integer counts invents values that never existed: one
+   transaction at 11:00 with nothing either side became a bell curve implying
+   half a transaction at 10:30. Counts are whole and the reading is "how many in
+   this hour", so the line goes where the data goes and nowhere else. */
+function linePath(pts) {
   if (!pts.length) return '';
-  if (pts.length < 2) return 'M ' + pts[0].x + ' ' + pts[0].y;
-  const d = ['M ' + pts[0].x + ' ' + pts[0].y];
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] || pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] || p2;
-    const lo = Math.min(p1.y, p2.y);
-    const hi = Math.max(p1.y, p2.y);
-    const clamp = (v) => Math.max(lo, Math.min(hi, v));
-    const c1x = p1.x + (p2.x - p0.x) / 6;
-    const c1y = clamp(p1.y + (p2.y - p0.y) / 6);
-    const c2x = p2.x - (p3.x - p1.x) / 6;
-    const c2y = clamp(p2.y - (p3.y - p1.y) / 6);
-    d.push('C ' + c1x + ' ' + c1y + ', ' + c2x + ' ' + c2y + ', ' + p2.x + ' ' + p2.y);
-  }
-  return d.join(' ');
+  return pts.map((p, i) => (i ? 'L ' : 'M ') + p.x + ' ' + p.y).join(' ');
 }
 
 export default function TypeTrendChart({ transactions = [], defaultRange = 'today' }) {
@@ -126,7 +120,7 @@ export default function TypeTrendChart({ transactions = [], defaultRange = 'toda
   const [hover, setHover] = useState(null);
 
   const model = useMemo(() => {
-    const { starts, keyOf, tick, full } = rangeModel(range);
+    const { starts, keyOf, tick, full, tickEvery } = rangeModel(range);
     const index = new Map(starts.map((t, i) => [t, i]));
     const n = starts.length;
 
@@ -171,10 +165,10 @@ export default function TypeTrendChart({ transactions = [], defaultRange = 'toda
 
     const peak = Math.max(1, ...series.flatMap((s) => s.values));
     const counted = series.reduce((acc, s) => acc + s.total, 0);
-    return { buckets: starts, series, peak, tick, full, counted };
+    return { buckets: starts, series, peak, tick, full, counted, tickEvery };
   }, [transactions, range]);
 
-  const { buckets, series, peak, tick, full, counted } = model;
+  const { buckets, series, peak, tick, full, counted, tickEvery } = model;
 
   const picker = (
     <div className="ttc-ranges" role="group" aria-label="Time range">
@@ -193,8 +187,10 @@ export default function TypeTrendChart({ transactions = [], defaultRange = 'toda
   );
 
   const W = 720;
-  const H = 240;
-  const pad = { l: 34, r: 12, t: 14, b: 26 };
+  /* Shorter than it was: at a peak of two, the old frame was three quarters
+     empty and the whole card read as a gap in the page. */
+  const H = 190;
+  const pad = { l: 30, r: 10, t: 12, b: 24 };
   const iw = W - pad.l - pad.r;
   const ih = H - pad.t - pad.b;
   const x = (i) => pad.l + (buckets.length === 1 ? iw / 2 : (i / (buckets.length - 1)) * iw);
@@ -205,7 +201,13 @@ export default function TypeTrendChart({ transactions = [], defaultRange = 'toda
   const ticks = [];
   for (let v = 0; v <= peak; v += step) ticks.push(v);
 
-  const midpoint = Math.floor((buckets.length - 1) / 2);
+  /* Label the whole period at the range's own interval, always including the
+     last bucket so the axis states where it ends — marks that stop three hours
+     short read as missing data rather than a skipped tick. */
+  const labelEvery = Math.max(1, tickEvery || 1);
+  const labelled = new Set();
+  for (let i = 0; i < buckets.length; i += labelEvery) labelled.add(i);
+  labelled.add(buckets.length - 1);
 
   return (
     <div className="ttc">
@@ -248,7 +250,7 @@ export default function TypeTrendChart({ transactions = [], defaultRange = 'toda
               ))}
 
               {buckets.map((t, i) =>
-                (i === 0 || i === buckets.length - 1 || i === midpoint) ? (
+                labelled.has(i) ? (
                   <text key={t} className="ttc-axis" x={x(i)} y={H - 8} textAnchor="middle">
                     {tick(t)}
                   </text>
@@ -257,7 +259,7 @@ export default function TypeTrendChart({ transactions = [], defaultRange = 'toda
 
               {series.map((s, si) => {
                 const pts = s.values.map((v, i) => ({ x: x(i), y: y(v) }));
-                const line = smoothPath(pts);
+                const line = linePath(pts);
                 const dim = hover && hover.series && hover.series !== s.key;
                 /* Only the busiest series is filled. Filling all of them
                    stacked five translucent gradients on top of each other and
@@ -273,6 +275,12 @@ export default function TypeTrendChart({ transactions = [], defaultRange = 'toda
                       <path className="ttc-area" d={area} fill={'url(#ttc-fill-' + s.slot + ')'} />
                     ) : null}
                     <path className="ttc-line" d={line} />
+                    {/* A dot on every bucket that has something in it. Without
+                        one, a single busy hour surrounded by zeros is a thin
+                        spike that reads as noise rather than a data point. */}
+                    {s.values.map((v, i) => (v > 0 ? (
+                      <circle className="ttc-point" key={i} cx={pts[i].x} cy={pts[i].y} r="3" />
+                    ) : null))}
                   </g>
                 );
               })}
