@@ -121,7 +121,18 @@
 
 /* ---------- responsive ---------------------------------------------------- */
 @media (max-width: 720px) {
-  .recent-tx-table .recent-tx-ref { display: none; }
+  /* The reference used to be hidden here, but only the value — the "Reference"
+     heading stayed, so the column read as empty rather than absent, and the one
+     thing you need to chase a transaction was the thing missing. The table
+     scrolls inside .table-wrap, so it can simply stay. */
+  .recent-tx-table .recent-tx-ref {
+    display: inline-block;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
 }
 
 /* ---------- dark mode ----------------------------------------------------- */

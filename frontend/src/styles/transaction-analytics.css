@@ -423,3 +423,41 @@
   padding-bottom: 14px;
   margin-bottom: 14px;
 }
+
+/* ---- the Commission card header on narrow screens ----------------------
+   Title and sort control shared one row, so "SORT BY" broke across two lines
+   beside a select that had nowhere to go. They stack instead: the heading
+   keeps its line, and the control gets a full-width row of its own. */
+@media (max-width: 640px) {
+  .ta-card-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .ta-sort {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+  }
+
+  /* Two short words that should never break. */
+  .ta-sort > span { white-space: nowrap; }
+
+  .ta-sort select {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 60%;
+    height: 36px;
+  }
+
+  /* The card's own range row wraps to full-width controls at this size, so the
+     presets and dates each get a line rather than being squeezed side by side. */
+  .ta-filters.is-compact .ta-ranges { width: 100%; }
+  .ta-filters.is-compact .ta-range { flex: 1 1 auto; text-align: center; }
+  .ta-filters.is-compact .ta-field { flex: 1 1 45%; }
+  .ta-filters.is-compact .ta-field input,
+  .ta-filters.is-compact .ta-field select { width: 100%; max-width: 100%; }
+}

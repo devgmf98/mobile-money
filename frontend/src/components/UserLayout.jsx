@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
-import { Banknote, Bell, QrCode, ChartColumn, CircleUserRound, ClipboardList, Hourglass, Lock, PanelLeftClose, PanelLeftOpen, RefreshCw, Upload, User, UserCog } from 'lucide-react';
+import { Banknote, Bell, ChartColumn, CircleUserRound, ClipboardList, Hourglass, LogOut, PanelLeftClose, PanelLeftOpen, QrCode, RefreshCw, Upload, User, UserCog } from 'lucide-react';
 import { useAuthStore } from '../context/store';
 import { useNotificationStore } from '../context/store';
 import { notificationAPI } from '../utils/api';
@@ -237,7 +237,7 @@ export default function UserLayout() {
         </nav>
         <div className="sidebar-footer">
           <button className="btn btn-outline logout-mobile sidebar-logout" onClick={() => { setMenuOpen(false); handleLogout(); }}>
-            <span className="btn-icon"><Lock size={18} /></span>
+            <span className="btn-icon"><LogOut size={18} /></span>
             <span className="btn-label">Logout</span>
           </button>
         </div>

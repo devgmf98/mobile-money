@@ -1062,7 +1062,10 @@
   margin: 4px auto 6px;
 }
 
-.admin-layout.sidebar-collapsed .sidebar-footer,
+/* The exchange-rate widget is a panel of selects and has nowhere to go in a
+   64px rail, so it stays hidden. Logout is not a panel — it is the one control
+   a person needs from any page, and hiding it with the widget left no way to
+   sign out without expanding the sidebar first. */
 .admin-layout.sidebar-collapsed .exchange-rate-widget {
   display: none;
 }
@@ -1873,4 +1876,454 @@
     margin: 0;
     z-index: 1000;
   }
+}
+
+/* ==========================================================================
+   The pending badge, and the icons-only rail.
+   ========================================================================== */
+
+/* Expanded, the badge trails the label. */
+.sidebar-badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #DC2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- icons-only rail ----------------------------------------------------
+   Narrower, and every item the same square. The rail was 78px of mostly empty
+   space with tall airy rows; at 64px with square targets it reads as a rail
+   rather than a menu with its words cut off. */
+.admin-layout.sidebar-collapsed {
+  grid-template-columns: 64px 1fr;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-item {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 2px auto;
+  border-radius: 12px;
+}
+
+/* The active item was a filled block wide enough to dominate the column. A
+   square tile the size of the others, plus a marker on the rail edge, says
+   "you are here" without shouting. */
+.admin-layout.sidebar-collapsed .sidebar-item.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: currentColor;
+}
+
+/* On the icon's corner, not beside it — inline it widened the row and pushed
+   the icon off centre. */
+.admin-layout.sidebar-collapsed .sidebar-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  margin: 0;
+  min-width: 16px;
+  padding: 0 4px;
+  font-size: 9.5px;
+  line-height: 16px;
+  box-shadow: 0 0 0 2px var(--sidebar-bg, #fff);
+}
+
+/* The group headings are hidden with the labels, so the gap they left has to
+   read as a division on its own. */
+.admin-layout.sidebar-collapsed .sidebar-group {
+  display: block;
+  height: 1px;
+  width: 24px;
+  margin: 9px auto;
+  padding: 0;
+  overflow: hidden;
+  text-indent: -999px;
+  background: var(--border, #E3EAE7);
+}
+
+@media screen and (max-width: 768px) {
+  .admin-layout.sidebar-collapsed .sidebar-item {
+    width: auto;
+    height: auto;
+    margin: 3px 8px;
+    border-radius: 10px;
+  }
+  .admin-layout.sidebar-collapsed .sidebar-group {
+    height: auto; width: auto; text-indent: 0; background: none; overflow: visible;
+  }
+  .admin-layout.sidebar-collapsed .sidebar-badge { position: static; box-shadow: none; }
+}
+
+/* The expand control while the rail is icons-only. It lives in the navbar
+   because a 64px rail has no room for a button beside the logo mark — down
+   there it read as a stray icon rather than a control. */
+.navbar-sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  /* Clear of the rail on one side and the page title on the other — flush
+     against the rail edge it read as part of the sidebar rather than a
+     control in the bar. */
+  margin: 0 14px 0 16px;
+  padding: 0;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.navbar-sidebar-toggle:hover {
+  color: var(--primary-dark, #005C2E);
+  border-color: var(--primary, #007A3D);
+  background: var(--surface-2, #F7FAF9);
+}
+
+.navbar-sidebar-toggle:focus-visible {
+  outline: 2px solid var(--primary, #007A3D);
+  outline-offset: 2px;
+}
+
+/* Only one of the two is ever on screen. */
+.admin-layout.sidebar-collapsed .sidebar-brand .sidebar-toggle { display: none; }
+
+/* The rail is a fixed 64 — the sidebar was sizing itself wider than the grid
+   column it sits in, so the icons floated in more space than they needed. */
+.admin-layout.sidebar-collapsed .sidebar,
+.admin-layout.sidebar-collapsed .admin-sidebar {
+  width: 64px;
+  min-width: 64px;
+  padding-left: 0;
+  padding-right: 0;
+  /* The rail carried 12px of its own top padding, which pushed the header
+     down and left its bottom edge 12px below the navbar's. A plain .sidebar
+     rule could not clear it — this selector is what the padding was set on. */
+  padding-top: 0;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-brand {
+  padding: 12px 0 10px;
+  justify-content: center;
+}
+
+/* Below 768px the sidebar is a drawer with labels, so the rail control has
+   nothing to expand and the drawer's own button takes over. */
+@media screen and (max-width: 768px) {
+  .navbar-sidebar-toggle { display: none; }
+  .admin-layout.sidebar-collapsed .sidebar-brand .sidebar-toggle { display: inline-flex; }
+  .admin-layout.sidebar-collapsed .sidebar,
+  .admin-layout.sidebar-collapsed .admin-sidebar { width: auto; min-width: 0; }
+}
+
+/* ---- logout in the icons-only rail ---- */
+.admin-layout.sidebar-collapsed .sidebar-footer {
+  padding: 8px 0 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-footer > div { display: block; }
+
+/* The same 44px square the nav items use, so the rail reads as one column of
+   tiles rather than a column with a wide button bolted to the bottom. */
+.admin-layout.sidebar-collapsed .sidebar-logout {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  margin: 0 auto;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-logout .btn-label { display: none; }
+.admin-layout.sidebar-collapsed .sidebar-logout .btn-icon { margin: 0; }
+
+/* The label it lost, on hover — the same affordance the nav icons get. */
+.admin-layout.sidebar-collapsed .sidebar-logout::after {
+  content: 'Logout';
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #04331E;
+  color: #FFFFFF;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 200;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: opacity 0.12s ease;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-logout:hover::after { opacity: 1; }
+
+@media screen and (max-width: 768px) {
+  .admin-layout.sidebar-collapsed .sidebar-footer { display: block; padding: inherit; }
+  .admin-layout.sidebar-collapsed .sidebar-logout {
+    width: 100%; height: auto; border-radius: 10px; gap: 8px;
+  }
+  .admin-layout.sidebar-collapsed .sidebar-logout .btn-label { display: inline; }
+  .admin-layout.sidebar-collapsed .sidebar-logout::after { display: none; }
+}
+
+/* ---- the sidebar header lines up with the navbar ------------------------
+   The navbar is 64px from the top of the viewport. The brand block was 56px
+   tall and started 5px down (12px once collapsed), so its bottom edge never
+   met the navbar's and the gap above the logo read as a mistake. Same height,
+   same start, so the two headers share one horizon. */
+.sidebar .sidebar-brand {
+  height: 64px;
+  min-height: 64px;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Whatever the rail's own top padding was, it offset the header inside it. */
+.sidebar { padding-top: 0; }
+
+.admin-layout.sidebar-collapsed .sidebar-brand {
+  height: 64px;
+  min-height: 64px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* The nav below starts clear of the header rather than tight against it. */
+.admin-layout.sidebar-collapsed .sidebar-nav { padding-top: 8px; }
+
+/* ==========================================================================
+   Wherever the sidebar is a drawer, there is no icons-only rail.
+
+   The rail rules above are appended after the original mobile override, so
+   they were winning on small screens too — the layout kept a 64px column and
+   the page was squeezed into it beside an empty half-screen.
+
+   The cut is 1032px, not 768: that is where the sidebar becomes position:
+   fixed and starts behaving as an overlay. Undoing the rail only below 768
+   left the 769-1032 band with a drawer wearing rail styling — a centred logo
+   with the collapse toggle stacked underneath it.
+   ========================================================================== */
+@media screen and (max-width: 1032px) {
+  .admin-layout.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar,
+  .admin-layout.sidebar-collapsed .admin-sidebar {
+    width: 300px;
+    min-width: 0;
+    max-width: 85vw;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Labels come back — an icon-only drawer is just a menu with the words
+     removed, and there is room for them here. */
+  .admin-layout.sidebar-collapsed .sidebar-label { display: inline; }
+
+  .admin-layout.sidebar-collapsed .sidebar-item {
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar-item.active::before { display: none; }
+  .admin-layout.sidebar-collapsed .sidebar-item:hover::after { display: none; }
+
+  /* The rail turns these headings into short divider rules. A drawer has room
+     for the words, and losing them left the menu as one undifferentiated list,
+     so they are restored — at a specificity that beats the rail rule. */
+  .admin-layout.sidebar-collapsed .admin-sidebar .sidebar-menu .sidebar-group,
+  .admin-layout .admin-sidebar.collapsed .sidebar-menu .sidebar-group {
+    display: block;
+    /* The rail hides these by collapsing them to a 1px line with font-size 0.
+       Both have to be given back, not just the indent — the text was present
+       and correctly positioned, at zero size. */
+    height: auto;
+    min-height: 0;
+    width: auto;
+    font-size: 11px;
+    line-height: 1.4;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin: 14px 16px 6px;
+    padding: 0;
+    background: none;
+    text-indent: 0;
+    overflow: visible;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar-badge {
+    position: static;
+    box-shadow: none;
+    min-width: 20px;
+    padding: 2px 7px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .admin-layout.sidebar-collapsed .brand-logo-full { display: block; }
+  .admin-layout.sidebar-collapsed .brand-logo-mark { display: none; }
+  .admin-layout.sidebar-collapsed .sidebar-brand {
+    justify-content: space-between;
+    padding: 0 16px;
+  }
+  .admin-layout.sidebar-collapsed .sidebar-brand .sidebar-toggle { display: none; }
+
+  .admin-layout.sidebar-collapsed .exchange-rate-widget { display: block; }
+
+  .admin-layout.sidebar-collapsed .sidebar-footer {
+    display: block;
+    padding: 12px 16px;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar-logout {
+    width: 100%;
+    height: auto;
+    min-height: 44px;
+    border-radius: 10px;
+    gap: 8px;
+  }
+
+  .admin-layout.sidebar-collapsed .sidebar-logout .btn-label { display: inline; }
+  .admin-layout.sidebar-collapsed .sidebar-logout::after { display: none; }
+}
+
+/* Between 769 and 1032px the sidebar is position: fixed — a drawer, not a
+   column — so it leaves the grid flow and .admin-main becomes the FIRST grid
+   item. With a rail width on that first column, the page was squeezed into
+   64px beside an empty half-screen. There is no rail in this band, so there
+   is no rail column either.
+
+   This band predates the change: the rule was 78px before it was 64px, and
+   the layout broke the same way. */
+@media screen and (min-width: 769px) and (max-width: 1032px) {
+  .admin-layout.sidebar-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  /* Nothing to expand while the sidebar is a drawer — the hamburger opens it. */
+  .navbar-sidebar-toggle { display: none; }
+}
+
+/* ==========================================================================
+   The open drawer's header on small screens.
+
+   The logo was centred by the brand's space-between with the close button
+   pushed to the far edge, where it overlapped the drawer's rounded corner. A
+   plain row — logo left, close right, both inside the padding — reads as a
+   header rather than two loose objects.
+   ========================================================================== */
+@media screen and (max-width: 1032px) {
+  /* layout.css stacks this brand for the rail:
+       .sidebar.collapsed .sidebar-brand,
+       .admin-layout.sidebar-collapsed .sidebar-brand { flex-direction: column }
+     — which is right for a 64px rail and wrong for a 300px drawer, where it
+     centred the logo and dropped the close button beneath it. That rule is
+     (0,3,0) in another file, so these selectors have to outrank it rather than
+     merely come later. */
+  .admin-layout .admin-sidebar .sidebar-brand,
+  .admin-layout.sidebar-collapsed .admin-sidebar .sidebar-brand,
+  .admin-layout .admin-sidebar.collapsed .sidebar-brand {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: 64px;
+    min-height: 64px;
+    padding: 0 14px;
+    border-bottom: 1px solid var(--border, #E3EAE7);
+  }
+
+  .admin-layout .admin-sidebar .sidebar-brand .brand-logo-full,
+  .admin-layout.sidebar-collapsed .admin-sidebar .sidebar-brand .brand-logo-full {
+    display: block;
+    height: 34px;
+    width: auto;
+    margin: 0;
+  }
+
+  .admin-layout .admin-sidebar .sidebar-brand .brand-logo-mark,
+  .admin-layout.sidebar-collapsed .admin-sidebar .sidebar-brand .brand-logo-mark { display: none; }
+
+  /* The collapse toggle belongs to the rail. In a drawer it stacked under the
+     centred logo and read as a stray control; the X closes the drawer. */
+  .admin-layout .admin-sidebar .sidebar-brand .sidebar-toggle,
+  .admin-layout.sidebar-collapsed .admin-sidebar .sidebar-brand .sidebar-toggle { display: none; }
+
+  .admin-drawer-close {
+    margin-left: 0;        /* space-between already places it */
+    flex-shrink: 0;
+  }
+}
+
+/* ---- the navbar logo sits with the hamburger ----------------------------
+   It was pushed toward the middle of the bar and shrunk to 24-26px, so it read
+   as a stray graphic rather than the app's mark beside the menu button. */
+@media screen and (max-width: 768px) {
+  .admin-navbar { gap: 8px; }
+
+  .navbar-brand-admin {
+    margin-right: auto;    /* stays next to the hamburger, not centred */
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+  /* The bar's own gap was still separating them. The two belong together as one
+     lockup — menu, then mark — so they sit closer than the bar's other items.
+
+     The link around the logo carried 12px of left padding as well, which was
+     most of the space; it keeps its padding on the other three sides so the tap
+     target stays a comfortable size. */
+  .admin-navbar { gap: 4px; }
+  .admin-menu-btn { margin-right: 0; }
+  .navbar-brand-admin .brand-link { padding-left: 0; }
+
+  .navbar-brand-admin .navbar-logo {
+    height: 34px;
+    padding: 0;
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .navbar-brand-admin .navbar-logo { height: 30px; }
 }

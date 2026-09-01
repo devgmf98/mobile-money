@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { canAccess, isStaff, isSubAdmin } from '../utils/roles';
-import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CircleUserRound, CreditCard, Handshake, Inbox, Landmark, Lock, Map, Menu, PanelLeftClose, PanelLeftOpen, Plane, Repeat, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
+import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CircleUserRound, CreditCard, Handshake, Inbox, Landmark, LogOut, Map, Menu, PanelLeftClose, PanelLeftOpen, Plane, Repeat, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
 import { useAuthStore } from '../context/store';
@@ -313,8 +313,11 @@ export default function AdminLayout() {
           {allow('/admin/send-state-pending') && (
               <NavLink data-label="Send To Destination Pending" to="/admin/send-state-pending" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}>
               <Inbox size={18} /><span className="sidebar-label">Send To Destination Pending</span>
+              {/* A class rather than inline styles: collapsed to a rail the
+                  badge sits on the icon's corner, and an inline style could
+                  not be overridden by the collapsed rules. */}
               {pendingCount > 0 && (
-                <span style={{marginLeft:8, background:'#DC2626', color:'#fff', borderRadius:12, padding:'2px 8px', fontSize: '0.69rem'}}>{pendingCount}</span>
+                <span className="sidebar-badge">{pendingCount}</span>
               )}
             </NavLink>
             )}
@@ -419,7 +422,7 @@ export default function AdminLayout() {
         <div className="sidebar-footer">
           <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
             <button onClick={handleLogout} className="btn btn-danger btn-block sidebar-logout">
-              <span className="btn-icon"><Lock size={18} /></span>
+              <span className="btn-icon"><LogOut size={18} /></span>
               <span className="btn-label">Logout</span>
             </button>
           </div>
@@ -445,6 +448,22 @@ export default function AdminLayout() {
               <img src={mpLogo} alt="MoneyPay" className="navbar-logo" />
             </NavLink>
           </div>
+          {/* Collapsed, the rail has no room for a control beside a 38px logo
+              — the toggle sat under it and read as a stray icon. It moves up
+              here instead, beside the page it would expand back to. */}
+          {collapsed && (
+            <button
+              type="button"
+              className="navbar-sidebar-toggle"
+              onClick={toggleCollapse}
+              aria-pressed={collapsed}
+              aria-label="Show labels"
+              title="Show labels"
+            >
+              <PanelLeftOpen size={18} />
+            </button>
+          )}
+
           {/* Current page, large screens only — the navbar carries the logo
               at 768px and below, and is otherwise empty above it. */}
           <div className="navbar-page-title">
