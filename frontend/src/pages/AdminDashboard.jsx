@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import SkeletonRows from '../components/SkeletonRows';
 import { adminAPI } from '../utils/api';
 import { findDestination } from '../utils/destination';
+import SkeletonCards from '../components/SkeletonCards';
 import PrintReceipt from '../components/PrintReceipt';
 import Footer from '../components/Footer';
 import CompositionChart from '../components/CompositionChart';
@@ -229,6 +230,12 @@ export default function AdminDashboard() {
       .filter((r) => r.value > 0)
       .sort((a, b) => b.value - a.value);
 
+  /* The icon and label of a stat card are static, so they show at once and
+     only the figure shimmers. Rendering the number straight away instead
+     meant a flash of "0" before the real value replaced it. */
+  const Value = ({ children }) =>
+    loading ? <span className="skeleton skeleton-value" /> : <>{children}</>;
+
   const roleRows = toRows(stats?.usersByRole, 'role');
   const statusRows = toRows(stats?.transactionsByStatus, 'status');
 
@@ -258,7 +265,7 @@ export default function AdminDashboard() {
           <div className="stat-icon tone-info"><Users size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Total Users</p>
-            <h3 className="stat-value">{count(stats?.totalUsers)}</h3>
+            <h3 className="stat-value"><Value>{count(stats?.totalUsers)}</Value></h3>
           </div>
         </div>
 
@@ -266,7 +273,7 @@ export default function AdminDashboard() {
           <div className="stat-icon tone-dark"><CreditCard size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Total Transactions</p>
-            <h3 className="stat-value">{count(stats?.totalTransactions)}</h3>
+            <h3 className="stat-value"><Value>{count(stats?.totalTransactions)}</Value></h3>
           </div>
         </div>
 
@@ -276,7 +283,7 @@ export default function AdminDashboard() {
           <div className="stat-icon tone-info"><TrendingUp size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Total Cash</p>
-            <h3 className="stat-value">{money(stats?.totalTopupVolume)}</h3>
+            <h3 className="stat-value"><Value>{money(stats?.totalTopupVolume)}</Value></h3>
           </div>
         </div>
 
@@ -284,7 +291,7 @@ export default function AdminDashboard() {
           <div className="stat-icon tone-dark"><ArrowUpRight size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Total Cash Out</p>
-            <h3 className="stat-value">{money(stats?.totalVolume)}</h3>
+            <h3 className="stat-value"><Value>{money(stats?.totalVolume)}</Value></h3>
           </div>
         </div>
 
@@ -292,7 +299,7 @@ export default function AdminDashboard() {
           <div className="stat-icon tone-success"><CircleCheck size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Completed</p>
-            <h3 className="stat-value">{count(stats?.completedTransactions)}</h3>
+            <h3 className="stat-value"><Value>{count(stats?.completedTransactions)}</Value></h3>
           </div>
         </div>
 
@@ -300,7 +307,7 @@ export default function AdminDashboard() {
           <div className="stat-icon tone-warning"><Banknote size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">You Cashed Out</p>
-            <h3 className="stat-value">{money(stats?.totalAdminCashOut)}</h3>
+            <h3 className="stat-value"><Value>{money(stats?.totalAdminCashOut)}</Value></h3>
           </div>
         </div>
 
@@ -308,7 +315,7 @@ export default function AdminDashboard() {
           <div className="stat-icon tone-success"><Landmark size={28} /></div>
           <div className="stat-content">
             <p className="stat-label">Company Benefits</p>
-            <h3 className="stat-value">{money(stats?.companyBenefits)}</h3>
+            <h3 className="stat-value"><Value>{money(stats?.companyBenefits)}</Value></h3>
           </div>
         </div>
       </div>
@@ -322,7 +329,9 @@ export default function AdminDashboard() {
           <h3><Coins size={17} /> Admin Destination Send Commission</h3>
           <span>Earned on destination sends &middot; one card per currency</span>
         </div>
-        {commissionByCurrency.length === 0 ? (
+        {loading ? (
+          <div className="dashboard-grid"><SkeletonCards count={2} /></div>
+        ) : commissionByCurrency.length === 0 ? (
           <div className="exchange-currency-empty">
             <Coins size={20} />
             <span>No currencies yet. Add one under Currencies and a card appears here.</span>
@@ -334,7 +343,7 @@ export default function AdminDashboard() {
                 <div className="stat-icon tone-primary"><Coins size={28} /></div>
                 <div className="stat-content">
                   <p className="stat-label">Admin Transfer Commission {c.code}</p>
-                  <h3 className="stat-value">{amount(c.total, c.code)}</h3>
+                  <h3 className="stat-value"><Value>{amount(c.total, c.code)}</Value></h3>
                   <p className="stat-sub">{count(c.count)} {c.count === 1 ? 'send' : 'sends'}</p>
                 </div>
               </div>
@@ -351,7 +360,9 @@ export default function AdminDashboard() {
           <h3><ArrowRightLeft size={17} /> My exchanges by currency</h3>
           <span>Not included in Total Cash Out · no commission applied</span>
         </div>
-        {exchangeCodes.length === 0 ? (
+        {loading ? (
+          <div className="dashboard-grid"><SkeletonCards count={2} /></div>
+        ) : exchangeCodes.length === 0 ? (
           <div className="exchange-currency-empty">
             <ArrowRightLeft size={20} />
             <span>No currencies yet. Add one under Currencies and a card appears here.</span>
@@ -365,7 +376,7 @@ export default function AdminDashboard() {
                 <div className="stat-icon tone-info"><ArrowRightLeft size={28} /></div>
                 <div className="stat-content">
                   <p className="stat-label">Exchanges in {code}</p>
-                  <h3 className="stat-value">{count(entry.count)}</h3>
+                  <h3 className="stat-value"><Value>{count(entry.count)}</Value></h3>
                   <p className="stat-sub">
                     {Number(entry.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} {code} converted
                   </p>

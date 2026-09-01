@@ -878,6 +878,37 @@ a:focus:not(:focus-visible),
 .skeleton-row .skeleton-avatar { width: 40px; height: 40px; }
 .skeleton-row .skeleton-amount { height: 14px; }
 
+/* A stand-in for a stat card's figure. The icon and label beside it are
+   static text the app already knows, so they render immediately and only the
+   number shimmers — the card keeps its size and nothing shifts when the real
+   value lands. */
+.skeleton-value {
+  height: 15px;
+  /* A fixed width, not a percentage. .stat-content does not fill the card —
+     its `flex: 1` never takes effect, so the box is only as wide as the label
+     text and a percentage resolves against that, or against nothing at all
+     when the card has no text yet. */
+  width: 84px;
+  margin-top: 3px;
+}
+
+/* The two lines of a placeholder card, sized in pixels for the same reason. */
+.skeleton-line.skeleton-w-label { width: 70px; }
+.skeleton-line.skeleton-w-value { width: 100px; }
+
+/* The icon square on a placeholder card. Everything else about that card —
+   the flex row, the copy column — comes from .stat-card and .stat-content,
+   so the placeholder cannot drift out of shape with the real thing. */
+.stat-icon.skeleton-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  /* .stat-icon paints its own tinted background and centres a glyph; neither
+     applies to an empty placeholder. */
+  background: var(--surface-2, #F1F6F3);
+  padding: 0;
+}
+
 [data-theme="dark"] .skeleton { background: rgba(255, 255, 255, 0.06); }
 [data-theme="dark"] .skeleton::after {
   background: linear-gradient(
