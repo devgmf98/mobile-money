@@ -40,6 +40,7 @@ import {
 import { createCurrency, getCurrencies, updateCurrency, deleteCurrency } from '../controllers/adminController.js';
 import { getPendingSendByStateCount } from '../controllers/adminController.js';
 import { authMiddleware, adminMiddleware, staffMiddleware, notSuspended } from '../middleware/auth.js';
+import { getTransactionAnalytics } from '../controllers/analyticsController.js';
 
 
 const router = express.Router();
@@ -68,6 +69,9 @@ router.get('/transactions', staffMiddleware, getAllTransactions);
 router.post('/suspend-user', adminMiddleware, suspendUser);
 router.post('/unsuspend-user', adminMiddleware, unsuspendUser);
 router.get('/stats', staffMiddleware, getAdminStats);
+
+/* Transaction analytics — an oversight tool, so it stays with the admins. */
+router.get('/analytics/transactions', adminMiddleware, getTransactionAnalytics);
 router.post('/grant-location', adminMiddleware, grantLocationPermissionToAll);
 router.get('/tiered-commission', adminMiddleware, getTieredCommission);
 router.post('/tiered-commission', adminMiddleware, setTieredCommission);

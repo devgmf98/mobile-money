@@ -54,6 +54,10 @@ export const adminAPI = {
   setSendMoneyTiers: (data) => api.post('/admin/tiered-commission/send-money', data),
   setWithdrawalTiers: (data) => api.post('/admin/tiered-commission/withdrawal', data),
   getStateSettings: () => api.get('/admin/state-settings'),
+  /* Transaction analytics. The caller builds the query string, because the
+     filters combine freely and enumerating them here would just be a second
+     place to keep in step. */
+  getTransactionAnalytics: (qs) => api.get('/admin/analytics/transactions' + (qs ? '?' + qs : '')),
   createStateSetting: (data) => api.post('/admin/state-settings', data),
   updateStateSetting: (id, data) => api.put(`/admin/state-settings/${id}`, data),
   deleteStateSetting: (id) => api.delete(`/admin/state-settings/${id}`),

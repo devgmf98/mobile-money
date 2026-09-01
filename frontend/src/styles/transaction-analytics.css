@@ -1,0 +1,425 @@
+/* Transaction analytics panel.
+
+   Filters in one left-aligned row above the figures, presets first. Everything
+   below re-renders against the same slice, so the headline and the breakdowns
+   can never disagree. */
+
+/* The filter toolbar. Presets first, then the date range, then the narrowing
+   selects — the order a reader reaches for them. Controls share one height so
+   the row reads as a single band rather than a ragged edge. */
+.ta-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 2px 0 16px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+}
+
+.ta-ranges {
+  display: inline-flex;
+  height: 36px;
+  padding: 3px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface-2, #F7FAF9);
+}
+
+.ta-range {
+  min-height: 0;
+  padding: 0 13px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-light, #5B6B66);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.ta-range:hover { color: var(--text-dark, #16302B); }
+.ta-range.is-on { background: var(--primary, #007A3D); color: #fff; }
+
+/* A hairline between the date range and the dimension filters: they answer
+   different questions and the eye should see the seam. */
+.ta-sep {
+  align-self: stretch;
+  width: 1px;
+  margin: 4px 2px;
+  background: var(--border, #E3EAE7);
+}
+
+.ta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.ta-field > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.ta-field input,
+.ta-field select {
+  height: 36px;
+  min-height: 0;
+  padding: 0 10px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-dark, #16302B);
+  font-size: 12.5px;
+  max-width: 170px;
+}
+
+.ta-field select { padding-right: 26px; cursor: pointer; }
+.ta-field input:focus,
+.ta-field select:focus { outline: 2px solid var(--primary, #007A3D); outline-offset: -1px; }
+
+.ta-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  min-height: 0;
+  padding: 0 13px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ta-reset:hover { color: var(--primary-dark, #005C2E); border-color: var(--primary, #007A3D); }
+
+/* Refetching holds the previous figures rather than swapping in a skeleton —
+   no layout jump, and the reader keeps their place while narrowing a filter. */
+.ta-body { transition: opacity 140ms ease; }
+.ta-body.is-loading { opacity: 0.45; }
+
+/* ---- headline ----
+   The count and the money are the answer to whatever the filters just asked,
+   so they sit on one band, apart from the detail below. */
+.ta-headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 18px 0;
+}
+
+.ta-count { display: flex; align-items: baseline; gap: 8px; }
+
+.ta-count-value {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+.ta-count-label { font-size: 12.5px; color: var(--text-light, #5B6B66); }
+
+.ta-totals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* One tile per currency. They are never summed — the app holds no cross-rate
+   at report time, so a single total across SSP, USD and UGX would be
+   arithmetic on unlike units. Separate tiles make that separation visible
+   rather than something a reader has to know. */
+.ta-total {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 14px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 12px;
+  background: var(--surface-2, #F7FAF9);
+  white-space: nowrap;
+}
+
+.ta-total b {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--primary-dark, #005C2E);
+  font-variant-numeric: tabular-nums;
+}
+
+.ta-total i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-light, #5B6B66);
+}
+
+.ta-none { color: var(--text-light, #5B6B66); font-size: 12.5px; }
+.ta-error { color: var(--error, #DC2626); font-size: 13px; padding: 14px 0; }
+
+/* ---- breakdowns ---- */
+.ta-breakdowns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px 28px;
+  padding-top: 2px;
+  border-top: 1px solid var(--border, #E3EAE7);
+}
+
+.ta-block { padding-top: 16px; min-width: 0; }
+
+.ta-block h4 {
+  margin: 0 0 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.ta-rows { margin: 0; padding: 0; list-style: none; }
+
+/* No rules between rows — the bars already separate them, and a border every
+   14px fought with them for the eye. */
+.ta-rows li { padding: 0 0 13px; }
+
+.ta-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.ta-row-label {
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text-dark, #16302B);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ta-row-count {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+.ta-row-count em {
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-light, #5B6B66);
+}
+
+/* One hue: length carries the magnitude. These are ranked amounts of a single
+   measure, not separate identities, so a categorical palette would imply a
+   distinction that is not there. */
+.ta-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2, #F1F6F3);
+  overflow: hidden;
+}
+
+.ta-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary, #007A3D);
+}
+
+.ta-row-money {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 14px;
+  margin-top: 5px;
+  color: var(--text-light, #5B6B66);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ta-row-money .nb { white-space: nowrap; }
+
+@media (max-width: 640px) {
+  .ta-field input, .ta-field select { max-width: 100%; width: 100%; }
+  .ta-field { flex: 1 1 45%; }
+  .ta-totals { margin-left: 0; }
+  .ta-count-value { font-size: 22px; }
+  .ta-total b { font-size: 17px; }
+}
+
+/* ---- dark ---- */
+[data-theme="dark"] .ta-ranges { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.10); }
+[data-theme="dark"] .ta-field input,
+[data-theme="dark"] .ta-field select,
+[data-theme="dark"] .ta-reset {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #E6F2EC;
+}
+[data-theme="dark"] .ta-filters,
+[data-theme="dark"] .ta-breakdowns,
+[data-theme="dark"] .ta-rows li { border-color: rgba(255, 255, 255, 0.10); }
+[data-theme="dark"] .ta-count-value,
+[data-theme="dark"] .ta-row-label,
+[data-theme="dark"] .ta-row-count { color: #E6F2EC; }
+[data-theme="dark"] .ta-total b { color: #34D399; }
+[data-theme="dark"] .ta-sep { background: rgba(255, 255, 255, 0.12); }
+[data-theme="dark"] .ta-total { background: rgba(255, 255, 255, 0.04); border-color: rgba(255, 255, 255, 0.10); }
+[data-theme="dark"] .ta-bar { background: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .ta-bar span { background: #34D399; }
+
+/* Which role earned it, beside the name. Admins and sub-admins share this
+   block because they earn the same way; the tag is what tells them apart. */
+.ta-tag {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface-2, #F1F6F3);
+  border: 1px solid var(--border, #E3EAE7);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+  vertical-align: middle;
+}
+
+.ta-tag.is-sub-admin { background: #EEF4FF; border-color: #D8E4FB; color: #2A5BB7; }
+
+[data-theme="dark"] .ta-tag {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #9FB3AB;
+}
+[data-theme="dark"] .ta-tag.is-sub-admin { background: rgba(76, 141, 255, 0.16); border-color: rgba(76, 141, 255, 0.3); color: #8FB6FF; }
+
+/* The commission card's header carries its own sort, so the title and the
+   control sit on one line. */
+.ta-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ta-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.ta-sort select {
+  height: 32px;
+  min-height: 0;
+  padding: 0 26px 0 10px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-dark, #16302B);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+/* Standing alone in its own card, this grid needs no rule above it. */
+.ta-breakdowns.is-flush { border-top: none; padding-top: 0; }
+.ta-breakdowns.is-flush .ta-block { padding-top: 4px; }
+
+[data-theme="dark"] .ta-sort select {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #E6F2EC;
+}
+
+/* A block's own total, on the line with its title. Sits opposite the heading
+   so the eye finds "what does this add up to" without hunting the rows. */
+.ta-block-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* The title never wraps — it is two or three words and breaking it to make
+   room for figures reads as a layout failure. The figures move instead. */
+.ta-block-head h4 { margin: 0; flex: 0 0 auto; white-space: nowrap; }
+
+.ta-block-total {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px 12px;
+  min-width: 0;
+  font-size: 11.5px;
+  color: var(--text-light, #5B6B66);
+  font-variant-numeric: tabular-nums;
+}
+
+/* More than one currency: the figures take their own line under the title and
+   read left to right, so a fourth or fifth currency simply extends the row
+   instead of crowding the heading. */
+.ta-block-head.is-stacked {
+  display: block;
+  margin-bottom: 14px;
+}
+
+.ta-block-head.is-stacked .ta-block-total {
+  justify-content: flex-start;
+  gap: 4px 16px;
+  margin-top: 7px;
+}
+
+/* Standing on their own line the figures carry the weight, so they are sized
+   to be read rather than glanced past. */
+.ta-block-head.is-stacked .ta-block-total b { font-size: 14px; }
+
+.ta-block-total b {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--primary-dark, #005C2E);
+}
+
+.ta-block-total .nb { white-space: nowrap; }
+
+[data-theme="dark"] .ta-block-total b { color: #34D399; }
+
+/* The commission card's own range row: same controls, lighter presence — the
+   card has one question to ask, not seven. */
+.ta-filters.is-compact {
+  padding-top: 0;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}

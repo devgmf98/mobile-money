@@ -908,22 +908,60 @@ export const getAdminStats = async (req, res) => {
       where: { type: 'agent_cash_out_money', receiverId: req.userId }
     }) || 0;
 
-    // Exchange activity for THIS admin, grouped by source currency.
+    /* Exchange activity for THIS admin, grouped by the PAIR rather than the
+       source currency alone. "Exchanges in SSP" lumped SSP->USD together with
+       SSP->UGX, which are different trades; the card now names both ends, as
+       "SSP - USD".
+
+       currencyCode holds the currency sold and toCurrencyCode the one bought.
+       Rows written before toCurrencyCode existed left it null but put the
+       bought currency in currencySymbol — that column has always held a code
+       here, not a symbol — so it stands in for them. */
     const myExchangeRows = await Transaction.findAll({
       attributes: [
         'currencyCode',
+        'toCurrencyCode',
+        'currencySymbol',
         [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-        [sequelize.fn('SUM', sequelize.col('amount')), 'total']
+        [sequelize.fn('SUM', sequelize.col('amount')), 'total'],
+        /* What the pair bought, so the card can state both sides.
+
+           Rows written before convertedAmount existed leave it null, which
+           would drop them from the total and leave those cards with only half
+           the trade. The rate is on the row though, so the figure is derived
+           from it: on every row that stores both, amount * exchangeRate equals
+           convertedAmount exactly, and for the older rows it reproduces the
+           number written in their own description. */
+        [
+          sequelize.fn('SUM', sequelize.literal('COALESCE(`convertedAmount`, `amount` * `exchangeRate`)')),
+          'converted',
+        ]
       ],
-      where: { type: 'money_exchange', senderId: req.userId },
-      group: ['currencyCode'],
+      /* An admin oversees the desk, so they see every exchange anyone has
+         made. A sub-admin sees only their own — the same line their scoped
+         transaction list draws. Exchanges can only be created through a
+         staff-only endpoint, so "everything" is already "everything by an
+         admin or sub-admin". */
+      where: {
+        type: 'money_exchange',
+        ...(req.userRole === 'sub-admin' ? { senderId: req.userId } : {}),
+      },
+      group: ['currencyCode', 'toCurrencyCode', 'currencySymbol'],
       raw: true
     });
 
     const myExchangesByCurrency = myExchangeRows.reduce((acc, r) => {
-      const code = (r.currencyCode || '').toUpperCase();
-      if (!code) return acc;
-      acc[code] = { count: Number(r.count) || 0, total: Number(r.total) || 0 };
+      const from = (r.currencyCode || '').toUpperCase();
+      const to = (r.toCurrencyCode || r.currencySymbol || '').toUpperCase();
+      if (!from) return acc;
+      /* A row with no destination recorded at all is still counted against its
+         source rather than dropped. */
+      const key = to && to !== from ? from + ' - ' + to : from;
+      const seen = acc[key] || { count: 0, total: 0, converted: 0, from, to: to || null };
+      seen.count += Number(r.count) || 0;
+      seen.total += Number(r.total) || 0;
+      seen.converted += Number(r.converted) || 0;
+      acc[key] = seen;
       return acc;
     }, {});
 
@@ -939,7 +977,10 @@ export const getAdminStats = async (req, res) => {
       ],
       where: {
         type: 'admin_state_push',
-        senderId: req.userId,
+        /* An admin oversees the desk, so these cards count every destination
+           send anyone made. A sub-admin sees only their own — the same split
+           their transaction list and exchange cards already use. */
+        ...(req.userRole === 'sub-admin' ? { senderId: req.userId } : {}),
         commission: { [Op.gt]: 0 },
       },
       group: ['currencyCode'],

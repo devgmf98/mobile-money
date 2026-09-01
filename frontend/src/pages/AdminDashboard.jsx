@@ -5,12 +5,13 @@ import { findDestination } from '../utils/destination';
 import SkeletonCards from '../components/SkeletonCards';
 import { isSubAdmin } from '../utils/roles';
 import TypeTrendChart from '../components/TypeTrendChart';
+import TransactionAnalytics from '../components/TransactionAnalytics';
 import PrintReceipt from '../components/PrintReceipt';
 import Footer from '../components/Footer';
 import CompositionChart from '../components/CompositionChart';
 import '../styles/admin-dashboard.css';
 import { useAuthStore } from '../context/store';
-import { ArrowRightLeft, ArrowUpRight, Banknote, Bell, CircleCheck, Clock, Coins, CreditCard, Files, Landmark, MapPin, TrendingUp, Users, Wallet, X } from 'lucide-react';
+import { ArrowRightLeft, ArrowUpRight, Banknote, Bell, CircleCheck, Clock, Coins, CreditCard, Files, Landmark, MapPin, TrendingUp, Users, Wallet, X, Filter } from 'lucide-react';
 import { typeLabel } from '../data/transactionTypes';
 
 // Exchange cards are built from the currencies that actually exist, so adding
@@ -82,20 +83,15 @@ export default function AdminDashboard() {
      configured currency has a card even before it earns anything. */
   const commissionByCurrency = stats?.myCommissionByCurrency || [];
 
+  /* One card per currency PAIR that has actually been exchanged — "SSP - USD".
+     These are not zero-filled from the Currencies table the way the commission
+     cards are: four currencies make twelve ordered pairs, and a wall of empty
+     cards for trades nobody has made buries the ones that happened. */
   const exchangeCodes = (() => {
-    const byCurrency = stats?.myExchangesByCurrency || {};
-    const codes = new Set();
-    for (const c of currencies) {
-      const code = String(c?.code || '').toUpperCase();
-      if (code) codes.add(code);
-    }
-    for (const code of Object.keys(byCurrency)) {
-      if (code) codes.add(String(code).toUpperCase());
-    }
-    return [...codes].sort((a, b) => {
-      // currencies the admin actually exchanged in come first, then alphabetical
-      const na = byCurrency[a]?.count || 0;
-      const nb = byCurrency[b]?.count || 0;
+    const byPair = stats?.myExchangesByCurrency || {};
+    return Object.keys(byPair).sort((a, b) => {
+      const na = byPair[a]?.count || 0;
+      const nb = byPair[b]?.count || 0;
       if (na !== nb) return nb - na;
       return a.localeCompare(b);
     });
@@ -244,6 +240,10 @@ export default function AdminDashboard() {
      component, so it carries the admin page's own cards and colours; two
      dashboards would have drifted apart by the second change. */
   const subAdmin = isSubAdmin(user);
+  /* Tested on the role itself rather than inferred from !subAdmin: this gate
+     guards a report on everyone, and it should keep holding if another role
+     ever reaches this page. */
+  const isAdminOnly = user?.role === 'admin';
 
   const Value = ({ children }) =>
     loading ? <span className="skeleton skeleton-value" /> : <>{children}</>;
@@ -341,7 +341,11 @@ export default function AdminDashboard() {
       <div className="exchange-currency-row">
         <div className="exchange-currency-head">
           <h3><Coins size={17} /> Admin Destination Send Commission</h3>
-          <span>Earned on destination sends &middot; one card per currency</span>
+          {/* Says whose figures these are — an admin sees every desk, a
+              sub-admin only their own. */}
+          <span>
+            {subAdmin ? 'Earned on your destination sends' : 'Across all admins and sub-admins'} &middot; one card per currency
+          </span>
         </div>
         {loading ? (
           <div className="dashboard-grid"><SkeletonCards count={2} /></div>
@@ -371,7 +375,9 @@ export default function AdminDashboard() {
           never carry commission. */}
       <div className="exchange-currency-row">
         <div className="exchange-currency-head">
-          <h3><ArrowRightLeft size={17} /> My exchanges by currency</h3>
+          {/* An admin sees every exchange, so "My" would be wrong for them;
+              a sub-admin sees only their own and it is right. */}
+          <h3><ArrowRightLeft size={17} /> {subAdmin ? 'My exchanges by currency' : 'Exchanges by currency'}</h3>
           <span>Not included in Total Cash Out · no commission applied</span>
         </div>
         {loading ? (
@@ -379,7 +385,7 @@ export default function AdminDashboard() {
         ) : exchangeCodes.length === 0 ? (
           <div className="exchange-currency-empty">
             <ArrowRightLeft size={20} />
-            <span>No currencies yet. Add one under Currencies and a card appears here.</span>
+            <span>No exchanges yet. A card appears here for each currency pair you exchange.</span>
           </div>
         ) : (
         <div className="dashboard-grid">
@@ -392,7 +398,21 @@ export default function AdminDashboard() {
                   <p className="stat-label">Exchanges in {code}</p>
                   <h3 className="stat-value"><Value>{count(entry.count)}</Value></h3>
                   <p className="stat-sub">
-                    {Number(entry.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} {code} converted
+                      {/* Both sides of the trade: what was sold, then what it
+                          bought. The second half is omitted when the rows are
+                          old enough not to have recorded it, rather than
+                          printing a zero that reads as "bought nothing". */}
+                      <span className="nb">
+                        {Number(entry.total || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })} {entry.from || code} converted
+                      </span>
+                      {entry.converted > 0 && entry.to ? (
+                        <>
+                          {' - '}
+                          <span className="nb">
+                            {Number(entry.converted).toLocaleString(undefined, { maximumFractionDigits: 2 })} {entry.to}
+                          </span>
+                        </>
+                      ) : null}
                   </p>
                 </div>
               </div>
@@ -449,6 +469,16 @@ export default function AdminDashboard() {
             </div>
           </div>
           )}
+
+          {/* Below the distribution charts: the same ledger, sliced. Renders
+              its own cards — one for volume, one for commission.
+
+              Admins only. Both report across everyone — every destination and
+              what each person earned — which is oversight, not the counter
+              work a sub-admin does. The endpoint behind them is already gated
+              the same way, so a sub-admin would otherwise be shown two cards
+              that could only answer 403. */}
+          {isAdminOnly ? <TransactionAnalytics /> : null}
 
           <div className="card mt-4">
         <div className="card-header exchange-header-row">

@@ -1126,3 +1126,8 @@
   .exchange-filter { min-width: 0; width: 100%; }
   .exchange-filter-clear { justify-content: center; }
 }
+
+/* Each half of an exchange card's sub-line stays whole. Without this the line
+   broke mid-figure — "300" on one row and "USD" on the next — so the wrap now
+   falls on the dash between the two sides of the trade. */
+.stat-sub .nb { white-space: nowrap; }
