@@ -67,3 +67,10 @@ export const phoneVariants = (raw) => {
   }
   return [...new Set(tries.filter(Boolean))];
 };
+
+/* Admins and sub-admins both hold a destination and both work destination
+   transfers, so every check on that flow asks this rather than testing for
+   'admin'. Opening the route was not enough on its own: the handlers checked
+   the role again themselves and turned a sub-admin away with "Sender must be
+   an admin" after the middleware had already let them through. */
+export const isStaffRole = (role) => role === 'admin' || role === 'sub-admin';

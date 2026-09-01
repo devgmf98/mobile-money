@@ -58,7 +58,7 @@ import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import Notification from '../models/Notification.js';
 import WithdrawalRequest from '../models/WithdrawalRequest.js';
-import { generateTransactionId } from '../utils/helpers.js';
+import { generateTransactionId, isStaffRole } from '../utils/helpers.js';
 import { sendSMS } from '../utils/sms.js';
 import { getIO } from '../utils/socket.js';
 import SendMoneyCommissionTier from '../models/SendMoneyCommissionTier.js';
@@ -345,8 +345,8 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
 
     const sender = await User.findByPk(senderId);
     const receiver = await User.findByPk(toAdminId);
-    if (!sender || sender.role !== 'admin') return res.status(403).json({ message: 'Sender must be an admin' });
-    if (!receiver || receiver.role !== 'admin') return res.status(404).json({ message: 'To Destination not found' });
+    if (!sender || !isStaffRole(sender.role)) return res.status(403).json({ message: 'Sender must be an admin' });
+    if (!receiver || !isStaffRole(receiver.role)) return res.status(404).json({ message: 'To Destination not found' });
 
     /* FROM is the sender's own destination, assigned when their account was
        created; TO is the destination of the admin being paid. Both are stored
@@ -735,7 +735,16 @@ export const findAgentByAgentId = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.findAll({ attributes: { exclude: ['password'] }, order: [['createdAt', 'DESC']] });
+    /* A sub-admin has no Users page; the only reason they reach this endpoint
+       is the Send To Destination form, which needs the list of admins to send
+       to. Returning the full directory to satisfy that would hand them every
+       customer's balance, email and phone, so they get the admins only. */
+    const staffOnly = req.userRole === 'sub-admin';
+    const users = await User.findAll({
+      where: staffOnly ? { role: ['admin', 'sub-admin'] } : undefined,
+      attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+    });
     const usersWithNumericBalance = users.map(user => ({
       ...user.toJSON(),
       balance: parseFloat(user.balance) || 0
@@ -748,7 +757,27 @@ export const getAllUsers = async (req, res) => {
 
 export const getAllTransactions = async (req, res) => {
   try {
+    /* An admin sees the whole ledger. A sub-admin sees their own destination:
+       transfers in or out of it, plus anything they handled themselves.
+
+       The second half is not redundant. Only admin_state_push records a
+       destination — a top-up, a withdrawal or an exchange carries none — so a
+       state match alone would hide a sub-admin's own work from them. Matching
+       on their id as well brings that back, and it is also what scopes the
+       exchange list: an exchange stores the acting admin as its sender, so
+       theirs match and other people's cannot. */
+    let where;
+    if (req.userRole === 'sub-admin') {
+      const me = await User.findByPk(req.userId, { attributes: ['id', 'state'] });
+      const mine = [{ senderId: req.userId }, { receiverId: req.userId }];
+      const ofState = me && me.state
+        ? [{ fromStateName: me.state }, { toStateName: me.state }]
+        : [];
+      where = { [Op.or]: [...mine, ...ofState] };
+    }
+
     const transactions = await Transaction.findAll({
+      where,
       include: [
         { model: User, as: 'sender', attributes: ['name', 'phone', 'role'] },
         { model: User, as: 'receiver', attributes: ['name', 'phone', 'role'] }
@@ -1621,7 +1650,7 @@ export const receiveSendByState = async (req, res) => {
     if (tx.status !== 'pending') return res.status(400).json({ message: 'Transaction is not pending' });
 
     const receiver = await User.findByPk(adminId);
-    if (!receiver || receiver.role !== 'admin') return res.status(403).json({ message: 'Only admins can mark this transfer as received' });
+    if (!receiver || !isStaffRole(receiver.role)) return res.status(403).json({ message: 'Only admins can mark this transfer as received' });
     if (!receiver.state || !tx.toStateName || receiver.state !== tx.toStateName) {
       return res.status(403).json({ message: 'Only admins in the destination state can mark this transfer as received' });
     }
@@ -1631,8 +1660,42 @@ export const receiveSendByState = async (req, res) => {
     receiver.balance = Math.round(((parseFloat(receiver.balance) || 0) + receiverCredit) * 100) / 100;
     await receiver.update({ balance: receiver.balance });
 
+    /* Pay the sender the commission they earned. The send screen states it
+       plainly — "Commission, credited to your Admin Cash, +SSP 6,000.00" — but
+       nothing ever added it to a balance: the figure was written onto the
+       transaction, which fed the dashboard card, and went no further. The
+       sender was left holding only the debit.
+
+       It is paid here rather than at send because a pending transfer can be
+       cancelled, and cancelling refunds the sender and zeroes the commission.
+       Commission is earned when the money lands, so it is credited when the
+       transfer completes. */
+    const earned = Number(tx.commission || 0);
+    let senderBalance = tx.senderBalance;
+    if (earned > 0 && tx.senderId) {
+      const sender = await User.findByPk(tx.senderId);
+      if (sender) {
+        sender.balance = Math.round(((parseFloat(sender.balance) || 0) + earned) * 100) / 100;
+        await sender.update({ balance: sender.balance });
+        senderBalance = sender.balance;
+
+        await Notification.create({
+          recipientId: sender.id,
+          title: 'Commission earned',
+          message: `Your transfer was received. ${tx.currencyCode || 'SSP'} ${earned.toFixed(2)} commission was credited to your Admin Cash.`,
+          type: 'system',
+          relatedTransactionId: tx.id,
+        });
+
+        try {
+          const io = req.app.get('io');
+          if (io) io.to(`user-${sender.id}`).emit('balance-updated', { userId: sender.id, balance: parseFloat(sender.balance) });
+        } catch (e) { /* the credit is done; a missed socket only delays the UI */ }
+      }
+    }
+
     // Update transaction
-    await tx.update({ status: 'completed', receiverBalance: receiver.balance });
+    await tx.update({ status: 'completed', receiverBalance: receiver.balance, senderBalance });
 
     // Notifications
     await Notification.create({
@@ -1701,7 +1764,7 @@ export const cancelSendByState = async (req, res) => {
     const actingAdmin = await User.findByPk(adminId);
     const sender = await User.findByPk(tx.senderId);
     const receiver = await User.findByPk(tx.receiverId);
-    if (!actingAdmin || actingAdmin.role !== 'admin') return res.status(403).json({ message: 'Only admins can cancel this transfer' });
+    if (!actingAdmin || !isStaffRole(actingAdmin.role)) return res.status(403).json({ message: 'Only admins can cancel this transfer' });
     if (!sender) return res.status(404).json({ message: 'Sender not found' });
 
     const isSender = Number(tx.senderId) === Number(adminId);
@@ -1713,9 +1776,15 @@ export const cancelSendByState = async (req, res) => {
     // Compute how much was debited from sender when creating the pending tx
     const amount = Number(tx.amount || 0);
     const commission = Number(tx.commission || 0);
-    // If companyCommission exists it means commission was deducted from amount
-    const wasDeductedFromAmount = Number(tx.companyCommission || 0) > 0;
-    const senderDebit = wasDeductedFromAmount ? amount : Math.round((amount - commission) * 100) / 100;
+    /* Both modes debit the sender the full amount — they differ only in what
+       the recipient is due and whether commission is earned — so cancelling
+       refunds the amount.
+
+       This used to read companyCommission to decide, which a destination
+       transfer never sets: it is 0 either way, so the test was always false
+       and every cancellation refunded amount-minus-commission. The sender
+       silently lost the commission on a transfer that never happened. */
+    const senderDebit = amount;
 
     // Refund sender
     sender.balance = Math.round(((parseFloat(sender.balance) || 0) + senderDebit) * 100) / 100;
@@ -1792,7 +1861,7 @@ export const editSendByState = async (req, res) => {
     let newReceiverId = tx.receiverId;
     if (toAdminId) {
       const newReceiver = await User.findByPk(toAdminId);
-      if (!newReceiver || newReceiver.role !== 'admin') return res.status(404).json({ message: 'To Destination not found' });
+      if (!newReceiver || !isStaffRole(newReceiver.role)) return res.status(404).json({ message: 'To Destination not found' });
       newReceiverId = newReceiver.id;
     }
 

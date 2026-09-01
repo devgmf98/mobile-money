@@ -1,0 +1,267 @@
+/* Transactions-by-type line chart.
+
+   The six series colours are the validated categorical order from the dataviz
+   palette, reordered so the aqua nearest this app's green leads. Both columns
+   were checked with scripts/validate_palette.js against their own surface —
+   the dark steps are the same hues re-stepped for a dark ground, not an
+   automatic flip. Adjacent-pair CVD separation passes in both.
+
+   Against the light surface three of the six fall under 3:1 contrast; the
+   named legend with per-series totals is the relief that requires, so it is
+   not optional decoration. */
+.ttc {
+  --ttc-s1: #1baf7a;
+  --ttc-s2: #2a78d6;
+  --ttc-s3: #eb6834;
+  --ttc-s4: #4a3aa7;
+  --ttc-s5: #eda100;
+  --ttc-s6: #e87ba4;
+
+  --ttc-grid: rgba(22, 48, 43, 0.09);
+  --ttc-axis: #7A8B85;
+  --ttc-tip-bg: #ffffff;
+  --ttc-tip-line: #E3EAE7;
+  --ttc-tip-ink: #16302B;
+}
+
+[data-theme="dark"] .ttc {
+  --ttc-s1: #199e70;
+  --ttc-s2: #3987e5;
+  --ttc-s3: #d95926;
+  --ttc-s4: #9085e9;
+  --ttc-s5: #c98500;
+  --ttc-s6: #d55181;
+
+  --ttc-grid: rgba(255, 255, 255, 0.09);
+  --ttc-axis: #9FB3AB;
+  --ttc-tip-bg: #17241F;
+  --ttc-tip-line: rgba(255, 255, 255, 0.12);
+  --ttc-tip-ink: #E6F2EC;
+}
+
+/* ---- range presets ----
+   A segmented row above the plot: four fixed windows, one always selected, so
+   there is no "no range" state to render. Buttons rather than a <select>
+   because all four fit and a reader can see which window they are in without
+   opening anything. */
+.ttc-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.ttc-ranges {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--ttc-tip-line);
+  border-radius: 10px;
+  background: var(--surface-2, #F7FAF9);
+}
+
+.ttc-range {
+  min-height: 0;
+  padding: 5px 12px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ttc-axis);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.ttc-range:hover { color: var(--ttc-tip-ink); }
+
+.ttc-range.is-on {
+  background: var(--primary, #007A3D);
+  color: #fff;
+}
+
+.ttc-count {
+  margin-left: auto;
+  color: var(--ttc-axis);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme="dark"] .ttc-ranges { background: rgba(255, 255, 255, 0.05); }
+
+.ttc-plot { position: relative; }
+
+.ttc-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* ---- axes and grid stay recessive ---- */
+.ttc-grid {
+  stroke: var(--ttc-grid);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.ttc-axis {
+  fill: var(--ttc-axis);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- series ---- */
+.ttc-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ttc-area { stroke: none; }
+
+/* Hovering one series recedes the rest rather than hiding them, so the shape
+   being compared stays in context. */
+.ttc-series { transition: opacity 120ms ease; }
+.ttc-series.is-dim { opacity: 0.18; }
+
+.ttc-s1 .ttc-line, .ttc-dot.ttc-s1 { stroke: var(--ttc-s1); }
+.ttc-s2 .ttc-line, .ttc-dot.ttc-s2 { stroke: var(--ttc-s2); }
+.ttc-s3 .ttc-line, .ttc-dot.ttc-s3 { stroke: var(--ttc-s3); }
+.ttc-s4 .ttc-line, .ttc-dot.ttc-s4 { stroke: var(--ttc-s4); }
+.ttc-s5 .ttc-line, .ttc-dot.ttc-s5 { stroke: var(--ttc-s5); }
+.ttc-s6 .ttc-line, .ttc-dot.ttc-s6 { stroke: var(--ttc-s6); }
+
+/* Gradient stops carry the hue; the fill is faint so six overlapping areas
+   still read as lines rather than mud. */
+.ttc-stop-a.ttc-s1 { stop-color: var(--ttc-s1); stop-opacity: 0.26; }
+.ttc-stop-a.ttc-s2 { stop-color: var(--ttc-s2); stop-opacity: 0.26; }
+.ttc-stop-a.ttc-s3 { stop-color: var(--ttc-s3); stop-opacity: 0.26; }
+.ttc-stop-a.ttc-s4 { stop-color: var(--ttc-s4); stop-opacity: 0.26; }
+.ttc-stop-a.ttc-s5 { stop-color: var(--ttc-s5); stop-opacity: 0.26; }
+.ttc-stop-a.ttc-s6 { stop-color: var(--ttc-s6); stop-opacity: 0.26; }
+
+.ttc-stop-b.ttc-s1, .ttc-stop-b.ttc-s2, .ttc-stop-b.ttc-s3,
+.ttc-stop-b.ttc-s4, .ttc-stop-b.ttc-s5, .ttc-stop-b.ttc-s6 {
+  stop-color: currentColor;
+  stop-opacity: 0;
+}
+
+.ttc-stop-b.ttc-s1 { stop-color: var(--ttc-s1); }
+.ttc-stop-b.ttc-s2 { stop-color: var(--ttc-s2); }
+.ttc-stop-b.ttc-s3 { stop-color: var(--ttc-s3); }
+.ttc-stop-b.ttc-s4 { stop-color: var(--ttc-s4); }
+.ttc-stop-b.ttc-s5 { stop-color: var(--ttc-s5); }
+.ttc-stop-b.ttc-s6 { stop-color: var(--ttc-s6); }
+
+/* ---- hover ---- */
+.ttc-hit { fill: transparent; cursor: crosshair; }
+
+.ttc-crosshair {
+  stroke: var(--ttc-axis);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+}
+
+/* A surface-coloured ring keeps overlapping dots separable. */
+.ttc-dot {
+  stroke-width: 2;
+  fill: var(--ttc-tip-bg);
+}
+
+.ttc-tip {
+  position: absolute;
+  top: 6px;
+  transform: translateX(-50%);
+  min-width: 150px;
+  padding: 9px 11px;
+  border: 1px solid var(--ttc-tip-line);
+  border-radius: 10px;
+  background: var(--ttc-tip-bg);
+  box-shadow: 0 10px 26px -12px rgba(9, 20, 16, 0.35);
+  color: var(--ttc-tip-ink);
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Past the midpoint the tooltip would run off the right edge. */
+.ttc-tip.is-left { transform: translateX(-100%); }
+
+.ttc-tip-day {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ttc-axis);
+}
+
+.ttc-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+}
+
+.ttc-tip-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ttc-tip-row b { font-variant-numeric: tabular-nums; }
+.ttc-tip-none { color: var(--ttc-axis); }
+
+/* ---- legend ---- */
+.ttc-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ttc-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--ttc-tip-ink);
+  cursor: default;
+  opacity: 0.92;
+}
+
+.ttc-legend-item.is-on { opacity: 1; }
+.ttc-legend-item b { font-variant-numeric: tabular-nums; }
+
+.ttc-swatch {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+.ttc-swatch.ttc-s1 { background: var(--ttc-s1); }
+.ttc-swatch.ttc-s2 { background: var(--ttc-s2); }
+.ttc-swatch.ttc-s3 { background: var(--ttc-s3); }
+.ttc-swatch.ttc-s4 { background: var(--ttc-s4); }
+.ttc-swatch.ttc-s5 { background: var(--ttc-s5); }
+.ttc-swatch.ttc-s6 { background: var(--ttc-s6); }
+
+.ttc-empty {
+  padding: 26px 4px;
+  color: var(--ttc-axis, #7A8B85);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .ttc-tip { min-width: 130px; font-size: 11.5px; }
+  .ttc-legend { gap: 5px 12px; }
+}

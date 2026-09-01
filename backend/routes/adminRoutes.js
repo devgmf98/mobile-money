@@ -39,7 +39,7 @@ import {
 
 import { createCurrency, getCurrencies, updateCurrency, deleteCurrency } from '../controllers/adminController.js';
 import { getPendingSendByStateCount } from '../controllers/adminController.js';
-import { authMiddleware, adminMiddleware, notSuspended } from '../middleware/auth.js';
+import { authMiddleware, adminMiddleware, staffMiddleware, notSuspended } from '../middleware/auth.js';
 
 
 const router = express.Router();
@@ -50,24 +50,24 @@ router.use(authMiddleware);
 router.use(notSuspended);
 
 // User/Agent details endpoint
-router.get('/user-details', adminMiddleware, getUserOrAgentDetails);
+router.get('/user-details', staffMiddleware, getUserOrAgentDetails);
 
 // Allow any authenticated user to read the commission percent
 router.get('/commission', getCommission);
 
 // The following routes require admin privileges
-router.post('/topup-user', adminMiddleware, topupUser);
-router.post('/push-money', adminMiddleware, pushMoneyBetweenUsers);
+router.post('/topup-user', staffMiddleware, topupUser);
+router.post('/push-money', staffMiddleware, pushMoneyBetweenUsers);
 router.post('/withdraw-from-user', adminMiddleware, withdrawFromUser);
-router.post('/withdraw-from-agent', adminMiddleware, withdrawFromAgent);
-router.post('/request-agent-withdrawal', adminMiddleware, requestAgentWithdrawal);
-router.get('/find-agent', adminMiddleware, findAgentByAgentId);
+router.post('/withdraw-from-agent', staffMiddleware, withdrawFromAgent);
+router.post('/request-agent-withdrawal', staffMiddleware, requestAgentWithdrawal);
+router.get('/find-agent', staffMiddleware, findAgentByAgentId);
 router.post('/commission', adminMiddleware, setCommission);
-router.get('/users', adminMiddleware, getAllUsers);
-router.get('/transactions', adminMiddleware, getAllTransactions);
+router.get('/users', staffMiddleware, getAllUsers);
+router.get('/transactions', staffMiddleware, getAllTransactions);
 router.post('/suspend-user', adminMiddleware, suspendUser);
 router.post('/unsuspend-user', adminMiddleware, unsuspendUser);
-router.get('/stats', adminMiddleware, getAdminStats);
+router.get('/stats', staffMiddleware, getAdminStats);
 router.post('/grant-location', adminMiddleware, grantLocationPermissionToAll);
 router.get('/tiered-commission', adminMiddleware, getTieredCommission);
 router.post('/tiered-commission', adminMiddleware, setTieredCommission);
@@ -75,39 +75,39 @@ router.post('/tiered-commission/send-money', adminMiddleware, setSendMoneyTiers)
 router.post('/tiered-commission/withdrawal', adminMiddleware, setWithdrawalTiers);
 
 // Return logged-in admin's cashed-out total
-router.get('/stats/my-cashed-out', adminMiddleware, getMyAdminCashOut);
+router.get('/stats/my-cashed-out', staffMiddleware, getMyAdminCashOut);
 // Return logged-in admin's commission total
-router.get('/stats/my-commission', adminMiddleware, getMyAdminCommission);
+router.get('/stats/my-commission', staffMiddleware, getMyAdminCommission);
 
 // State settings CRUD
-router.get('/state-settings', adminMiddleware, getStateSettings);
+router.get('/state-settings', staffMiddleware, getStateSettings);
 router.post('/state-settings', adminMiddleware, createStateSetting);
 router.put('/state-settings/:id', adminMiddleware, updateStateSetting);
 router.delete('/state-settings/:id', adminMiddleware, deleteStateSetting);
 
 // Admin send money by state
-router.post('/send-state', adminMiddleware, sendMoneyBetweenAdminsByState);
-router.get('/send-state/pending', adminMiddleware, getPendingSendByState);
-router.post('/send-state/:id/receive', adminMiddleware, receiveSendByState);
-router.post('/send-state/:id/cancel', adminMiddleware, cancelSendByState);
-router.post('/send-state/:id/edit', adminMiddleware, editSendByState);
-router.get('/send-state/pending/count', adminMiddleware, getPendingSendByStateCount);
+router.post('/send-state', staffMiddleware, sendMoneyBetweenAdminsByState);
+router.get('/send-state/pending', staffMiddleware, getPendingSendByState);
+router.post('/send-state/:id/receive', staffMiddleware, receiveSendByState);
+router.post('/send-state/:id/cancel', staffMiddleware, cancelSendByState);
+router.post('/send-state/:id/edit', staffMiddleware, editSendByState);
+router.get('/send-state/pending/count', staffMiddleware, getPendingSendByStateCount);
 
 // Currency management
-router.get('/currencies', adminMiddleware, getCurrencies);
+router.get('/currencies', staffMiddleware, getCurrencies);
 router.post('/currencies', adminMiddleware, createCurrency);
 router.put('/currencies/:id', adminMiddleware, updateCurrency);
 router.delete('/currencies/:id', adminMiddleware, deleteCurrency);
 
 // Pairwise exchange-rate management
-router.get('/exchange-rates', adminMiddleware, getExchangeRates);
+router.get('/exchange-rates', staffMiddleware, getExchangeRates);
 router.post('/exchange-rates', adminMiddleware, createExchangeRate);
 router.put('/exchange-rates/:id', adminMiddleware, updateExchangeRate);
 router.delete('/exchange-rates/:id', adminMiddleware, deleteExchangeRate);
 
 // Money exchange transactions
-router.post('/money-exchange', adminMiddleware, createMoneyExchangeTransaction);
-router.post('/convert-money-exchange', adminMiddleware, convertMoneyExchange);
+router.post('/money-exchange', staffMiddleware, createMoneyExchangeTransaction);
+router.post('/convert-money-exchange', staffMiddleware, convertMoneyExchange);
 
 // Agent withdrawal approval endpoints (agent role)
 router.post('/approve-withdrawal-request', authMiddleware, notSuspended, approveAdminWithdrawalRequest);

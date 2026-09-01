@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { canAccess, isSubAdmin } from '../utils/roles';
 import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CircleUserRound, CreditCard, Handshake, Inbox, Landmark, Lock, Map, Menu, PanelLeftClose, PanelLeftOpen, Plane, Repeat, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
@@ -43,6 +44,10 @@ const titleFromPath = (pathname) => {
 export default function AdminLayout() {
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
+  /* A sub-admin sees a subset of the menu. Guarding each link by its own path
+     means the sidebar and the router agree by construction — both ask the
+     same question of the same list. */
+  const allow = (path) => canAccess(user, path);
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -285,33 +290,69 @@ export default function AdminLayout() {
 
         <nav className="sidebar-menu">
           <span className="sidebar-group">Overview</span>
-          <NavLink data-label="Dashboard" to="/admin/dashboard" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ChartColumn size={18} /><span className="sidebar-label">Dashboard</span></NavLink>
-          <span className="sidebar-group">Money movement</span>
-          <NavLink data-label="Topup Users" to="/admin/topup" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Banknote size={18} /><span className="sidebar-label">Topup Users</span></NavLink>
-          <NavLink data-label="Push Money" to="/admin/push-money" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Handshake size={18} /><span className="sidebar-label">Push Money</span></NavLink>
-          <NavLink data-label="Agent Withdrawal" to="/admin/withdraw-agent" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Landmark size={18} /><span className="sidebar-label">Agent Withdrawal</span></NavLink>
-          <NavLink data-label="Send To Destination" to="/admin/send-state" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Plane size={18} /><span className="sidebar-label">Send To Destination</span></NavLink>
-          <NavLink data-label="Send To Destination Pending" to="/admin/send-state-pending" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}>
-            <Inbox size={18} /><span className="sidebar-label">Send To Destination Pending</span>
-            {pendingCount > 0 && (
-              <span style={{marginLeft:8, background:'#DC2626', color:'#fff', borderRadius:12, padding:'2px 8px', fontSize: '0.69rem'}}>{pendingCount}</span>
+          {allow('/admin/dashboard') && (
+              <NavLink data-label="Dashboard" to="/admin/dashboard" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ChartColumn size={18} /><span className="sidebar-label">Dashboard</span></NavLink>
             )}
-          </NavLink>
+          <span className="sidebar-group">Money movement</span>
+          {allow('/admin/topup') && (
+              <NavLink data-label="Topup Users" to="/admin/topup" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Banknote size={18} /><span className="sidebar-label">Topup Users</span></NavLink>
+            )}
+          {allow('/admin/push-money') && (
+              <NavLink data-label="Push Money" to="/admin/push-money" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Handshake size={18} /><span className="sidebar-label">Push Money</span></NavLink>
+            )}
+          {allow('/admin/withdraw-agent') && (
+              <NavLink data-label="Agent Withdrawal" to="/admin/withdraw-agent" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Landmark size={18} /><span className="sidebar-label">Agent Withdrawal</span></NavLink>
+            )}
+          {allow('/admin/send-state') && (
+              <NavLink data-label="Send To Destination" to="/admin/send-state" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Plane size={18} /><span className="sidebar-label">Send To Destination</span></NavLink>
+            )}
+          {allow('/admin/send-state-pending') && (
+              <NavLink data-label="Send To Destination Pending" to="/admin/send-state-pending" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}>
+              <Inbox size={18} /><span className="sidebar-label">Send To Destination Pending</span>
+              {pendingCount > 0 && (
+                <span style={{marginLeft:8, background:'#DC2626', color:'#fff', borderRadius:12, padding:'2px 8px', fontSize: '0.69rem'}}>{pendingCount}</span>
+              )}
+            </NavLink>
+            )}
           <span className="sidebar-group">Currency tools</span>
-          <NavLink data-label="Create Currency" to="/admin/currencies" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ArrowRightLeft size={18} /><span className="sidebar-label">Create Currency</span></NavLink>
-          <NavLink data-label="Exchange Rates" to="/admin/currency-rates" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ChartColumn size={18} /><span className="sidebar-label">Exchange Rates</span></NavLink>
-          <NavLink data-label="Money Exchange" to="/admin/money-exchange" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Repeat size={18} /><span className="sidebar-label">Money Exchange</span></NavLink>
-          <NavLink data-label="Exchange Transactions" to="/admin/exchange-transactions" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ArrowRightLeft size={18} /><span className="sidebar-label">Exchange Transactions</span></NavLink>
+          {allow('/admin/currencies') && (
+              <NavLink data-label="Create Currency" to="/admin/currencies" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ArrowRightLeft size={18} /><span className="sidebar-label">Create Currency</span></NavLink>
+            )}
+          {allow('/admin/currency-rates') && (
+              <NavLink data-label="Exchange Rates" to="/admin/currency-rates" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ChartColumn size={18} /><span className="sidebar-label">Exchange Rates</span></NavLink>
+            )}
+          {allow('/admin/money-exchange') && (
+              <NavLink data-label="Money Exchange" to="/admin/money-exchange" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Repeat size={18} /><span className="sidebar-label">Money Exchange</span></NavLink>
+            )}
+          {allow('/admin/exchange-transactions') && (
+              <NavLink data-label="Exchange Transactions" to="/admin/exchange-transactions" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ArrowRightLeft size={18} /><span className="sidebar-label">Exchange Transactions</span></NavLink>
+            )}
           <span className="sidebar-group">Records</span>
-          <NavLink data-label="Transactions" to="/admin/transactions" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><CreditCard size={18} /><span className="sidebar-label">Transactions</span></NavLink>
-          <NavLink data-label="Users" to="/admin/users" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Users size={18} /><span className="sidebar-label">Users</span></NavLink>
-          <NavLink data-label="Notifications" to="/admin/notifications" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Bell size={18} /><span className="sidebar-label">Notifications</span></NavLink>
-          <NavLink data-label="Reports" to="/admin/reports" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><TrendingUp size={18} /><span className="sidebar-label">Reports</span></NavLink>
+          {allow('/admin/transactions') && (
+              <NavLink data-label="Transactions" to="/admin/transactions" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><CreditCard size={18} /><span className="sidebar-label">Transactions</span></NavLink>
+            )}
+          {allow('/admin/users') && (
+              <NavLink data-label="Users" to="/admin/users" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Users size={18} /><span className="sidebar-label">Users</span></NavLink>
+            )}
+          {allow('/admin/notifications') && (
+              <NavLink data-label="Notifications" to="/admin/notifications" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Bell size={18} /><span className="sidebar-label">Notifications</span></NavLink>
+            )}
+          {allow('/admin/reports') && (
+              <NavLink data-label="Reports" to="/admin/reports" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><TrendingUp size={18} /><span className="sidebar-label">Reports</span></NavLink>
+            )}
           <span className="sidebar-group">Configuration</span>
-          <NavLink data-label="Tiered Commission" to="/admin/tiered-commission" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Wallet size={18} /><span className="sidebar-label">Tiered Commission</span></NavLink>
-          <NavLink data-label="Destination Settings" to="/admin/state-settings" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Map size={18} /><span className="sidebar-label">Destination Settings</span></NavLink>
-          <NavLink data-label="Settings" to="/admin/settings" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Settings size={18} /><span className="sidebar-label">Settings</span></NavLink>
-          <NavLink data-label="Profile" to="/admin/profile" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><User size={18} /><span className="sidebar-label">Profile</span></NavLink>
+          {allow('/admin/tiered-commission') && (
+              <NavLink data-label="Tiered Commission" to="/admin/tiered-commission" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Wallet size={18} /><span className="sidebar-label">Tiered Commission</span></NavLink>
+            )}
+          {allow('/admin/state-settings') && (
+              <NavLink data-label="Destination Settings" to="/admin/state-settings" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Map size={18} /><span className="sidebar-label">Destination Settings</span></NavLink>
+            )}
+          {allow('/admin/settings') && (
+              <NavLink data-label="Settings" to="/admin/settings" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Settings size={18} /><span className="sidebar-label">Settings</span></NavLink>
+            )}
+          {allow('/admin/profile') && (
+              <NavLink data-label="Profile" to="/admin/profile" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><User size={18} /><span className="sidebar-label">Profile</span></NavLink>
+            )}
         </nav>
 
         {/* Exchange Rate Widget */}

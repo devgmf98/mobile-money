@@ -66,7 +66,8 @@ function setupSessionTimeout(logout, token) {
 }
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet, ScrollRestoration } from 'react-router-dom'
-import { useAuthStore } from './context/store'
+import { useAuthStore } from './context/store';
+import { canAccess } from './utils/roles'
 
 // Theme provider + session timeout
 function ThemeProvider({ children }) {
@@ -93,6 +94,16 @@ console.warn = (...args) => {
 }
 
 // Protected Route wrapper component
+/* Hiding a link does not protect the page behind it — the URL still works.
+   Every admin route is admitted through the same list the sidebar draws from,
+   so the two cannot disagree. A sub-admin who types a forbidden address is
+   returned to their dashboard rather than logged out. */
+function AdminOnly({ path, children }) {
+  const user = useAuthStore((state) => state.user);
+  if (!canAccess(user, path)) return <Navigate to="/admin/dashboard" replace />;
+  return children;
+}
+
 function ProtectedRoute({ children, requiredRole }) {
   const user = useAuthStore((state) => state.user)
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -300,28 +311,28 @@ const router = createBrowserRouter(
         {
           path: '/admin',
           element: (
-            <ProtectedRoute requiredRole={["admin"]}>
+            <ProtectedRoute requiredRole={["admin", "sub-admin"]}>
               <AdminLayout />
             </ProtectedRoute>
           ),
           children: [
-            { path: 'dashboard', element: <AdminDashboard /> },
-            { path: 'users', element: <AdminUsers /> },
-            { path: 'transactions', element: <AdminTransactions /> },
-            { path: 'notifications', element: <AdminNotifications /> },
-            { path: 'topup', element: <AdminTopup /> },
-            { path: 'push-money', element: <AdminPushMoney /> },
-            { path: 'withdraw-agent', element: <AdminWithdraw /> },
-            { path: 'tiered-commission', element: <AdminTieredCommission /> },
-            { path: 'currencies', element: <AdminCurrency /> },
-            { path: 'currency-rates', element: <AdminCurrencyRates /> },
-            { path: 'money-exchange', element: <AdminMoneyExchange /> },
-            { path: 'exchange-transactions', element: <AdminExchangeTransactions /> },
-            { path: 'state-settings', element: <AdminStateSettings /> },
-            { path: 'send-state', element: <AdminStateSend /> },
-            { path: 'send-state-pending', element: <AdminStatePending /> },
-            { path: 'settings', element: <AdminSettings /> },
-            { path: 'profile', element: <AdminProfile /> }
+            { path: 'dashboard', element: <AdminOnly path="/admin/dashboard"><AdminDashboard /></AdminOnly> },
+            { path: 'users', element: <AdminOnly path="/admin/users"><AdminUsers /></AdminOnly> },
+            { path: 'transactions', element: <AdminOnly path="/admin/transactions"><AdminTransactions /></AdminOnly> },
+            { path: 'notifications', element: <AdminOnly path="/admin/notifications"><AdminNotifications /></AdminOnly> },
+            { path: 'topup', element: <AdminOnly path="/admin/topup"><AdminTopup /></AdminOnly> },
+            { path: 'push-money', element: <AdminOnly path="/admin/push-money"><AdminPushMoney /></AdminOnly> },
+            { path: 'withdraw-agent', element: <AdminOnly path="/admin/withdraw-agent"><AdminWithdraw /></AdminOnly> },
+            { path: 'tiered-commission', element: <AdminOnly path="/admin/tiered-commission"><AdminTieredCommission /></AdminOnly> },
+            { path: 'currencies', element: <AdminOnly path="/admin/currencies"><AdminCurrency /></AdminOnly> },
+            { path: 'currency-rates', element: <AdminOnly path="/admin/currency-rates"><AdminCurrencyRates /></AdminOnly> },
+            { path: 'money-exchange', element: <AdminOnly path="/admin/money-exchange"><AdminMoneyExchange /></AdminOnly> },
+            { path: 'exchange-transactions', element: <AdminOnly path="/admin/exchange-transactions"><AdminExchangeTransactions /></AdminOnly> },
+            { path: 'state-settings', element: <AdminOnly path="/admin/state-settings"><AdminStateSettings /></AdminOnly> },
+            { path: 'send-state', element: <AdminOnly path="/admin/send-state"><AdminStateSend /></AdminOnly> },
+            { path: 'send-state-pending', element: <AdminOnly path="/admin/send-state-pending"><AdminStatePending /></AdminOnly> },
+            { path: 'settings', element: <AdminOnly path="/admin/settings"><AdminSettings /></AdminOnly> },
+            { path: 'profile', element: <AdminOnly path="/admin/profile"><AdminProfile /></AdminOnly> }
           ]
         }
       ]

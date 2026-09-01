@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { adminAPI } from '../utils/api';
 import { useAuthStore } from '../context/store';
+import { isStaff } from '../utils/roles';
 import Toast from '../components/Toast';
 import Select from '../components/Select';
 import '../styles/admin-state-pending.css';
@@ -126,8 +127,8 @@ export default function AdminStatePending() {
     // Any admin in the destination state can receive the transfer. Any admin in
     // the source state can also cancel it, along with the original sender.
     const isSender = Number(user?.id) === Number(tx.senderId);
-    const isSameStateAdmin = user?.role === 'admin' && user?.state && tx.fromStateName && user.state === tx.fromStateName;
-    const isReceiverForDestination = user?.role === 'admin' && user?.state && tx.toStateName && user.state === tx.toStateName;
+    const isSameStateAdmin = isStaff(user) && user?.state && tx.fromStateName && user.state === tx.fromStateName;
+    const isReceiverForDestination = isStaff(user) && user?.state && tx.toStateName && user.state === tx.toStateName;
     const busy = actionLoading === tx.id;
 
     if (isReceiverForDestination) {

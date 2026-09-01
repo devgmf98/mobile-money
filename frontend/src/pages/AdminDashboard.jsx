@@ -3,6 +3,8 @@ import SkeletonRows from '../components/SkeletonRows';
 import { adminAPI } from '../utils/api';
 import { findDestination } from '../utils/destination';
 import SkeletonCards from '../components/SkeletonCards';
+import { isSubAdmin } from '../utils/roles';
+import TypeTrendChart from '../components/TypeTrendChart';
 import PrintReceipt from '../components/PrintReceipt';
 import Footer from '../components/Footer';
 import CompositionChart from '../components/CompositionChart';
@@ -38,6 +40,9 @@ export default function AdminDashboard() {
   const [adminStateCommission, setAdminStateCommission] = useState(null);
   const [moneyExchangeTransactions, setMoneyExchangeTransactions] = useState([]);
   const [recentTransactions, setRecentTransactions] = useState([]);
+  /* The trend chart plots every transaction in the window, not the five
+     rows the Recent list shows, so it keeps the full response. */
+  const [allTransactions, setAllTransactions] = useState([]);
   const [loadingRecent, setLoadingRecent] = useState(true);
   const [currencies, setCurrencies] = useState([]);
   const [exchangeFromDate, setExchangeFromDate] = useState('');
@@ -107,6 +112,7 @@ export default function AdminDashboard() {
            everything except exchanges, which already have their own card. No
            second request is needed. */
         setRecentTransactions(data.filter(t => t.type !== 'money_exchange').slice(0, 5));
+        setAllTransactions(data);
       } catch (error) {
         console.error('Failed to fetch money exchange transactions:', error);
       } finally {
@@ -233,6 +239,12 @@ export default function AdminDashboard() {
   /* The icon and label of a stat card are static, so they show at once and
      only the figure shimmers. Rendering the number straight away instead
      meant a flash of "0" before the real value replaced it. */
+  /* A sub-admin's dashboard is this same page with the panels their role does
+     not cover left out — the four it keeps are the ones they can act on. Same
+     component, so it carries the admin page's own cards and colours; two
+     dashboards would have drifted apart by the second change. */
+  const subAdmin = isSubAdmin(user);
+
   const Value = ({ children }) =>
     loading ? <span className="skeleton skeleton-value" /> : <>{children}</>;
 
@@ -258,6 +270,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {!subAdmin && (
       <div className="dashboard-grid grid-4">
         {/* My Wallet card removed for admin users */}
 
@@ -319,6 +332,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+      )}
 
       {/* One card per currency rather than a single blended figure: these
           commissions are earned in different currencies and cannot be added
@@ -387,6 +401,22 @@ export default function AdminDashboard() {
         </div>
         )}
       </div>
+          {subAdmin && (
+            <div className="card mt-4">
+              <div className="card-header">
+                <h3><TrendingUp size={18} /> Transactions by type</h3>
+              </div>
+              <div className="card-body">
+                {loadingRecent ? (
+                  <div className="ttc-empty">Loading activity…</div>
+                ) : (
+                  <TypeTrendChart transactions={allTransactions} defaultRange="today" />
+                )}
+              </div>
+            </div>
+          )}
+
+          {!subAdmin && (
           <div className="charts-grid grid-2">
             <div className="card">
               <div className="card-header">
@@ -418,6 +448,7 @@ export default function AdminDashboard() {
               </div>
             </div>
           </div>
+          )}
 
           <div className="card mt-4">
         <div className="card-header exchange-header-row">
@@ -593,6 +624,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+        {!subAdmin && (
         <div className="card mt-4">
         <div className="card-header">
           <h3>Quick Actions</h3>
@@ -627,6 +659,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+        )}
       {selectedTransaction && (
         <PrintReceipt
           transaction={selectedTransaction}

@@ -32,7 +32,8 @@ export default function AdminStateSend() {
       const sres = await adminAPI.getStateSettings();
       setStates(sres.data.states || []);
       const ures = await adminAPI.getAllUsers();
-      const adminsOnly = (ures.data || []).filter(u => u.role === 'admin');
+      /* Sub-admins hold destinations too, so they are valid recipients. */
+      const adminsOnly = (ures.data || []).filter(u => u.role === 'admin' || u.role === 'sub-admin');
       setAdmins(adminsOnly);
       try {
         const cres = await adminAPI.getCurrencies();

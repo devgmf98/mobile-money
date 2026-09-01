@@ -48,9 +48,9 @@ export const register = async (req, res) => {
       }
     }
 
-    // If role is admin, generate a unique 6-digit admin ID
+    // Admins and sub-admins both get a unique 6-digit admin ID
     let finalAdminId = null;
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'sub-admin') {
       let isUnique = false;
       while (!isUnique) {
         finalAdminId = Math.floor(Math.random() * 900000) + 100000;
@@ -70,7 +70,7 @@ export const register = async (req, res) => {
        access, not by self-signup, so there is no phone to prove ownership of —
        and the SMS code would strand them: sign-in refuses unverified accounts,
        so an admin created this way could never log in. */
-    const isAdmin = role === 'admin';
+    const isAdmin = role === 'admin' || role === 'sub-admin';
 
     const user = await User.create({
       name,

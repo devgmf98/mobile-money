@@ -124,7 +124,9 @@ export default function Login() {
       // Navigate to role-specific dashboard
       if (role === 'agent') {
         navigate('/agent/dashboard');
-      } else if (role === 'admin') {
+      } else if (role === 'admin' || role === 'sub-admin') {
+        /* A sub-admin lands on the same dashboard; it renders the subset of
+           panels their role covers. */
         navigate('/admin/dashboard');
       } else {
         navigate('/user/dashboard');

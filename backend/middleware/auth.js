@@ -25,8 +25,23 @@ export const adminMiddleware = (req, res, next) => {
   next();
 };
 
+/* A sub-admin runs the counter: top-ups, pushes, agent withdrawals, destination
+   transfers and exchanges. What separates them from an admin is that they
+   cannot change the rules everyone else operates under — commission tiers,
+   destinations, currencies, exchange rates — or act on other people's
+   accounts. Those stay on adminMiddleware.
+
+   Guarding the routes rather than only hiding the pages: the sidebar is a
+   convenience, and a hidden page is still one fetch away. */
+export const staffMiddleware = (req, res, next) => {
+  if (req.userRole !== 'admin' && req.userRole !== 'sub-admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+};
+
 export const agentMiddleware = (req, res, next) => {
-  if (req.userRole !== 'agent' && req.userRole !== 'admin') {
+  if (!['agent', 'admin', 'sub-admin'].includes(req.userRole)) {
     return res.status(403).json({ message: 'Agent access required' });
   }
   next();
