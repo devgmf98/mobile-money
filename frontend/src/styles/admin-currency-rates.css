@@ -212,3 +212,59 @@
   .rsum-tile { padding: 12px 13px; }
   .rsum-value { font-size: 16.5px; }
 }
+
+/* ==========================================================================
+   The rate dialogs.
+
+   Every field was a full-width row with the same generous gap, so a five-field
+   form ran past the fold and the two halves of each pair — from/to, buying/
+   selling — sat far apart despite being read together. Paired fields share a
+   row, spacing is tighter, and the body scrolls under a header and footer that
+   stay put.
+   ========================================================================== */
+.modal-content {
+  max-height: min(88vh, 720px);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content .modal-header,
+.modal-content .modal-footer {
+  flex: 0 0 auto;
+}
+
+.modal-content .modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.modal-content .modal-body .form-group { margin-bottom: 14px; }
+.modal-content .modal-body .form-group:last-child { margin-bottom: 0; }
+
+.modal-content .modal-body label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.modal-content .modal-body .form-input,
+.modal-content .modal-body select {
+  width: 100%;
+  height: 40px;
+  min-height: 0;
+}
+
+/* From/To and Buying/Selling belong side by side — they are read as a pair. */
+.modal-content .modal-body .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-content .modal-body .form-row .form-group { margin-bottom: 14px; }
+
+@media (max-width: 520px) {
+  .modal-content .modal-body .form-row { grid-template-columns: 1fr; gap: 0; }
+}

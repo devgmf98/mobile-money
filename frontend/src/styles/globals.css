@@ -1700,72 +1700,105 @@ textarea:focus-visible {
    ========================================================================== */
 
 .actions-grid {
-  /* 150px columns forced "View Transactions" onto two ragged lines */
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 16px;
+  /* display was declared in admin-dashboard.css, which this file supersedes —
+     leaving it there meant the columns below applied to a block element and
+     every card stacked. */
+  display: grid;
+  /* Wider columns: these are rows now, not posters, so they need horizontal
+     room rather than vertical. */
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  gap: 10px;
   align-items: stretch;
 }
 
+/* Quick Actions were centred posters — a 56px plate, then a title, then a
+   caption, each on its own line inside 22px of padding. Five of them filled a
+   screen to say five short things. They read as rows now: icon, then title over
+   caption, left to right like the rest of the page. */
 .actions-grid .action-card {
+  position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 12px;
   height: 100%;
-  padding: 22px 16px 18px;
+  padding: 13px 30px 13px 14px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: 12px;
   background: var(--surface, #FFFFFF);
-  text-align: center;
+  text-align: left;
   text-decoration: none;
   color: inherit;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  transition: border-color 0.16s ease, background 0.16s ease;
 }
 
 .actions-grid .action-card:hover {
-  transform: translateY(-3px);
+  /* No lift: a 3px hop on a dense grid of rows reads as a jitter. */
+  transform: none;
   border-color: var(--primary);
-  
-  background: var(--surface, #FFFFFF);
+  background: var(--surface-2, #F7FAF9);
 }
 
-/* uniform plate for every icon, whatever tone it carries */
 .actions-grid .action-card .action-icon {
-  width: 56px;
-  height: 56px;
-  min-height: 56px;
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 16px;
-  margin: 0 0 2px;
-  transition: transform 0.18s ease;
+  border-radius: 11px;
+  margin: 0;
 }
 
-.actions-grid .action-card:hover .action-icon {
-  transform: scale(1.06);
+/* The glyphs are rendered at 28px for the old plate; an SVG ignores font-size,
+   so the size is set on the element itself. */
+.actions-grid .action-card .action-icon svg { width: 19px; height: 19px; }
+
+.actions-grid .action-card .action-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
-/* titles: reserve two lines so cards line up whether or not they wrap */
 .actions-grid .action-card h4 {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 650;
   line-height: 1.3;
   color: var(--primary-dark);
-  text-wrap: balance;
-  display: flex;
-  align-items: center;
-  min-height: 2.6em;
+  /* No reserved second line — rows do not need to be the same height for the
+     grid to look even. */
+  min-height: 0;
+  display: block;
 }
 
 .actions-grid .action-card p {
   margin: 0;
   font-size: 11.5px;
-  line-height: 1.45;
+  line-height: 1.35;
   color: var(--text-light);
-  text-wrap: balance;
 }
+
+/* A destination arrow, on hover only — five permanent arrows are five pieces
+   of noise, but nothing else said these were links. */
+.actions-grid .action-card::after {
+  content: '';
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-top: 2px solid var(--primary);
+  border-right: 2px solid var(--primary);
+  transform: translateY(-50%) rotate(45deg);
+  opacity: 0;
+  transition: opacity 0.16s ease, right 0.16s ease;
+}
+
+.actions-grid .action-card:hover::after { opacity: 1; right: 11px; }
+
 
 @media (max-width: 600px) {
   .actions-grid {

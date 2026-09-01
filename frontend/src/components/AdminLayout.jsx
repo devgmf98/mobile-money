@@ -1,7 +1,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { canAccess, isStaff, isSubAdmin } from '../utils/roles';
-import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CircleUserRound, CreditCard, Handshake, Inbox, Landmark, LogOut, Map, Menu, PanelLeftClose, PanelLeftOpen, Plane, Repeat, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
+import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CirclePlus, CircleUserRound, CreditCard, Handshake, Hourglass, Landmark, LayoutDashboard, LogOut, Map, Menu, PanelLeftClose, PanelLeftOpen, Percent, Repeat, SendHorizontal, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
 import { useAuthStore } from '../context/store';
@@ -11,14 +11,14 @@ import '../styles/layout.css';
 /* Title and icon shown in the navbar for the current route.
    Keep in step with the sidebar items below — same label, same icon. */
 const PAGE_META = {
-  '/admin/dashboard': { title: 'Dashboard', Icon: ChartColumn },
+  '/admin/dashboard': { title: 'Dashboard', Icon: LayoutDashboard },
   '/admin/topup': { title: 'Topup Users', Icon: Banknote },
   '/admin/push-money': { title: 'Push Money', Icon: Handshake },
   '/admin/withdraw-agent': { title: 'Agent Withdrawal', Icon: Landmark },
-  '/admin/send-state': { title: 'Send To Destination', Icon: Plane },
-  '/admin/send-state-pending': { title: 'Send To Destination Pending', Icon: Inbox },
-  '/admin/currencies': { title: 'Create Currency', Icon: ArrowRightLeft },
-  '/admin/currency-rates': { title: 'Exchange Rates', Icon: ChartColumn },
+  '/admin/send-state': { title: 'Send To Destination', Icon: SendHorizontal },
+  '/admin/send-state-pending': { title: 'Send To Destination Pending', Icon: Hourglass },
+  '/admin/currencies': { title: 'Create Currency', Icon: CirclePlus },
+  '/admin/currency-rates': { title: 'Exchange Rates', Icon: Percent },
   '/admin/money-exchange': { title: 'Money Exchange', Icon: Repeat },
   '/admin/exchange-transactions': { title: 'Exchange Transactions', Icon: ArrowRightLeft },
   '/admin/transactions': { title: 'Transactions', Icon: CreditCard },
@@ -295,7 +295,7 @@ export default function AdminLayout() {
         <nav className="sidebar-menu">
           <span className="sidebar-group">Overview</span>
           {allow('/admin/dashboard') && (
-              <NavLink data-label="Dashboard" to="/admin/dashboard" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ChartColumn size={18} /><span className="sidebar-label">Dashboard</span></NavLink>
+              <NavLink data-label="Dashboard" to="/admin/dashboard" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><LayoutDashboard size={18} /><span className="sidebar-label">Dashboard</span></NavLink>
             )}
           <span className="sidebar-group">Money movement</span>
           {allow('/admin/topup') && (
@@ -308,11 +308,18 @@ export default function AdminLayout() {
               <NavLink data-label="Agent Withdrawal" to="/admin/withdraw-agent" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Landmark size={18} /><span className="sidebar-label">Agent Withdrawal</span></NavLink>
             )}
           {allow('/admin/send-state') && (
-              <NavLink data-label="Send To Destination" to="/admin/send-state" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Plane size={18} /><span className="sidebar-label">Send To Destination</span></NavLink>
+              <NavLink data-label="Send To Destination" to="/admin/send-state" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><SendHorizontal size={18} /><span className="sidebar-label">Send To Destination</span></NavLink>
             )}
           {allow('/admin/send-state-pending') && (
               <NavLink data-label="Send To Destination Pending" to="/admin/send-state-pending" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}>
-              <Inbox size={18} /><span className="sidebar-label">Send To Destination Pending</span>
+              <Hourglass size={18} />
+                {/* Shorter than the page title, which stays "Send To
+                    Destination Pending". At 280px the full name wrapped
+                    onto two lines and the row grew taller than every
+                    other; sitting directly under "Send To Destination",
+                    this reads unambiguously. The rail tooltip and the
+                    page heading both keep the full wording. */}
+                <span className="sidebar-label">Transfer Requests</span>
               {/* A class rather than inline styles: collapsed to a rail the
                   badge sits on the icon's corner, and an inline style could
                   not be overridden by the collapsed rules. */}
@@ -323,10 +330,10 @@ export default function AdminLayout() {
             )}
           <span className="sidebar-group">Currency tools</span>
           {allow('/admin/currencies') && (
-              <NavLink data-label="Create Currency" to="/admin/currencies" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ArrowRightLeft size={18} /><span className="sidebar-label">Create Currency</span></NavLink>
+              <NavLink data-label="Create Currency" to="/admin/currencies" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><CirclePlus size={18} /><span className="sidebar-label">Create Currency</span></NavLink>
             )}
           {allow('/admin/currency-rates') && (
-              <NavLink data-label="Exchange Rates" to="/admin/currency-rates" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><ChartColumn size={18} /><span className="sidebar-label">Exchange Rates</span></NavLink>
+              <NavLink data-label="Exchange Rates" to="/admin/currency-rates" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Percent size={18} /><span className="sidebar-label">Exchange Rates</span></NavLink>
             )}
           {allow('/admin/money-exchange') && (
               <NavLink data-label="Money Exchange" to="/admin/money-exchange" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Repeat size={18} /><span className="sidebar-label">Money Exchange</span></NavLink>

@@ -389,6 +389,24 @@ if (typeof window !== 'undefined') {
   }
 }
 
+/* A focused <input type="number"> steps its value on wheel, so scrolling the
+   page with the pointer over an amount silently edits it — and these fields
+   carry money: transfer amounts, commission percentages, exchange rates. A
+   reader scrolling past a filled form could change what they are about to
+   submit without ever noticing.
+
+   Blocked once here rather than on each of the eighteen inputs across twelve
+   pages. passive: false is required — a passive listener cannot preventDefault.
+   Focus is kept, so only the wheel-stepping is lost, not the field. */
+document.addEventListener(
+  'wheel',
+  (e) => {
+    const el = document.activeElement;
+    if (el && el.type === 'number' && el === e.target) e.preventDefault();
+  },
+  { passive: false }
+);
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider>

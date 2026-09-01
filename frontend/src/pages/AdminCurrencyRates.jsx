@@ -372,8 +372,8 @@ export default function AdminCurrencyRates() {
 
       {/* Edit Modal */}
       {showModal && (
-        <div className="modal-overlay" onClick={cancelEdit}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h2><Pencil size={18} /> Edit Currency</h2>
               <button className="modal-close" onClick={cancelEdit}><X size={18} /></button>
@@ -445,34 +445,37 @@ export default function AdminCurrencyRates() {
 
       {/* Create Modal */}
       {showCreateRate && (
-        <div className="modal-overlay" onClick={() => setShowCreateRate(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h2>{editingRateId ? <><Pencil size={18} /> Edit Pair Rate</> : <><Plus size={18} /> Add Pair Rate</>}</h2>
               <button className="modal-close" onClick={() => setShowCreateRate(false)}><X size={18} /></button>
             </div>
 
             <div className="modal-body">
-              <div className="form-group">
-                <label>From Currency Code</label>
-                <input
-                  type="text"
-                  value={editingRateId ? (editRateData.fromCode || '') : (createRateData.fromCode || '')}
-                  onChange={(e) => editingRateId ? setEditRateData(prev => ({...prev, fromCode: e.target.value.toUpperCase()})) : handleCreateRateChange('fromCode', e.target.value.toUpperCase())}
-                  className="form-input"
-                  placeholder="e.g., USD"
-                />
-              </div>
+              {/* Read as a pair, so they sit on one row. */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label>From Currency Code</label>
+                  <input
+                    type="text"
+                    value={editingRateId ? (editRateData.fromCode || '') : (createRateData.fromCode || '')}
+                    onChange={(e) => editingRateId ? setEditRateData(prev => ({...prev, fromCode: e.target.value.toUpperCase()})) : handleCreateRateChange('fromCode', e.target.value.toUpperCase())}
+                    className="form-input"
+                    placeholder="e.g., USD"
+                  />
+                </div>
 
-              <div className="form-group">
-                <label>To Currency Code</label>
-                <input
-                  type="text"
-                  value={editingRateId ? (editRateData.toCode || '') : (createRateData.toCode || '')}
-                  onChange={(e) => editingRateId ? setEditRateData(prev => ({...prev, toCode: e.target.value.toUpperCase()})) : handleCreateRateChange('toCode', e.target.value.toUpperCase())}
-                  className="form-input"
-                  placeholder="e.g., SSP"
-                />
+                <div className="form-group">
+                  <label>To Currency Code</label>
+                  <input
+                    type="text"
+                    value={editingRateId ? (editRateData.toCode || '') : (createRateData.toCode || '')}
+                    onChange={(e) => editingRateId ? setEditRateData(prev => ({...prev, toCode: e.target.value.toUpperCase()})) : handleCreateRateChange('toCode', e.target.value.toUpperCase())}
+                    className="form-input"
+                    placeholder="e.g., SSP"
+                  />
+                </div>
               </div>
 
               <div className="form-group">
@@ -522,8 +525,8 @@ export default function AdminCurrencyRates() {
         </div>
       )}
       {showCreate && (
-        <div className="modal-overlay" onClick={() => setShowCreate(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h2><Plus size={18} /> Add Currency Rate</h2>
               <button className="modal-close" onClick={() => setShowCreate(false)}><X size={18} /></button>

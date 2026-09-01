@@ -1930,15 +1930,24 @@
 
 /* On the icon's corner, not beside it — inline it widened the row and pushed
    the icon off centre. */
-.admin-layout.sidebar-collapsed .sidebar-badge {
+.admin-layout.sidebar-collapsed .sidebar-item .sidebar-badge {
   position: absolute;
-  top: 3px;
-  right: 3px;
+  top: 2px;
+  right: 2px;
   margin: 0;
-  min-width: 16px;
-  padding: 0 4px;
-  font-size: 9.5px;
-  line-height: 16px;
+  /* A circle, not a rounded box. Height and min-width are the same number and
+     the padding is small enough that one or two digits never widen it past
+     that — three push it into a pill rather than clipping the count. */
+  width: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 3px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-sizing: border-box;
   box-shadow: 0 0 0 2px var(--sidebar-bg, #fff);
 }
 
@@ -2326,4 +2335,64 @@
 
 @media screen and (max-width: 560px) {
   .navbar-brand-admin .navbar-logo { height: 30px; }
+}
+
+/* Nav labels stay on one line. A wrapped label makes its row taller than every
+   other and the column stops reading as an even list. */
+.sidebar-item .sidebar-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* The badge keeps its size while the label takes the slack, and it no longer
+   makes its row taller than the others — one badge was leaving a single 40px
+   row in a column of 38s. */
+.sidebar-item .sidebar-badge {
+  flex-shrink: 0;
+  /* A round counter, not a label. min-width equal to the height keeps one and
+     two digits circular; three push it into a short pill rather than clipping. */
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-sizing: border-box;
+  /* The same white ring the rail badge wears. On the active row the tile is
+     solid green and the red counter sat straight on it; the ring separates the
+     two. Elsewhere the sidebar is already white, so it simply does not show. */
+  box-shadow: 0 0 0 2px #FFFFFF;
+}
+
+/* Dark mode: the ring takes the sidebar's own colour, or it would draw a white
+   circle on a dark panel. */
+[data-theme="dark"] .sidebar-item .sidebar-badge {
+  box-shadow: 0 0 0 2px #1E293B;
+}
+
+.sidebar-item { min-height: 40px; }
+
+/* ==========================================================================
+   Sidebar width.
+
+   280px was sized for the old labels — "Send To Destination Pending" among
+   them. The longest is now "Exchange Transactions", which needs about 207px
+   including the icon, gap and padding, so the column carried some 70px of
+   empty space beside every item. 248px keeps a comfortable margin and hands
+   the difference back to the content.
+   ========================================================================== */
+@media screen and (min-width: 1033px) {
+  .admin-layout:not(.sidebar-collapsed) {
+    grid-template-columns: 248px 1fr;
+  }
+
+  .admin-layout:not(.sidebar-collapsed) .sidebar,
+  .admin-layout:not(.sidebar-collapsed) .admin-sidebar {
+    width: 248px;
+    min-width: 248px;
+  }
 }

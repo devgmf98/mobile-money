@@ -663,28 +663,38 @@ export default function AdminDashboard() {
           <div className="actions-grid">
             <a href="/admin/users" className="action-card">
               <div className="action-icon tone-info"><Users size={28} /></div>
-              <h4>Manage Users</h4>
-              <p>View and manage users</p>
+              <span className="action-copy">
+                <h4>Manage Users</h4>
+                <p>View and manage users</p>
+              </span>
             </a>
             <a href="/admin/transactions" className="action-card">
               <div className="action-icon tone-dark"><CreditCard size={28} /></div>
-              <h4>View Transactions</h4>
-              <p>Monitor all transactions</p>
+              <span className="action-copy">
+                <h4>View Transactions</h4>
+                <p>Monitor all transactions</p>
+              </span>
             </a>
             <a href="/admin/notifications" className="action-card">
               <div className="action-icon tone-warning"><Bell size={28} /></div>
-              <h4>Send Notifications</h4>
-              <p>Notify users</p>
+              <span className="action-copy">
+                <h4>Send Notifications</h4>
+                <p>Notify users</p>
+              </span>
             </a>
             <a href="/admin/tiered-commission" className="action-card">
               <div className="action-icon tone-success"><Wallet size={28} /></div>
-              <h4>Tiered Commission</h4>
-              <p>Manage send-money commission tiers</p>
+              <span className="action-copy">
+                <h4>Tiered Commission</h4>
+                <p>Manage send-money commission tiers</p>
+              </span>
             </a>
             <a href="/admin/reports" className="action-card">
               <div className="action-icon tone-dark"><TrendingUp size={28} /></div>
-              <h4>Reports</h4>
-              <p>View detailed reports</p>
+              <span className="action-copy">
+                <h4>Reports</h4>
+                <p>View detailed reports</p>
+              </span>
             </a>
           </div>
         </div>
