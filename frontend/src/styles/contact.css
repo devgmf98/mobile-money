@@ -1,0 +1,245 @@
+/* Contact Us — a standalone page reachable signed in or out, so it carries its
+   own centred shell rather than sitting inside a dashboard layout. */
+
+.contact-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  background: var(--bg, #EAF6F0);
+}
+
+.contact-card {
+  width: 100%;
+  max-width: 660px;
+  padding: 28px 30px 24px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 18px;
+  background: var(--surface, #fff);
+  box-shadow: 0 12px 40px rgba(16, 40, 34, 0.08);
+}
+
+.contact-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+}
+
+.contact-logo { width: 46px; height: 46px; object-fit: contain; }
+
+.contact-head h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+}
+
+.contact-head p { margin: 2px 0 0; font-size: 13px; color: var(--text-light, #5B6B66); }
+
+.contact-form { display: flex; flex-direction: column; gap: 14px; }
+
+/* Two to a row where the fields are short, one where they are not. */
+.contact-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.contact-row > .contact-field { flex: 1 1 220px; }
+
+.contact-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+
+.contact-field > span:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.contact-field > span:first-child i {
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.75;
+}
+
+.contact-field input,
+.contact-field select,
+.contact-field textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-dark, #16302B);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.contact-field textarea { resize: vertical; min-height: 130px; line-height: 1.5; }
+
+.contact-field input:focus,
+.contact-field select:focus,
+.contact-field textarea:focus {
+  outline: 2px solid var(--primary, #007A3D);
+  outline-offset: -1px;
+}
+
+/* An icon inside the box, with the input padded clear of it. */
+.contact-input-icon { position: relative; display: block; }
+
+.contact-input-icon svg {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light, #5B6B66);
+  pointer-events: none;
+}
+
+.contact-input-icon input { padding-left: 32px; }
+
+.contact-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #FEE2E2;
+  color: #B42318;
+  font-size: 13px;
+}
+
+.contact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.contact-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light, #5B6B66);
+  text-decoration: none;
+}
+
+.contact-back:hover { color: var(--primary-dark, #005C2E); }
+
+.contact-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 0;
+  padding: 11px 20px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary, #007A3D);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.contact-primary:hover:not(:disabled) { background: var(--primary-dark, #005C2E); }
+.contact-primary:disabled { opacity: 0.65; cursor: progress; }
+
+.contact-secondary {
+  padding: 11px 20px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-dark, #16302B);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.contact-secondary:hover { border-color: var(--primary, #007A3D); color: var(--primary-dark, #005C2E); }
+
+.contact-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #E3EAE7);
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+.contact-spin { animation: contact-spin 900ms linear infinite; }
+@keyframes contact-spin { to { transform: rotate(360deg); } }
+
+/* ---- sent ---------------------------------------------------------------- */
+.contact-done { text-align: center; padding: 42px 30px 34px; }
+.contact-done svg { color: var(--primary, #007A3D); }
+
+.contact-done h1 {
+  margin: 14px 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+}
+
+.contact-done p { margin: 0; font-size: 14px; color: var(--text-light, #5B6B66); }
+
+.contact-ref { margin-top: 10px !important; font-size: 13px !important; }
+.contact-ref strong { color: var(--text-dark, #16302B); font-variant-numeric: tabular-nums; }
+
+.contact-done-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+  .contact-card { padding: 22px 18px 20px; }
+  .contact-row { flex-direction: column; gap: 14px; }
+  .contact-actions { flex-direction: column-reverse; align-items: stretch; }
+  .contact-back { justify-content: center; }
+  .contact-primary { width: 100%; }
+}
+
+/* ---- dark ---------------------------------------------------------------- */
+[data-theme="dark"] .contact-card {
+  background: #12211C;
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .contact-head,
+[data-theme="dark"] .contact-note { border-color: rgba(255, 255, 255, 0.10); }
+
+[data-theme="dark"] .contact-field input,
+[data-theme="dark"] .contact-field select,
+[data-theme="dark"] .contact-field textarea,
+[data-theme="dark"] .contact-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #E6F2EC;
+}
+
+[data-theme="dark"] .contact-head h1,
+[data-theme="dark"] .contact-done h1,
+[data-theme="dark"] .contact-ref strong { color: #E6F2EC; }
+
+[data-theme="dark"] .contact-head p,
+[data-theme="dark"] .contact-note,
+[data-theme="dark"] .contact-done p,
+[data-theme="dark"] .contact-field > span:first-child { color: #9FB3AB; }
+
+/* The line that says what actually happened to the message, rather than the
+   headline claim that it was emailed. */
+.contact-note-soft { opacity: 0.85; }

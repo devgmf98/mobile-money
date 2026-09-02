@@ -1,10 +1,20 @@
 import { useState, useEffect } from 'react';
 import SkeletonRows from '../components/SkeletonRows';
+import Footer from '../components/Footer';
 import { useAuthStore } from '../context/store';
 import { transactionAPI } from '../utils/api';
-import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, CreditCard, Files, Hand, Inbox, Landmark, RefreshCw, Smartphone, Upload, Wallet } from 'lucide-react';
-import styles from './AgentDashboard.module.css';
+import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, CreditCard, Files, Hand, HandCoins, Inbox, Landmark, RefreshCw, Send, Smartphone, Upload, Wallet } from 'lucide-react';
+import styles from './DashboardMobile.module.css';
 import { txLabel } from '../data/transactionTypes';
+
+/* Digits only, in groups of four — the same shaping the user dashboard gives
+   an account number, so the two cards read alike. */
+const accountCode = (phone) => {
+  if (!phone) return '—';
+  const digits = String(phone).replace(/\D/g, '');
+  if (!digits) return String(phone);
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ');
+};
 
 export default function AgentDashboard() {
   const { user } = useAuthStore();
@@ -89,111 +99,106 @@ export default function AgentDashboard() {
   }
 
   // Mobile View
+  /* Deliberately the same shape as the user's mobile dashboard, class for
+     class, off the shared DashboardMobile stylesheet: a green header, a white
+     balance card, four action tiles, then History and Recent Transactions.
+     The two were drifting into different products — this one had a green
+     gradient balance card, its own transaction row markup, and class names
+     that only existed in its own stylesheet. What differs now is the content,
+     which is the only thing that should. */
   if (isMobile) {
     return (
-      <div className={styles.container}>
-        {/* Balance Card */}
+      <div className={styles.home}>
+        <header className={styles.homeHeader}>
+          <div>
+            <span className={styles.homeGreeting}>Welcome back</span>
+            <h2 className={styles.homeName}>{user?.name || 'Agent'}</h2>
+          </div>
+        </header>
+
         <div className={styles.balanceCard}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <div className={styles.balanceTop}>
             <span className={styles.balanceLabel}>My Balance</span>
-            <CreditCard style={{ height: 32, width: 48, color: '#fff' }} />
           </div>
-          <span className={styles.balanceAmount} style={{ fontSize: '1.97rem', letterSpacing: '2px', margin: '18px 0 8px 0', color: '#fff' }}>
-            {user && user.balance !== undefined && user.balance !== null
-              ? `${(parseFloat(user.balance) || 0).toFixed(2)}`
-              : '0.00'}
-            <span className={styles.currency} style={{ color: '#fff', marginLeft: 8 }}>SSP</span>
-          </span>
-          <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginTop: 16 }}>
-            <span style={{ fontSize: '1rem', letterSpacing: '2px', opacity: 0.85 }}>**** **** **** {user?.agentId?.slice(-4) || '5678'}</span>
+
+          <div className={styles.balanceAmount}>
+            <span className={styles.currency}>SSP</span>
+            {(parseFloat(user?.balance) || 0).toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
+
+          {/* The user's card shows their account code here. An agent's working
+              identity is the agent ID, so that is what goes in the same slot —
+              same row, same treatment, the identifier that is actually useful. */}
+          <div className={styles.balanceFoot}>
+            <span className={styles.balanceAccountLabel}>{user?.agentId ? 'Agent ID' : 'Account'}</span>
+            <span className={styles.balanceAccount}>{user?.agentId || accountCode(user?.phone)}</span>
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* The two that move money are the primary pair, as on the user side. */}
         <div className={styles.actions}>
-          <button 
-            className={styles.actionBtn}
-            onClick={() => handleNavigate('/agent/send-money')}
-          >
-            <span><Upload size={18} /></span>
-            <span>Send Money</span>
-          </button>
-          <button 
-            className={styles.actionBtn}
-            onClick={() => handleNavigate('/agent/receive')}
-          >
-            <span>�</span>
-            <span>Receive</span>
-          </button>
-          <button 
-            className={styles.actionBtn}
-            onClick={() => handleNavigate('/agent/pull-from-user')}
-          >
-            <span><RefreshCw size={18} /></span>
-            <span>Pull from User</span>
-          </button>
-          <button 
-            className={styles.actionBtn}
-            onClick={() => handleNavigate('/agent/transactions')}
-          >
-            <span><ChartColumn size={18} /></span>
-            <span>Transactions</span>
-          </button>
+          <button className={styles.actionBtnPrimary} onClick={() => handleNavigate('/agent/send-money')}><Send /><span>Send Money</span></button>
+          <button className={styles.actionBtnPrimary} onClick={() => handleNavigate('/agent/pull-from-user')}><RefreshCw /><span>Pull from User</span></button>
+          <button className={styles.actionBtn} onClick={() => handleNavigate('/agent/receive')}><HandCoins /><span>Receive</span></button>
+          <button className={styles.actionBtn} onClick={() => handleNavigate('/agent/transactions')}><ChartColumn /><span>Transactions</span></button>
         </div>
 
-        {/* History Section */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h3>Statistics</h3>
+            <span>History</span>
           </div>
           <div className={styles.statsGrid}>
             <div className={styles.statItem}>
-              <div className={styles.statLabel}>Money Sent</div>
-              <div className={styles.statValue}>SSP {formatCurrency(stats.totalSent)}</div>
+              <span className={styles.statLabel}>Money Sent</span>
+              <span className={styles.statValue}>SSP {formatCurrency(stats.totalSent)}</span>
             </div>
             <div className={styles.statItem}>
-              <div className={styles.statLabel}>Money Received</div>
-              <div className={styles.statValue}>SSP {formatCurrency(stats.totalReceived)}</div>
+              <span className={styles.statLabel}>Money Received</span>
+              <span className={styles.statValue}>SSP {formatCurrency(stats.totalReceived)}</span>
             </div>
             <div className={styles.statItem}>
-              <div className={styles.statLabel}>Commission Earned</div>
-              <div className={styles.statValue}>SSP {formatCurrency(stats.commissionEarned)}</div>
+              <span className={styles.statLabel}>Commission Earned</span>
+              <span className={styles.statValue}>SSP {formatCurrency(stats.commissionEarned)}</span>
             </div>
           </div>
         </div>
 
-        {/* Recent Transactions */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h3>Recent Transactions</h3>
-            <a href="/agent/transactions" className={styles.seeAllLink}>See all</a>
+            <span>Recent Transactions</span>
+            <a href="/agent/transactions" className={styles.seeAll}>See all</a>
           </div>
-          {loading ? (
-            <SkeletonRows count={4} />
-          ) : transactions.length > 0 ? (
-            <div className={styles.transactionsList}>
-              {transactions.map(tx => (
-                <div key={tx.id} className={styles.transactionItem}>
-                  <div className={styles.txHeader}>
-                    <span className={styles.txType}>
-                      {tx.type === 'send' ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />} {tx.type === 'send' ? 'Sent to' : 'Received from'}
-                    </span>
-                    <span className={styles.txAmount}>
-                      {tx.type === 'send' ? '-' : '+'}{formatCurrency(tx.amount)}
-                    </span>
+          <div className={styles.transactionsList}>
+            {loading ? (
+              <SkeletonRows count={4} />
+            ) : transactions.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#64748B' }}>No transactions yet</p>
+            ) : (
+              transactions.map((tx, idx) => (
+                <div key={tx.id || idx} className={styles.transactionItem}>
+                  <div className={styles.txIcon}>
+                    {isOutgoing(tx)
+                      ? <ArrowUp style={{ color: '#DC2626' }} />
+                      : <ArrowDown style={{ color: '#16A34A' }} />}
                   </div>
-                  <div className={styles.txDetails}>
-                    <span className={styles.txName}>{tx.recipientName || tx.senderName}</span>
+                  <div className={styles.txInfo}>
+                    <span className={styles.txType}>{txLabel(tx, isOutgoing(tx))}</span>
                     <span className={styles.txDate}>
-                      {new Date(tx.createdAt).toLocaleDateString('en-PH')}
+                      {tx.createdAt
+                        ? new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                        : 'N/A'}
                     </span>
                   </div>
+                  <span className={styles.txAmount}>
+                    {isOutgoing(tx) ? '-' : '+'}SSP {(parseFloat(tx.amount) || 0).toFixed(2)}
+                  </span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className={styles.loadingText}>No transactions yet</div>
-          )}
+              ))
+            )}
+          </div>
         </div>
       </div>
     );
@@ -201,6 +206,7 @@ export default function AgentDashboard() {
 
   // Desktop View
   return (
+    <>
     <div className="dashboard-container">
       <div className="dashboard-header">
         <div>
@@ -339,5 +345,7 @@ export default function AgentDashboard() {
       </div>
 
     </div>
+    <Footer />
+    </>
   );
 }

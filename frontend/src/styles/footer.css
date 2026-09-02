@@ -550,15 +550,6 @@
   .footer-bottom p { font-size: 11px; }
 }
 
-/* pages that do not exist yet: present but visibly inactive */
-.footer-pending {
-  display: inline-block;
-  font-size: 12px;
-  line-height: 1.5;
-  color: rgba(169, 235, 209, 0.45);
-  cursor: default;
-}
-
 /* ---- brand logo -----------------------------------------------------------
    The logo's wordmark and phone are dark navy, which all but disappears on the
    dark-green footer. A light plate keeps it legible without needing a separate
@@ -629,3 +620,38 @@
     margin-bottom: 0;
   }
 }
+
+/* ==========================================================================
+   Public pages that carry the site footer
+
+   Contact, Help and the three legal documents each set `min-height: 100vh` and
+   centre their own content, because each was written as a standalone screen.
+   Dropping a footer in beside that content makes it a flex item next to the
+   card; dropping it after leaves 100vh of page above it whether or not the
+   content fills that.
+
+   This shell is the ordinary fix: a column that owns the viewport height, the
+   page growing to fill whatever is left, and the footer after it — at the
+   bottom of the screen on a short page, below the content on a long one.
+   Lives here because it is the rule that lets a page host this footer, and
+   every page that does already imports this file through the component.
+   ========================================================================== */
+
+.public-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg, #EAF6F0);
+}
+
+.public-shell > .contact-page,
+.public-shell > .help-page,
+.public-shell > .legal-page {
+  flex: 1 0 auto;
+  /* Their own 100vh would push the footer off the fold on every one of them. */
+  min-height: 0;
+}
+
+.public-shell > .footer { flex-shrink: 0; }
+
+[data-theme="dark"] .public-shell { background: var(--bg, #0B1F17); }

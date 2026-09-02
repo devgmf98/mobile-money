@@ -91,6 +91,26 @@ export const adminAPI = {
   convertMoneyExchange: (data) => api.post('/admin/convert-money-exchange', data)
 };
 
+/* Sending is deliberately open — the interceptor attaches a token when there
+   is one, and the endpoint records the sender from it, but a signed-out
+   visitor gets through just the same. */
+export const contactAPI = {
+  send: (body) => api.post('/contact', body),
+  list: (qs) => api.get('/contact' + (qs ? '?' + qs : '')),
+  newCount: () => api.get('/contact/count'),
+  update: (id, body) => api.patch('/contact/' + id, body),
+};
+
+/* Reading is open to everyone; writing needs staff. The interceptor attaches
+   a token when there is one, which is also how staff see their own drafts. */
+export const helpAPI = {
+  list: (qs) => api.get('/help' + (qs ? '?' + qs : '')),
+  markRead: (slug) => api.post('/help/' + slug + '/read'),
+  create: (body) => api.post('/help', body),
+  update: (id, body) => api.patch('/help/' + id, body),
+  remove: (id) => api.delete('/help/' + id),
+};
+
 export const notificationAPI = {
   getNotifications: () => api.get('/notifications'),
   markAsRead: (data) => api.post('/notifications/mark-as-read', data),

@@ -1,0 +1,337 @@
+/* Contact Us inbox.
+
+   A list beside a reading pane. Triage and reading are different motions — you
+   scan to choose, then read one thing properly — and a table of truncated
+   messages would serve neither. Scoped to .ms-*. */
+
+.ms-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.ms-filters {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface-2, #F7FAF9);
+}
+
+.ms-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 0;
+  padding: 7px 13px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-light, #5B6B66);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ms-filter:hover { color: var(--text-dark, #16302B); }
+.ms-filter.is-on { background: var(--primary, #007A3D); color: #fff; }
+
+.ms-filter b {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ms-filter.is-on b { background: rgba(255, 255, 255, 0.22); }
+
+.ms-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 240px;
+  max-width: 380px;
+  height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+}
+
+.ms-search input { flex: 1; border: none; background: none; font-size: 13px; min-width: 0; }
+.ms-search input:focus { outline: none; }
+.ms-search:focus-within { border-color: var(--primary, #007A3D); }
+
+.ms-refresh {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  margin-left: auto;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+  cursor: pointer;
+}
+
+.ms-refresh:hover { color: var(--primary-dark, #005C2E); border-color: var(--primary, #007A3D); }
+
+.ms-error { padding: 14px 16px; color: var(--error, #DC2626); font-size: 13px; margin-bottom: 14px; }
+
+/* ---- the split ----------------------------------------------------------- */
+.ms-split {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  transition: opacity 140ms ease;
+}
+
+.ms-split.is-loading { opacity: 0.6; }
+
+.ms-list {
+  padding: 6px;
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+}
+
+.ms-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  min-height: 0;
+  padding: 11px 12px;
+  border: none;
+  border-radius: 10px;
+  border-left: 3px solid transparent;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 110ms ease;
+}
+
+.ms-item:hover { background: var(--surface-2, #F7FAF9); }
+.ms-item.is-open { background: var(--light, #E8F7F0); border-left-color: var(--primary, #007A3D); }
+
+/* An unanswered message earns the weight; everything else recedes. */
+.ms-item.is-new .ms-who { font-weight: 700; }
+.ms-item.is-new .ms-subject { color: var(--text-dark, #16302B); }
+
+.ms-item-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.ms-who { font-size: 13px; font-weight: 600; color: var(--text-dark, #16302B); }
+.ms-when { font-size: 11px; color: var(--text-light, #5B6B66); white-space: nowrap; }
+.ms-subject { font-size: 12px; font-weight: 600; color: var(--text-light, #5B6B66); }
+
+.ms-preview {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-light, #5B6B66);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ms-tags { display: flex; gap: 6px; margin-top: 4px; }
+
+.ms-status,
+.ms-account,
+.ms-guest {
+  font-style: normal;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: capitalize;
+}
+
+.ms-status.is-new { background: #FEF3C7; color: #B45309; }
+.ms-status.is-read { background: #EEF4FF; color: #2A5BB7; }
+.ms-status.is-resolved { background: #DCFCE7; color: #0F7A43; }
+.ms-account { background: #E8F7F0; color: #036B41; }
+.ms-guest { background: var(--surface-2, #F7FAF9); color: var(--text-light, #5B6B66); }
+
+/* ---- the reader ---------------------------------------------------------- */
+.ms-reader { padding: 18px 20px; }
+
+.ms-reader-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+}
+
+.ms-reader-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-dark, #16302B); }
+.ms-ref { margin: 3px 0 0; font-size: 11.5px; color: var(--text-light, #5B6B66); font-variant-numeric: tabular-nums; }
+
+.ms-sender { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 14px 0 10px; }
+
+.ms-sender span,
+.ms-sender a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-light, #5B6B66);
+  text-decoration: none;
+}
+
+.ms-sender a:hover { color: var(--primary-dark, #005C2E); }
+
+.ms-linked {
+  margin: 0 0 14px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  background: var(--light, #E8F7F0);
+  font-size: 12px;
+  color: var(--text-dark, #16302B);
+}
+
+/* A visitor with no account cannot be replied to in the app, and an admin
+   typing into a box that goes nowhere is worse than no box at all. */
+.ms-linked.is-guest { background: #FEF3C7; color: #7C4A03; }
+
+.ms-body {
+  padding: 14px 16px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface-2, #F7FAF9);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-dark, #16302B);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ms-reply { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+
+.ms-reply span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.ms-reply textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-dark, #16302B);
+  font-size: 13.5px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.ms-reply textarea:focus { outline: 2px solid var(--primary, #007A3D); outline-offset: -1px; }
+
+.ms-handled { margin: 12px 0 0; font-size: 11.5px; color: var(--text-light, #5B6B66); }
+
+.ms-reader-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.ms-primary, .ms-secondary, .ms-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 0;
+  padding: 9px 15px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.ms-primary { background: var(--primary, #007A3D); color: #fff; }
+.ms-primary:hover:not(:disabled) { background: var(--primary-dark, #005C2E); }
+
+.ms-secondary { background: var(--surface, #fff); border-color: var(--primary, #007A3D); color: var(--primary-dark, #005C2E); }
+.ms-secondary:hover:not(:disabled) { background: var(--light, #E8F7F0); }
+
+.ms-ghost { background: transparent; border-color: var(--border, #E3EAE7); color: var(--text-light, #5B6B66); margin-right: auto; }
+.ms-ghost:hover:not(:disabled) { color: var(--text-dark, #16302B); }
+
+.ms-primary:disabled, .ms-secondary:disabled, .ms-ghost:disabled { opacity: 0.6; cursor: progress; }
+
+.ms-spin { animation: ms-spin 900ms linear infinite; }
+@keyframes ms-spin { to { transform: rotate(360deg); } }
+
+.ms-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 46px 16px;
+  color: var(--text-light, #5B6B66);
+  text-align: center;
+}
+
+.ms-empty h4 { margin: 6px 0 0; font-size: 14px; color: var(--text-dark, #16302B); }
+.ms-empty p { margin: 0; font-size: 12.5px; }
+
+@media (max-width: 900px) {
+  .ms-split { grid-template-columns: minmax(0, 1fr); }
+  .ms-list { max-height: 340px; }
+  .ms-refresh { margin-left: 0; }
+}
+
+/* ---- dark ---------------------------------------------------------------- */
+[data-theme="dark"] .ms-filters,
+[data-theme="dark"] .ms-search,
+[data-theme="dark"] .ms-refresh,
+[data-theme="dark"] .ms-reply textarea,
+[data-theme="dark"] .ms-secondary,
+[data-theme="dark"] .ms-body {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #E6F2EC;
+}
+
+[data-theme="dark"] .ms-item:hover { background: rgba(255, 255, 255, 0.04); }
+[data-theme="dark"] .ms-reader-head { border-color: rgba(255, 255, 255, 0.10); }
+
+[data-theme="dark"] .ms-who,
+[data-theme="dark"] .ms-reader-head h3,
+[data-theme="dark"] .ms-empty h4 { color: #E6F2EC; }
+
+[data-theme="dark"] .ms-when,
+[data-theme="dark"] .ms-preview,
+[data-theme="dark"] .ms-ref,
+[data-theme="dark"] .ms-handled { color: #9FB3AB; }
+
+/* Says where the reply went. An admin who types and clicks should not have to
+   guess whether anything reached the customer. */
+.ms-delivery {
+  margin: 12px 0 0;
+  padding: 8px 11px;
+  border-radius: 8px;
+  background: var(--light, #E8F7F0);
+  color: #036B41;
+  font-size: 12px;
+}
+
+.ms-delivery::first-letter { text-transform: uppercase; }
+.ms-delivery.is-quiet { background: var(--surface-2, #F7FAF9); color: var(--text-light, #5B6B66); }
+[data-theme="dark"] .ms-delivery { background: rgba(255,255,255,0.05); color: #9FB3AB; }

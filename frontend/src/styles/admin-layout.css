@@ -1070,27 +1070,81 @@
   display: none;
 }
 
-/* labels are hidden, so surface them on hover instead */
+/* Hovering one item brings back that item, icon and label.
+
+   This used to be an `::after` carrying `attr(data-label)` at
+   `left: calc(100% + 10px)` — outside a rail whose `overflow-y: auto` makes
+   `overflow-x` compute to `auto` as well. The tooltip was clipped away
+   entirely, so hovering an icon surfaced nothing and there was no telling the
+   items apart but by their glyphs. A pseudo-element could not have carried the
+   icon anyway.
+
+   The label escapes that clip by going `position: fixed` with no offsets, which
+   leaves it at its static position — right where it sits in the row — while
+   taking it out of every ancestor's overflow. The icon stays put in the rail
+   and the label opens beside it, so the pair reads as the row does when the
+   sidebar is expanded. Only the hovered item changes; the rail keeps its
+   width and nothing behind it reflows. */
 .admin-layout.sidebar-collapsed .sidebar-item {
   position: relative;
 }
 
-.admin-layout.sidebar-collapsed .sidebar-item:hover::after {
-  content: attr(data-label);
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
+.admin-layout.sidebar-collapsed .sidebar-item:hover .sidebar-label {
+  display: inline-flex;
+  align-items: center;
+  position: fixed;
+  /* Coordinates come from the row itself, written by the nav's mouseover
+     handler. Without them a fixed box falls back to its static position and
+     lands on top of the icon it is meant to name. */
+  left: var(--tip-x, 100%);
+  top: var(--tip-y, 50%);
   transform: translateY(-50%);
+  padding: 8px 13px;
   background: #04331E;
   color: #FFFFFF;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
-  z-index: 200;
+  z-index: 400;
   pointer-events: none;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+}
+
+/* The hovered icon lifts with its label, so the two read as one thing rather
+   than a label that happens to be floating nearby.
+
+   `transform: none` is load-bearing, not cosmetic. A wider breakpoint nudges the
+   hovered row with translateX(6px) scale(1.02), and any transform makes that row
+   the containing block for its own fixed child — which put the label back inside
+   the rail's clip and drew it 91px right and 300px down from where it belonged.
+   The nudge is decorative; on a 64px rail there is nowhere to nudge to. */
+.admin-layout.sidebar-collapsed .sidebar-item:hover {
+  /* No background of its own. A hovered row already takes the green gradient
+     and turns its icon white; setting a pale background here overrode only the
+     gradient, leaving a white icon on a near-white pill — invisible. The rail
+     now hovers exactly as the expanded sidebar does.
+
+     transform and filter are cleared because either one makes this row the
+     containing block for its own fixed label: a wider breakpoint nudges the row
+     with translateX(6px) scale(1.02), and the active row wears
+     brightness(1.04), which is why the current page's label was the one landing
+     in the wrong place. Neither is worth losing the label over. */
+  transform: none;
+  filter: none;
+}
+
+.admin-layout.sidebar-collapsed .sidebar-item.active:hover .sidebar-label {
+  background: var(--primary-dark, #005C2E);
+}
+
+/* A transform on an ancestor would become the containing block for the fixed
+   label and pull it back inside the clip. The large-screen rule that nudges the
+   sidebar on hover does exactly that, so it is switched off while the rail is
+   collapsed — the nudge is decorative, the label is not. */
+.admin-layout.sidebar-collapsed .admin-sidebar:hover {
+  transform: none;
 }
 
 /* on phones the sidebar is a drawer; icons-only would just be confusing */
@@ -2071,12 +2125,30 @@
 .admin-layout.sidebar-collapsed .sidebar-logout .btn-label { display: none; }
 .admin-layout.sidebar-collapsed .sidebar-logout .btn-icon { margin: 0; }
 
+/* In dark mode `--danger` flips to a pale #F87171, where a white icon lands at
+   2.77:1 — under the 3:1 a non-text icon needs to stay legible. Dark ink on
+   that same red reads at 6.15:1 and keeps the tile unmistakably destructive. */
+[data-theme="dark"] .admin-layout.sidebar-collapsed .sidebar-logout {
+  color: #3B0A0A;
+}
+
+[data-theme="dark"] .admin-layout.sidebar-collapsed .sidebar-logout:hover {
+  background: var(--danger, #F87171);
+  border-color: var(--danger, #F87171);
+  color: #3B0A0A;
+}
+
 /* The label it lost, on hover — the same affordance the nav icons get. */
 .admin-layout.sidebar-collapsed .sidebar-logout::after {
   content: 'Logout';
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 50%;
+  /* Fixed, not absolute. The rail's `overflow-y: auto` makes `overflow-x`
+     compute to `auto` as well, and an absolutely-positioned pill at
+     `left: calc(100% + 10px)` was clipped to a 3px sliver at the rail edge —
+     the same trap the nav labels fell into. Coordinates come from the footer's
+     mouseover handler, as they do there. */
+  position: fixed;
+  left: var(--tip-x, 100%);
+  top: var(--tip-y, 50%);
   transform: translateY(-50%);
   background: #04331E;
   color: #FFFFFF;

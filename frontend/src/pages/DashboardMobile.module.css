@@ -543,12 +543,14 @@
 .actionBtn:hover { background: #D1F0E3; }
 
 /* ---- transaction history: subtle gray ---- */
+/* Was #F8FAFC on #EEF2F6 — a cool grey-blue, the one card on the page pulling
+   against the green. Same fade and same hairline as the rest. */
 .transactionItem {
-  background: #F8FAFC;
-  border: 1px solid #EEF2F6;
+  background: linear-gradient(160deg, #FFFFFF 0%, #FFFFFF 55%, #F4FBF8 100%);
+  border: 1px solid #EAF2ED;
   border-radius: 12px;
 }
-.transactionItem:hover { background: #F1F5F9; }
+.transactionItem:hover { background: linear-gradient(160deg, #FFFFFF 0%, #FBFEFD 45%, #EDF8F3 100%); }
 
 .txType { color: #1E293B; font-weight: 600; }
 .txDate { color: #64748B; }
@@ -602,25 +604,58 @@
 .actionBtnPrimary:active,
 .actionBtn:active { transform: scale(0.985); }
 
-/* All four tiles share the Receive treatment: light green ground, deep green
-   label. Send Money and Cash Out were solid #00A86B with white text, which
-   made the row read as two ranks of action rather than one set. */
+/* All four are one rank of action, so they share one treatment — Send Money
+   and Cash Out were solid #00A86B with white text, which read as two ranks.
+
+   They were four flat green squares: icon and ground came from the same
+   family, so nothing led the eye. Now they match the balance card and the stat
+   tiles — a white card with a hairline edge and the same green lift, carrying
+   the icon in a tinted chip. The green moves to the chip, where it marks the
+   action, and the label takes dark ink to read against white. */
 .actionBtnPrimary,
 .actionBtn {
-  background: #E8F7F0;
-  color: #087443;
-  border: 1px solid #D1F0E3;
-  box-shadow: none;
+  /* The same white-to-green fade the balance card carries, so every card on
+     the page is lit from the same direction instead of some being flat white
+     and one being tinted. */
+  background: linear-gradient(160deg, #FFFFFF 0%, #FFFFFF 55%, #F4FBF8 100%);
+  color: #0F2A20;
+  border: 1px solid #EAF2ED;
+  border-radius: 16px;
+  min-height: 84px;
+  padding: 12px 6px 11px;
+  gap: 8px;
+  /* px, not rem: globals.css drops the root to 12px at 480px and under, so a
+     rem here shrinks by a quarter on the phones this block is for — 0.7rem
+     rendered at 8.4px. */
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px -8px rgba(8, 116, 67, 0.18);
 }
 
 .actionBtnPrimary:hover,
 .actionBtn:hover {
-  background: #D1F0E3;
+  background: linear-gradient(160deg, #FFFFFF 0%, #FBFEFD 45%, #EDF8F3 100%);
+  border-color: #D1F0E3;
+  box-shadow: 0 10px 20px -8px rgba(8, 116, 67, 0.26);
   filter: none;
   transform: none;
 }
 
-.actions svg { width: 19px; height: 19px; flex-shrink: 0; }
+.actionBtnPrimary:hover svg,
+.actionBtn:hover svg { background: #D1F0E3; }
+
+/* The chip is the svg itself given a ground — the markup has no wrapper around
+   the icon, and content-box keeps the glyph at 19px inside its padding. */
+.actions svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+  box-sizing: content-box;
+  padding: 8px;
+  border-radius: 50%;
+  background: #E8F7F0;
+  color: #087443;
+}
 
 /* ---------- sections ------------------------------------------------------ */
 .section { margin: 0 16px 16px; }
@@ -652,37 +687,90 @@
   max-width: none;
   margin-left: 0;
   margin-right: 0;
+  /* An older rule wrapped the whole group in a 2px #34C88E box on an #E8F7F0
+     fill, and this one never reset it — so the tiles sat inside a green frame
+     that framed nothing. The tiles are the design; the box was packaging. */
+  border: none;
+  background: none;
+  padding: 0;
 }
 
+/* Each figure is its own tile, keyed by a rail down its left edge. The colours
+   are the ones the transaction list already uses — red for money leaving, green
+   for money arriving — so the same meaning is carried by the same colour in
+   both places. Commission is neither, so it takes its own amber. */
 .statItem {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 14px;
-  border: 1px solid #E2E8F0;
-  border-radius: 14px;
-  background: #FFFFFF;
+  align-items: flex-start;
+  gap: 5px;
+  /* extra left padding clears the accent rail */
+  padding: 14px 14px 14px 18px;
+  margin: 0;
+  text-align: left;
+  border: 1px solid #EAF2ED;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #FFFFFF 0%, #FFFFFF 55%, #F4FBF8 100%);
+  /* the same green-tinted lift the balance card has, at a quarter the strength
+     so a row of tiles does not compete with it */
+  box-shadow: 0 6px 16px -8px rgba(8, 116, 67, 0.18);
+  overflow: hidden;
+}
+
+.statItem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #94A3B8;
+}
+
+.statItem:nth-child(1)::before { background: #DC2626; }   /* out */
+.statItem:nth-child(2)::before { background: #16A34A; }   /* in */
+.statItem:nth-child(3)::before { background: #D97706; }   /* commission */
+
+/* The user dashboard shows two stats and fills the row. The agent shows a
+   third — commission — which would otherwise sit alone in the left column with
+   a hole beside it. A lone last item takes the full width instead. */
+.statsGrid > .statItem:nth-child(3):last-child {
+  grid-column: 1 / -1;
 }
 
 .statLabel {
-  font-size: 0.7rem;
+  /* px for the same reason as the action tiles: 0.66rem came out at 7.9px. */
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #64748B;
+  /* #7C8B95 was prettier and came out at 3.51:1 on white — under the 4.5:1
+     that 10.5px bold text needs. This reads at 5.25:1. */
+  color: #5F6E7A;
 }
 
 .statValue {
-  font-size: 0.906rem;
+  font-size: 15px;
   font-weight: 800;
-  color: #1E293B;
+  letter-spacing: -0.01em;
+  color: #0F2A20;
   font-variant-numeric: tabular-nums;
 }
 
 /* ---------- header -------------------------------------------------------- */
-.homeHeader { padding: 18px 18px 34px; }
-.homeGreeting { font-size: 0.75rem; opacity: 0.9; }
-.homeName { font-size: 1.031rem; font-weight: 800; margin: 2px 0 0; }
+/* The balance card is pulled 26px up into this header's bottom padding, so of
+   the 34px that was here only 8px of green ever showed below the name — a
+   band, not a header. 62px leaves a proper 36px of it.
+
+   The type goes with it: at 0.75rem and 1.031rem, against the 12px root that
+   globals.css sets below 481px, the greeting rendered at 9px and the name at
+   12.4px. A taller header full of 9px text looks empty rather than generous,
+   so these are px like the rest of the blocks below. */
+.homeHeader { padding: 22px 18px 62px; }
+.homeGreeting { font-size: 12px; opacity: 0.9; letter-spacing: 0.02em; }
+.homeName { font-size: 19px; font-weight: 800; margin: 3px 0 0; letter-spacing: -0.01em; }
 
 /* ==========================================================================
    Balance card — redesigned
@@ -709,7 +797,13 @@
   background: linear-gradient(160deg, #FFFFFF 0%, #FFFFFF 52%, #F2FBF7 100%);
   border: 1px solid #E3F5EC;
   overflow: hidden;
-  
+  /* Two layers of the brand green rather than neutral grey: a wide soft one
+     that lifts the card off the page, and a tight one under the edge so the
+     lift reads as depth instead of a blur. Tinted, because a grey drop shadow
+     on a green-tinted card looks like dirt under it. */
+  box-shadow:
+    0 16px 34px -10px rgba(8, 116, 67, 0.20),
+    0 4px 10px -2px rgba(8, 116, 67, 0.10);
 }
 
 /* faint brand wash in the corner so the card is not a plain white box */
@@ -922,6 +1016,11 @@
 :global([data-theme='dark']) .balanceCard {
   background: #1E293B;
   border-color: #14532D;
+  /* The light tint is invisible against a dark ground — a shadow there has to
+     be darker than what it falls on, with only a trace of green in it. */
+  box-shadow:
+    0 16px 34px -10px rgba(0, 0, 0, 0.55),
+    0 4px 10px -2px rgba(4, 40, 24, 0.45);
 }
 
 /* the decorative bloom is a light-green wash; on dark it becomes a haze */
@@ -939,20 +1038,26 @@
 :global([data-theme='dark']) .currency { color: #34C88E; }
 
 /* ---------- action buttons ---------- */
+/* Card and chip, as in light: the card takes the dark surface the stat tiles
+   use, and the chip keeps the green. */
 :global([data-theme='dark']) .actionBtn,
 :global([data-theme='dark']) .actionBtnPrimary {
-  background: #05512F;
-  border-color: #14532D;
-  color: #A9EBD1;
+  background: #1E293B;
+  border-color: #24384B;
+  color: #E2E8F0;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.5);
 }
 
-/* the light hover fills #D1F0E3, which against #A9EBD1 text is 1.12:1 */
 :global([data-theme='dark']) .actionBtn:hover,
 :global([data-theme='dark']) .actionBtnPrimary:hover {
-  background: #087443;
-  border-color: #087443;
-  color: #FFFFFF;              /* 5.85:1 */
+  background: #1E293B;
+  border-color: #14532D;
+  color: #FFFFFF;
 }
+
+:global([data-theme='dark']) .actions svg { background: #05512F; color: #6EE7A8; }
+:global([data-theme='dark']) .actionBtn:hover svg,
+:global([data-theme='dark']) .actionBtnPrimary:hover svg { background: #087443; color: #FFFFFF; }
 
 :global([data-theme='dark']) .depositBtn { background: #1E293B; color: #E2E8F0; }
 :global([data-theme='dark']) .depositBtn:hover { background: #087443; color: #FFFFFF; }
@@ -964,13 +1069,15 @@
 
 /* ---------- stats ---------- */
 :global([data-theme='dark']) .statsGrid {
-  background: #1E293B;
-  border-color: #14532D;
+  /* no container here either */
+  background: none;
+  border: none;
 }
 
 :global([data-theme='dark']) .statItem {
   background: #1E293B;
-  border-color: #14532D;
+  border-color: #24384B;
+  box-shadow: 0 6px 16px -8px rgba(0, 0, 0, 0.5);
 }
 
 :global([data-theme='dark']) .statLabel { color: #94A3B8; }

@@ -16,6 +16,9 @@ import transactionRoutes from './routes/transactionRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import withdrawalRoutes from './routes/withdrawalRoutes.js';
+import contactRoutes from './routes/contactRoutes.js';
+import helpRoutes from './routes/helpRoutes.js';
+import { seedHelpArticles } from './controllers/helpController.js';
 import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
 const flash = require('connect-flash');
@@ -113,10 +116,12 @@ import ExchangeRate from './models/ExchangeRate.js';
 import SendMoneyCommissionTier from './models/SendMoneyCommissionTier.js';
 import WithdrawalCommissionTier from './models/WithdrawalCommissionTier.js';
 import Verification from './models/Verification.js';
+import ContactMessage from './models/ContactMessage.js';
+import HelpArticle from './models/HelpArticle.js';
 import { migrateStateToName, ensureColumns } from './migrations/stateToName.js';
 
 // Set up associations
-const models = { User, Transaction, Notification, WithdrawalRequest, StateSetting, Currency, ExchangeRate, SendMoneyCommissionTier, WithdrawalCommissionTier, Verification };
+const models = { User, Transaction, Notification, WithdrawalRequest, StateSetting, Currency, ExchangeRate, SendMoneyCommissionTier, WithdrawalCommissionTier, Verification, ContactMessage, HelpArticle };
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {
     models[modelName].associate(models);
@@ -129,6 +134,8 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/withdrawals', withdrawalRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/help', helpRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -198,6 +205,18 @@ async function startServer() {
     // Sequelize alter preserves existing rows while bringing the schema up to date.
     await sequelize.sync({ alter: true });
     console.log('Database synchronized and schema updated');
+
+    /* The Help Center opens on whatever is in the table, so an empty one would
+       greet the first customer with an apology. Seeded once, only when there is
+       nothing there — it never overwrites what staff have written. */
+    try {
+      const help = await seedHelpArticles();
+      if (help.seeded) console.log(`Help Center seeded with ${help.seeded} starter articles`);
+    } catch (err) {
+      /* Same rule as the admin bootstrap below: seeding must never be the
+         reason the API fails to come up. */
+      console.error('Help Center seeding failed:', err.message);
+    }
 
     /* A fresh deployment has tables but no accounts, so nobody can sign in and
        nothing can create the first admin. Seed one from the environment. */

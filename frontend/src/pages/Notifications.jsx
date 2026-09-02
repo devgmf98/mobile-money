@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
-  Banknote, Bell, BellOff, Check, CheckCheck, CreditCard, Gift, Trash2, TriangleAlert,
+  Banknote, Bell, BellOff, Check, CheckCheck, CreditCard, Eye, Gift, Trash2, TriangleAlert, X,
 } from 'lucide-react';
 import { notificationAPI } from '../utils/api';
 import { useNotificationStore } from '../context/store';
@@ -19,6 +20,85 @@ const TYPES = {
 };
 
 const typeOf = (t) => TYPES[t] || { Icon: Bell, tone: 'muted', label: String(t || 'Notice').replace(/_/g, ' ') };
+
+/* The full notification, when the row is not enough.
+
+   A row clamps its message to keep the list scannable, so a long one — a reply
+   from support quoting the question it answers, say — is cut off exactly where
+   it starts to matter. This shows the whole thing, with the time it arrived
+   spelled out rather than as "12m ago". */
+function NotificationDetail({ notif, onClose, onDelete }) {
+  /* Escape closes it, and the page behind stops scrolling while it is open.
+
+     The scroller here is `.layout-body`, not the document, so locking `body`
+     alone would leave the list sliding around underneath — and a background
+     that moves while a dialog is open is how a modal ends up feeling like it
+     is somewhere else on the page. Both are pinned and both are restored to
+     whatever they were, rather than being reset to a hardcoded default. */
+  useEffect(() => {
+    if (!notif) return undefined;
+
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+
+    const scroller = document.querySelector('.layout-body');
+    const previous = {
+      body: document.body.style.overflow,
+      scroller: scroller ? scroller.style.overflow : null,
+    };
+    document.body.style.overflow = 'hidden';
+    if (scroller) scroller.style.overflow = 'hidden';
+
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previous.body;
+      if (scroller) scroller.style.overflow = previous.scroller;
+    };
+  }, [notif, onClose]);
+
+  if (!notif) return null;
+  const { Icon, tone, label } = typeOf(notif.type);
+
+  /* Rendered into <body> rather than inline in the list.
+
+     A `position: fixed` box is only fixed to the viewport while no ancestor
+     establishes a containing block — any transform, filter or `contain` on a
+     wrapper silently re-anchors it to that element, which puts the dialog
+     wherever that wrapper happens to sit and leaves you scrolling to find it.
+     Out here nothing can do that to it. */
+  return createPortal((
+    <div
+      className="nt-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label={notif.title}
+      onClick={onClose}
+    >
+      {/* Stops a click inside the panel from reaching the overlay behind it. */}
+      <div className="nt-detail" onClick={(e) => e.stopPropagation()}>
+        <div className="nt-detail-head">
+          <span className={'nt-icon tone-' + tone}><Icon size={18} /></span>
+          <div className="nt-detail-heading">
+            <strong>{notif.title}</strong>
+            <span className="nt-type">{label}</span>
+          </div>
+          <button type="button" className="nt-detail-close" onClick={onClose} aria-label="Close">
+            <X size={17} />
+          </button>
+        </div>
+
+        <p className="nt-detail-body">{notif.message}</p>
+
+        <div className="nt-detail-foot">
+          <time dateTime={notif.createdAt}>{fullTime(notif.createdAt)}</time>
+          <button type="button" className="nt-detail-delete" onClick={() => onDelete(notif.id)}>
+            <Trash2 size={14} /> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  ), document.body);
+}
 
 // Notifications are read relative to now, so "2h ago" beats a bare timestamp.
 const relativeTime = (value) => {
@@ -45,6 +125,7 @@ export default function Notifications() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('all');
   const [busyId, setBusyId] = useState(null);
+  const [detailId, setDetailId] = useState(null);
   const markAsRead = useNotificationStore((state) => state.markAsRead);
 
   useEffect(() => {
@@ -101,6 +182,9 @@ export default function Notifications() {
     try {
       await notificationAPI.delete(id);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
+      /* Nothing left to show — a panel open on a deleted notification would be
+         reading something that no longer exists. */
+      setDetailId((open) => (open === id ? null : open));
     } catch (error) {
       console.error('Failed to delete notification:', error);
     } finally {
@@ -169,7 +253,13 @@ export default function Notifications() {
                   return (
                     <li
                       key={notif.id}
-                      className={'nt-row' + (notif.isRead ? '' : ' is-unread')}
+                      className={'nt-row is-openable' + (notif.isRead ? '' : ' is-unread')}
+                      onClick={() => {
+                        setDetailId(notif.id);
+                        /* Opening one is reading it. Leaving it bold after the
+                           person has plainly read it is a chore done twice. */
+                        if (!notif.isRead) handleMarkAsRead(notif.id);
+                      }}
                     >
                       <span className={'nt-icon tone-' + tone}><Icon size={17} /></span>
 
@@ -185,7 +275,17 @@ export default function Notifications() {
                         </time>
                       </div>
 
-                      <div className="nt-actions">
+                      {/* Inside an openable row, so this stops its own clicks
+                          from also opening the detail panel. */}
+                      <div className="nt-actions" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={() => setDetailId(notif.id)}
+                          title="View details"
+                          aria-label={`View details of "${notif.title}"`}
+                        >
+                          <Eye size={15} />
+                        </button>
                         {!notif.isRead && (
                           <button
                             type="button"
@@ -213,6 +313,12 @@ export default function Notifications() {
                 })}
               </ul>
             )}
+
+            <NotificationDetail
+              notif={notifications.find((n) => n.id === detailId) || null}
+              onClose={() => setDetailId(null)}
+              onDelete={handleDelete}
+            />
           </div>
         </div>
       </div>

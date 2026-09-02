@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
-import { Banknote, Bell, ChartColumn, CircleUserRound, ClipboardList, Hourglass, LogOut, PanelLeftClose, PanelLeftOpen, QrCode, RefreshCw, Upload, User, UserCog } from 'lucide-react';
+import { Banknote, Bell, ChartColumn, CircleUserRound, ClipboardList, Hourglass, LogOut, Menu, PanelLeftClose, PanelLeftOpen, QrCode, RefreshCw, Upload, User, UserCog, X } from 'lucide-react';
 import { useAuthStore } from '../context/store';
 import { useNotificationStore } from '../context/store';
 import { notificationAPI } from '../utils/api';
@@ -144,6 +144,17 @@ export default function UserLayout() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // close it on navigation, so tapping a link does not leave the drawer open
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
+
+  // and on Escape, which is the expected way out of any overlay
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -155,6 +166,23 @@ export default function UserLayout() {
       try { localStorage.setItem('sidebarCollapsed', JSON.stringify(next)); } catch (e) {}
       return next;
     });
+  };
+
+  /* The collapsed rail clips its own overflow, so the hovered label is drawn as
+     a fixed element — which escapes the clip but then needs real coordinates,
+     since a fixed box with auto offsets falls back to its static position and
+     lands on top of the icon it is meant to name. CSS cannot know where a row
+     sits, so one delegated listener writes the position onto whichever item is
+     under the pointer and the stylesheet reads it back.
+
+     Same mechanism as the admin rail, so the two behave identically. */
+  const positionRailLabel = (e) => {
+    if (!collapsed) return;
+    const item = e.target.closest && e.target.closest('.nav-item, .sidebar-logout');
+    if (!item) return;
+    const r = item.getBoundingClientRect();
+    item.style.setProperty('--tip-x', `${Math.round(r.right + 12)}px`);
+    item.style.setProperty('--tip-y', `${Math.round(r.top + r.height / 2)}px`);
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -169,6 +197,16 @@ export default function UserLayout() {
 
   return (
     <div className="layout">
+      {/* Dims the page behind the drawer and gives a tap target to dismiss it.
+          Only rendered while open, so it never intercepts clicks otherwise. */}
+      {menuOpen && (
+        <div
+          className="sidebar-scrim"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       <aside className={`sidebar ${menuOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`} ref={menuRef}>
         <div className="sidebar-brand">
           <img src={mpLogo} alt="MoneyPay" className="brand-logo-full" />
@@ -183,8 +221,20 @@ export default function UserLayout() {
           >
             {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </button>
+
+          {/* Closes the drawer. It lives here rather than in the navbar because
+              the scrim covers the navbar while the drawer is open — a close
+              control up there would be unreachable. Small screens only. */}
+          <button
+            type="button"
+            className="drawer-close"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" onMouseOver={positionRailLabel}>
           <NavLink to={`${baseRoute}/dashboard`} className={({ isActive }) => (isActive ? 'nav-item nav-card active' : 'nav-item nav-card')} onClick={() => { if (window.innerWidth <= 768) setMenuOpen(false); }}>
             <span className="nav-icon"><ChartColumn size={18} /></span>
             <span className="nav-label">Dashboard</span>
@@ -235,7 +285,7 @@ export default function UserLayout() {
             <span className="nav-label">Profile</span>
           </NavLink>
         </nav>
-        <div className="sidebar-footer">
+        <div className="sidebar-footer" onMouseOver={positionRailLabel}>
           <button className="btn btn-outline logout-mobile sidebar-logout" onClick={() => { setMenuOpen(false); handleLogout(); }}>
             <span className="btn-icon"><LogOut size={18} /></span>
             <span className="btn-label">Logout</span>
@@ -245,11 +295,46 @@ export default function UserLayout() {
 
       <div className="main">
         <div className="navbar">
+          {/* Small screens only. The sidebar is `display: none` below 1033px
+              where the bottom nav takes over, but the bottom nav carries five
+              destinations and the sidebar carries seven or eight plus logout —
+              Profile, Notifications, Transactions, Pull from User and Admin
+              Requests had no route in on a phone at all. This opens the sidebar
+              as a drawer over the page. `toggleRef` was already wired into the
+              outside-click handler; only the button was ever missing. */}
+          <button
+            type="button"
+            className="navbar-menu-btn"
+            ref={toggleRef}
+            onClick={() => setMenuOpen(true)}
+            aria-expanded={menuOpen}
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
+
           {/* Logo below 769px, where the sidebar is off-canvas and the navbar
               is the only thing carrying the brand. */}
           <div className="navbar-brand">
             <img src={mpLogo} alt="MoneyPay" className="navbar-brand-logo" />
           </div>
+
+          {/* Collapsed, the rail has no room for a control beside a 38px logo
+              — the toggle sat under it and read as a stray icon. It moves up
+              here instead, beside the page it would expand back to. Same
+              placement as the admin layout. */}
+          {collapsed && (
+            <button
+              type="button"
+              className="navbar-sidebar-toggle"
+              onClick={toggleCollapse}
+              aria-pressed={collapsed}
+              aria-label="Show labels"
+              title="Show labels"
+            >
+              <PanelLeftOpen size={18} />
+            </button>
+          )}
 
           {/* From 769px up the sidebar is on screen with the brand at its top,
               so repeating the logo here said nothing. This names the active

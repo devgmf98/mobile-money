@@ -1,11 +1,11 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { canAccess, isStaff, isSubAdmin } from '../utils/roles';
-import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CirclePlus, CircleUserRound, CreditCard, Handshake, Hourglass, Landmark, LayoutDashboard, LogOut, Map, Menu, PanelLeftClose, PanelLeftOpen, Percent, Repeat, SendHorizontal, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
+import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CirclePlus, CircleUserRound, CreditCard, Handshake, Hourglass, Inbox, Landmark, LayoutDashboard, LogOut, Map, Menu, PanelLeftClose, PanelLeftOpen, Percent, Repeat, SendHorizontal, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
 import { useAuthStore } from '../context/store';
-import { adminAPI } from '../utils/api';
+import { adminAPI, contactAPI } from '../utils/api';
 import '../styles/layout.css';
 
 /* Title and icon shown in the navbar for the current route.
@@ -22,13 +22,14 @@ const PAGE_META = {
   '/admin/money-exchange': { title: 'Money Exchange', Icon: Repeat },
   '/admin/exchange-transactions': { title: 'Exchange Transactions', Icon: ArrowRightLeft },
   '/admin/transactions': { title: 'Transactions', Icon: CreditCard },
-  '/admin/users': { title: 'Users', Icon: Users },
+  '/admin/users': { title: 'All Users', Icon: Users },
   '/admin/notifications': { title: 'Notifications', Icon: Bell },
-  '/admin/reports': { title: 'Reports', Icon: TrendingUp },
+  '/admin/reports': { title: 'Billing Reports', Icon: TrendingUp },
+  '/admin/messages': { title: 'Messages', Icon: Inbox },
   '/admin/tiered-commission': { title: 'Tiered Commission', Icon: Wallet },
   '/admin/state-settings': { title: 'Destination Settings', Icon: Map },
-  '/admin/settings': { title: 'Settings', Icon: Settings },
-  '/admin/profile': { title: 'Profile', Icon: User },
+  '/admin/settings': { title: 'System Settings', Icon: Settings },
+  '/admin/profile': { title: 'User Profile', Icon: User },
 };
 
 // Fall back to the last path segment so a new route still shows something
@@ -89,6 +90,7 @@ export default function AdminLayout() {
   };
 
   const [pendingCount, setPendingCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [currencies, setCurrencies] = useState([]);
   const [exchangeRate, setExchangeRate] = useState(null);
   const [pairRates, setPairRates] = useState([]);
@@ -153,8 +155,24 @@ export default function AdminLayout() {
       }
     };
 
+    /* Unanswered customer messages, badged the same way as pending transfers.
+       Both roles work this queue, so both get the count. */
+    const loadMessages = async () => {
+      try {
+        if (!isStaff(user)) return setUnreadMessages(0);
+        const { data } = await contactAPI.newCount();
+        if (mounted) setUnreadMessages(Number(data.count || 0));
+      } catch (err) {
+        if (import.meta.env && import.meta.env.DEV) {
+          console.debug('Failed to load unanswered message count', err?.response?.data || err.message || err);
+        }
+        if (mounted) setUnreadMessages(0);
+      }
+    };
+
     loadPending();
-    const refreshHandler = () => { loadPending(); };
+    loadMessages();
+    const refreshHandler = () => { loadPending(); loadMessages(); };
     window.addEventListener('mpay:refresh-admin-commission', refreshHandler);
     return () => { mounted = false; window.removeEventListener('mpay:refresh-admin-commission', refreshHandler); };
   }, [user]);
@@ -251,6 +269,21 @@ export default function AdminLayout() {
     navigate('/login');
   };
 
+  /* The collapsed rail clips its own overflow, so the hovered label is drawn as
+     a fixed element — which escapes the clip but then needs real coordinates,
+     since a fixed box with auto offsets falls back to its static position and
+     lands on top of the icon it is meant to name. CSS cannot know where a row
+     sits, so one delegated listener writes the position onto whichever item is
+     under the pointer and the stylesheet reads it back. */
+  const positionRailLabel = (e) => {
+    if (!collapsed) return;
+    const item = e.target.closest && e.target.closest('.sidebar-item, .sidebar-logout');
+    if (!item) return;
+    const r = item.getBoundingClientRect();
+    item.style.setProperty('--tip-x', `${Math.round(r.right + 12)}px`);
+    item.style.setProperty('--tip-y', `${Math.round(r.top + r.height / 2)}px`);
+  };
+
   return (
     <div className={`admin-layout ${collapsed ? 'sidebar-collapsed' : ''}`}>
       {/* Dims the page behind the drawer and gives a tap target to dismiss it.
@@ -292,7 +325,7 @@ export default function AdminLayout() {
           </button>
         </div>
 
-        <nav className="sidebar-menu">
+        <nav className="sidebar-menu" onMouseOver={positionRailLabel}>
           <span className="sidebar-group">Overview</span>
           {allow('/admin/dashboard') && (
               <NavLink data-label="Dashboard" to="/admin/dashboard" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><LayoutDashboard size={18} /><span className="sidebar-label">Dashboard</span></NavLink>
@@ -346,13 +379,24 @@ export default function AdminLayout() {
               <NavLink data-label="Transactions" to="/admin/transactions" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><CreditCard size={18} /><span className="sidebar-label">Transactions</span></NavLink>
             )}
           {allow('/admin/users') && (
-              <NavLink data-label="Users" to="/admin/users" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Users size={18} /><span className="sidebar-label">Users</span></NavLink>
+              <NavLink data-label="All Users" to="/admin/users" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Users size={18} /><span className="sidebar-label">All Users</span></NavLink>
             )}
           {allow('/admin/notifications') && (
               <NavLink data-label="Notifications" to="/admin/notifications" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Bell size={18} /><span className="sidebar-label">Notifications</span></NavLink>
             )}
           {allow('/admin/reports') && (
-              <NavLink data-label="Reports" to="/admin/reports" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><TrendingUp size={18} /><span className="sidebar-label">Reports</span></NavLink>
+              <NavLink data-label="Billing Reports" to="/admin/reports" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><TrendingUp size={18} /><span className="sidebar-label">Billing Reports</span></NavLink>
+          )}
+          {allow('/admin/messages') && (
+              <NavLink data-label="Messages" to="/admin/messages" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}>
+                <Inbox size={18} />
+                <span className="sidebar-label">Messages</span>
+                {/* Same badge as Transfer Requests — it already handles sitting
+                    on the icon's corner when the rail is collapsed. */}
+                {unreadMessages > 0 && (
+                  <span className="sidebar-badge">{unreadMessages}</span>
+                )}
+              </NavLink>
             )}
           <span className="sidebar-group">Configuration</span>
           {allow('/admin/tiered-commission') && (
@@ -362,10 +406,10 @@ export default function AdminLayout() {
               <NavLink data-label="Destination Settings" to="/admin/state-settings" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Map size={18} /><span className="sidebar-label">Destination Settings</span></NavLink>
             )}
           {allow('/admin/settings') && (
-              <NavLink data-label="Settings" to="/admin/settings" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Settings size={18} /><span className="sidebar-label">Settings</span></NavLink>
+              <NavLink data-label="System Settings" to="/admin/settings" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Settings size={18} /><span className="sidebar-label">System Settings</span></NavLink>
             )}
           {allow('/admin/profile') && (
-              <NavLink data-label="Profile" to="/admin/profile" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><User size={18} /><span className="sidebar-label">Profile</span></NavLink>
+              <NavLink data-label="User Profile" to="/admin/profile" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><User size={18} /><span className="sidebar-label">User Profile</span></NavLink>
             )}
         </nav>
 
@@ -426,7 +470,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <div className="sidebar-footer">
+        <div className="sidebar-footer" onMouseOver={positionRailLabel}>
           <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
             <button onClick={handleLogout} className="btn btn-danger btn-block sidebar-logout">
               <span className="btn-icon"><LogOut size={18} /></span>
@@ -487,7 +531,7 @@ export default function AdminLayout() {
             <div
               className="admin-profile-icon"
               onClick={() => navigate('/admin/profile')}
-              title="Profile"
+              title="User Profile"
             >
               {user?.profileImage
                 ? <img src={user.profileImage} alt="" className="navbar-avatar" />

@@ -1,0 +1,479 @@
+/* Help Center.
+
+   Three bands: a search-first hero, a grid of topics, then the answers. The
+   page is reachable signed in or out, so it carries its own shell rather than
+   sitting inside a dashboard layout. Everything is scoped to .help-*. */
+
+.help-page {
+  min-height: 100vh;
+  background: var(--bg, #EAF6F0);
+  padding-bottom: 44px;
+}
+
+/* ---- hero ----------------------------------------------------------------
+   Search gets the top of the page because someone arriving here has a question
+   in mind, not a wish to browse a list of headings. */
+.help-hero {
+  padding: 44px 16px 40px;
+  background: linear-gradient(160deg, var(--primary-dark, #005C2E), var(--primary, #007A3D));
+  color: #fff;
+}
+
+.help-hero-inner { max-width: 720px; margin: 0 auto; text-align: center; }
+
+.help-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.help-hero h1 {
+  margin: 14px 0 6px;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.help-hero p { margin: 0 0 22px; font-size: 14.5px; color: rgba(255, 255, 255, 0.85); }
+
+.help-search {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 54px;
+  padding: 0 8px 0 16px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--text-light, #5B6B66);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+}
+
+.help-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  font-size: 15px;
+  color: var(--text-dark, #16302B);
+  font-family: inherit;
+}
+
+.help-search input:focus { outline: none; }
+
+.help-search-clear {
+  min-height: 0;
+  padding: 8px 13px;
+  border: none;
+  border-radius: 9px;
+  background: var(--surface-2, #F7FAF9);
+  color: var(--text-light, #5B6B66);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.help-search-clear:hover { color: var(--primary-dark, #005C2E); }
+
+/* ---- shell ---------------------------------------------------------------
+   Pulled up over the hero so the topics read as part of the same object. */
+.help-shell {
+  max-width: 720px;
+  margin: -22px auto 0;
+  padding: 0 16px;
+}
+
+/* ---- topics --------------------------------------------------------------
+   For the people who do not know what to call the thing they are looking for.
+   An icon each, so they are told apart at a glance rather than read one by
+   one. */
+.help-topics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.help-topic {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 0;
+  padding: 13px 14px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 13px;
+  background: var(--surface, #fff);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 40, 34, 0.05);
+  transition: border-color 130ms ease, transform 130ms ease, box-shadow 130ms ease;
+}
+
+.help-topic:hover {
+  border-color: var(--primary, #007A3D);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16, 40, 34, 0.09);
+}
+
+.help-topic.is-on {
+  border-color: var(--primary, #007A3D);
+  background: var(--light, #E8F7F0);
+}
+
+.help-topic-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary-dark, #005C2E);
+}
+
+.help-topic.is-on .help-topic-icon { background: var(--primary, #007A3D); color: #fff; }
+
+.help-topic-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-dark, #16302B);
+  line-height: 1.3;
+}
+
+.help-topic-count {
+  flex: none;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-light, #5B6B66);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- what is on screen, and the way back out of it ---- */
+.help-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 11px 15px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  font-size: 13px;
+  color: var(--text-light, #5B6B66);
+}
+
+.help-filterbar strong { color: var(--text-dark, #16302B); }
+
+.help-clear {
+  min-height: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--primary-dark, #005C2E);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.help-clear:hover { background: var(--light, #E8F7F0); border-color: var(--primary, #007A3D); }
+
+/* Reloading holds the previous answers at reduced opacity rather than blanking
+   the page between keystrokes. */
+.help-body { transition: opacity 140ms ease; }
+.help-body.is-loading { opacity: 0.55; }
+
+.help-error {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #FEE2E2;
+  color: #B42318;
+  font-size: 13px;
+}
+
+/* ---- most read -----------------------------------------------------------
+   Only rendered once the counts mean something. Before anyone has read
+   anything it would just be the seed order wearing a "popular" label. */
+.help-popular { margin-bottom: 24px; }
+
+.help-popular h2,
+.help-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 9px;
+  padding-left: 2px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.help-popular h2 svg { color: #C2410C; }
+
+/* Two across, so four entries fill two rows rather than leaving one orphan on
+   a line of its own. */
+.help-popular-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 10px;
+}
+
+.help-popular-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 0;
+  padding: 13px 15px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-left: 3px solid var(--primary, #007A3D);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  text-align: left;
+  cursor: pointer;
+  transition: box-shadow 130ms ease, transform 130ms ease;
+}
+
+.help-popular-item:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16, 40, 34, 0.09); }
+
+.help-popular-topic {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--primary-dark, #005C2E);
+}
+
+.help-popular-q { font-size: 13.5px; font-weight: 600; color: var(--text-dark, #16302B); line-height: 1.4; }
+
+/* ---- answers ------------------------------------------------------------- */
+.help-group { margin-bottom: 22px; }
+
+.help-group-icon {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary-dark, #005C2E);
+}
+
+.help-group-head i {
+  margin-left: auto;
+  font-style: normal;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.help-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  overflow: hidden;
+}
+
+.help-item + .help-item { border-top: 1px solid var(--border, #E3EAE7); }
+.help-item.is-open { background: var(--surface-2, #F7FAF9); }
+
+.help-question {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 0;
+  padding: 15px 18px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-dark, #16302B);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.help-q-text { flex: 1; line-height: 1.4; }
+.help-question:hover { color: var(--primary-dark, #005C2E); }
+
+.help-chevron {
+  flex: none;
+  color: var(--text-light, #5B6B66);
+  transition: transform 180ms ease;
+}
+
+.help-item.is-open .help-chevron { transform: rotate(180deg); color: var(--primary, #007A3D); }
+.help-item.is-open .help-question { color: var(--primary-dark, #005C2E); }
+
+.help-draft {
+  font-style: normal;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #FEF3C7;
+  color: #B45309;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* The answer, wrapped rather than clamped — this is the whole point of the
+   page, so nothing here truncates. */
+.help-answer { padding: 0 18px 16px; }
+
+.help-answer p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.68;
+  color: var(--text-light, #5B6B66);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* An answer that did not answer it is the moment someone needs a person, so
+   the way to one sits right there rather than at the bottom of the page. */
+.help-answer-foot {
+  display: block;
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px dashed var(--border, #E3EAE7);
+  font-size: 12.5px;
+  color: var(--text-light, #5B6B66);
+}
+
+.help-answer-foot a { color: var(--primary-dark, #005C2E); font-weight: 600; }
+
+.help-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 52px 20px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+  text-align: center;
+}
+
+.help-empty svg { color: var(--text-light, #5B6B66); opacity: 0.7; }
+.help-empty h3 { margin: 8px 0 0; font-size: 17px; color: var(--text-dark, #16302B); }
+.help-empty p { margin: 0; font-size: 13.5px; }
+.help-empty .help-cta { margin-top: 14px; }
+
+/* ---- foot ---------------------------------------------------------------- */
+.help-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+}
+
+.help-foot-copy { display: flex; align-items: center; gap: 12px; }
+
+.help-foot-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: var(--light, #E8F7F0);
+  color: var(--primary-dark, #005C2E);
+}
+
+.help-foot-copy strong { font-size: 14.5px; color: var(--text-dark, #16302B); }
+.help-foot-copy p { margin: 2px 0 0; font-size: 12.5px; color: var(--text-light, #5B6B66); }
+
+.help-foot-actions { display: inline-flex; align-items: center; gap: 14px; }
+
+.help-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-light, #5B6B66);
+  text-decoration: none;
+}
+
+.help-back:hover { color: var(--primary-dark, #005C2E); }
+
+.help-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  border-radius: 10px;
+  background: var(--primary, #007A3D);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.help-cta:hover { background: var(--primary-dark, #005C2E); }
+
+@media (max-width: 560px) {
+  .help-hero { padding: 32px 14px 34px; }
+  .help-hero h1 { font-size: 24px; }
+  .help-search { height: 50px; }
+  .help-topics { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .help-foot { flex-direction: column; align-items: stretch; }
+  .help-foot-actions { justify-content: space-between; }
+}
+
+/* ---- dark ---------------------------------------------------------------- */
+[data-theme="dark"] .help-topic,
+[data-theme="dark"] .help-list,
+[data-theme="dark"] .help-foot,
+[data-theme="dark"] .help-empty,
+[data-theme="dark"] .help-filterbar,
+[data-theme="dark"] .help-popular-item {
+  background: #12211C;
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .help-item + .help-item { border-color: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .help-item.is-open { background: rgba(255, 255, 255, 0.03); }
+[data-theme="dark"] .help-answer-foot { border-color: rgba(255, 255, 255, 0.12); }
+[data-theme="dark"] .help-topic.is-on { background: rgba(0, 122, 61, 0.18); }
+
+[data-theme="dark"] .help-topic-label,
+[data-theme="dark"] .help-question,
+[data-theme="dark"] .help-popular-q,
+[data-theme="dark"] .help-empty h3,
+[data-theme="dark"] .help-foot-copy strong,
+[data-theme="dark"] .help-filterbar strong { color: #E6F2EC; }
+
+[data-theme="dark"] .help-answer p,
+[data-theme="dark"] .help-group-head,
+[data-theme="dark"] .help-popular h2,
+[data-theme="dark"] .help-foot-copy p,
+[data-theme="dark"] .help-filterbar { color: #9FB3AB; }
+
+[data-theme="dark"] .help-topic-icon,
+[data-theme="dark"] .help-group-icon,
+[data-theme="dark"] .help-foot-icon { background: rgba(0, 122, 61, 0.22); color: #6EE7B7; }

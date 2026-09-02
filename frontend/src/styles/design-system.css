@@ -777,8 +777,9 @@ body::-webkit-scrollbar {
    These are (0,1,0), which outranks the bare `button` element selector.
    ========================================================================== */
 
-:is(.admin-menu-btn, .admin-drawer-close, .password-toggle, .modal-close,
-    .icon-btn, .sidebar-toggle, .qr-scanner-close, .close-btn,
+:is(.admin-menu-btn, .navbar-menu-btn, .admin-drawer-close, .drawer-close,
+    .password-toggle,
+    .modal-close, .icon-btn, .sidebar-toggle, .qr-scanner-close, .close-btn,
     .pm-swap, .conv-swap, .converter-swap-btn, .admin-id-copy) {
   min-height: 0;
   padding: 0;

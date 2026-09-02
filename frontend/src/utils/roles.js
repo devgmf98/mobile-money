@@ -16,6 +16,8 @@ export const SUB_ADMIN_PATHS = [
   '/admin/exchange-transactions',
   '/admin/transactions',
   '/admin/notifications',
+  /* Sub-admins answer customer messages, so the inbox is theirs too. */
+  '/admin/messages',
   '/admin/settings',
   '/admin/profile',
 ];

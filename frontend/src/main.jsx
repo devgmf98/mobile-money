@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 import '@fontsource-variable/inter'
 // Helper to decode JWT
 function decodeJWT(token) {
@@ -144,6 +144,12 @@ const AdminTieredCommission = React.lazy(() => import('./pages/AdminTieredCommis
 const AdminStateSettings = React.lazy(() => import('./pages/AdminStateSettings'))
 const AdminStateSend = React.lazy(() => import('./pages/AdminStateSend'))
 const AdminReports = React.lazy(() => import('./pages/AdminReports'))
+const Contact = React.lazy(() => import('./pages/Contact'))
+const Help = React.lazy(() => import('./pages/Help'))
+const Privacy = React.lazy(() => import('./pages/Privacy'))
+const Terms = React.lazy(() => import('./pages/Terms'))
+const Security = React.lazy(() => import('./pages/Security'))
+const AdminMessages = React.lazy(() => import('./pages/AdminMessages'))
 const AdminStatePending = React.lazy(() => import('./pages/AdminStatePending'))
 const AdminCurrency = React.lazy(() => import('./pages/AdminCurrency'))
 const AdminCurrencyRates = React.lazy(() => import('./pages/AdminCurrencyRates'))
@@ -175,7 +181,7 @@ import './styles/auth.css'
 import './components/BottomNav.module.css'
 import './styles/layout.css'
 import './components/HamburgerMenu.css'
-import './pages/UserDashboard.module.css'
+import './pages/DashboardMobile.module.css'
 import './styles/user-dashboard.css'
 import './styles/footer.css'
 import './styles/qr-scanner.css'
@@ -193,6 +199,9 @@ import './styles/profile-flow.css'
 import './styles/composition-chart.css'
 import './styles/admin-dashboard.css'
 import './styles/admin-reports.css'
+import './styles/admin-messages.css'
+import './styles/contact.css'
+import './styles/help.css'
 import './styles/admin-users.css'
 import './styles/admin-transactions.css'
 import './styles/select.css'
@@ -209,7 +218,6 @@ import './styles/admin-currency.css'
 import './styles/admin-currency-rates.css'
 import './styles/admin-money-exchange.css'
 import './styles/admin-exchange-transactions.css'
-import './pages/AgentDashboard.module.css'
 import './styles/pending-withdrawals.css'
 import './styles/pending-withdrawals-flow.css'
 import './styles/qr-scan.css'
@@ -251,7 +259,18 @@ function RootLayout() {
   return (
     <>
       <ScrollRestoration />
-      <Outlet />
+      {/* The nested layouts each wrap their own Outlet, but the routes that sit
+          directly under root had no boundary — every one of them was eagerly
+          imported, so nothing had ever suspended here.
+
+          The moment a lazy route joined them, clicking a link to it became a
+          synchronous update that suspends with nowhere to catch it, which React
+          reports as "a component suspended while responding to synchronous
+          input". The boundary belongs here whatever else is added later, rather
+          than each public route having to remember not to be lazy. */}
+      <Suspense fallback={<div className="route-loading" aria-busy="true">Loading...</div>}>
+        <Outlet />
+      </Suspense>
     </>
   );
 }
@@ -268,6 +287,15 @@ const router = createBrowserRouter(
         { path: '/login', element: <Login /> },
         { path: '/register', element: <Register /> },
         { path: '/forgot-password', element: <ForgotPassword /> },
+          /* Reachable signed in or out: whoever needs support most may be the
+             person who cannot get into their account. */
+          { path: '/contact', element: <Contact /> },
+          { path: '/help', element: <Help /> },
+          /* The three the footer links to. Public for the same reason: a
+             policy you must sign in to read is one nobody can rely on. */
+          { path: '/privacy', element: <Privacy /> },
+          { path: '/terms', element: <Terms /> },
+          { path: '/security', element: <Security /> },
         {
           path: '/user',
           element: (
@@ -325,6 +353,7 @@ const router = createBrowserRouter(
             /* The sidebar has linked here since before the page existed — the
                route was simply missing, so the link went nowhere. */
             { path: 'reports', element: <AdminOnly path="/admin/reports"><AdminReports /></AdminOnly> },
+            { path: 'messages', element: <AdminOnly path="/admin/messages"><AdminMessages /></AdminOnly> },
             { path: 'topup', element: <AdminOnly path="/admin/topup"><AdminTopup /></AdminOnly> },
             { path: 'push-money', element: <AdminOnly path="/admin/push-money"><AdminPushMoney /></AdminOnly> },
             { path: 'withdraw-agent', element: <AdminOnly path="/admin/withdraw-agent"><AdminWithdraw /></AdminOnly> },

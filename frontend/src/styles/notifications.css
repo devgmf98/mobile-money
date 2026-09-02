@@ -551,3 +551,125 @@
     box-shadow: 0 0 0 0 rgba(0, 168, 107, 0);
   }
 }
+
+/* ---- detail panel --------------------------------------------------------
+   A row clamps its message so the list stays scannable; this is where the
+   whole thing can be read. */
+.nt-row.is-openable { cursor: pointer; }
+
+.nt-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 30, 24, 0.45);
+}
+
+.nt-detail {
+  width: 100%;
+  max-width: 520px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 20px 22px 18px;
+  border-radius: 16px;
+  background: var(--surface, #fff);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+}
+
+.nt-detail-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+}
+
+.nt-detail-heading { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+
+.nt-detail-heading strong {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+  line-height: 1.35;
+}
+
+.nt-detail-heading .nt-type { align-self: flex-start; }
+
+.nt-detail-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-light, #5B6B66);
+  cursor: pointer;
+}
+
+.nt-detail-close:hover { background: var(--surface-2, #F7FAF9); color: var(--text-dark, #16302B); }
+
+/* The whole message, wrapped rather than clamped — this is the one place it is
+   read in full, so nothing here truncates. */
+.nt-detail-body {
+  margin: 16px 0 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-dark, #16302B);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.nt-detail-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border, #E3EAE7);
+  font-size: 12px;
+  color: var(--text-light, #5B6B66);
+}
+
+.nt-detail-delete {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 7px 12px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--error, #DC2626);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nt-detail-delete:hover { background: #FEE2E2; border-color: #FCA5A5; }
+
+@media (max-width: 520px) {
+  .nt-detail { padding: 18px 16px 16px; }
+  .nt-detail-foot { flex-direction: column; align-items: stretch; gap: 10px; }
+  .nt-detail-delete { justify-content: center; }
+}
+
+[data-theme="dark"] .nt-detail {
+  background: #12211C;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="dark"] .nt-detail-head,
+[data-theme="dark"] .nt-detail-foot { border-color: rgba(255, 255, 255, 0.10); }
+
+[data-theme="dark"] .nt-detail-heading strong,
+[data-theme="dark"] .nt-detail-body { color: #E6F2EC; }
+
+[data-theme="dark"] .nt-detail-close:hover { background: rgba(255, 255, 255, 0.06); }

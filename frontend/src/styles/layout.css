@@ -76,9 +76,15 @@
 }
 
 /* Collapsed sidebar: icons only */
+/* Matched to the admin rail so the two read as the same component. It was
+   72px + 8px of padding, rendering 80px against the admin's 64px, which is
+   most of why they looked unrelated. */
 .sidebar.collapsed {
-  width: 72px;
-  padding: 12px 8px;
+  width: 64px;
+  /* No padding at the top: the brand block is the first thing in the rail and
+     the admin's sits flush, so 12px here pushed every row 8px lower than the
+     admin's for the whole column. */
+  padding: 0 0 12px;
 }
 
 .sidebar.collapsed .sidebar-brand h2 {
@@ -97,14 +103,74 @@
   display: none;
 }
 
-.sidebar.collapsed .nav-item,
-.sidebar.collapsed .nav-card {
-  justify-content: center;
+/* On the rail an item is an icon, not a card.
+
+   `.nav-card` paints a tinted gradient and a border on every row, which at full
+   width reads as a list of cards and at 64px reads as a stack of chunky tiles —
+   nothing like the admin rail, where a row is plain until it is hovered or
+   current. Stripped back to the same geometry the admin uses. */
+/* The same 44px square the admin rail uses, stated as a fixed size rather than
+   padding: the wide-screen block sets `margin: 3px 14px` for the expanded
+   sidebar, and any size derived from padding inherits that gutter and comes
+   out the wrong width. Selector is (0,4,0) so it wins there too. */
+/* `.sidebar-nav` is a flex column with `gap: 4px`, and flex margins do not
+   collapse, so the rows sat 52px apart against the admin's 46px. The admin's
+   menu is block layout, where its 2px margins collapse into one. */
+.sidebar.collapsed .sidebar-nav {
+  gap: 0;
+  /* The admin rail groups its items and the first group's separator opens 5px
+     above the first icon. There are no groups here, so the space is taken as
+     margin instead — otherwise the two rails start their columns at different
+     heights. */
+  margin-top: 9px;
 }
 
-.sidebar.collapsed .badge-count {
-  display: none;
+.sidebar.collapsed .sidebar-nav .nav-item,
+.sidebar.collapsed .sidebar-nav .nav-card,
+.sidebar.collapsed .nav-item,
+.sidebar.collapsed .nav-card {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 1px auto;
+  justify-content: center;
+  gap: 0;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  border-radius: 12px;
 }
+
+/* Current and hovered rows keep their fill — that is the part worth seeing. */
+.sidebar.collapsed .sidebar-nav .nav-item.active,
+.sidebar.collapsed .sidebar-nav .nav-card.active {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-color: transparent;
+}
+
+.sidebar.collapsed .sidebar-nav .nav-item:hover:not(.active),
+.sidebar.collapsed .sidebar-nav .nav-card:hover:not(.active) {
+  background: var(--light, #E8F7F0);
+  border-color: transparent;
+}
+
+/* A square tile the size of the others reads as "selected" only weakly, so the
+   admin rail pairs it with a marker on the rail edge. Same here. */
+.sidebar.collapsed .sidebar-nav .nav-item.active::before,
+.sidebar.collapsed .sidebar-nav .nav-card.active::before {
+  content: '';
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 3px 3px 0;
+  background: currentColor;
+}
+
+/* The badge is not hidden on the rail — it is moved onto the icon's corner
+   further down, the way the admin sidebar does it. */
 
 /* When collapsed: show a floating label tooltip on nav-item hover */
 .sidebar.collapsed .nav-item {
@@ -115,35 +181,79 @@
   display: none; /* keep label hidden in normal flow */
 }
 
+/* Hovering one item brings back that item, icon and label — the same rail
+   behaviour the admin sidebar has, so the two do not diverge.
+
+   This was `position: absolute; left: 76px`, placed outside a rail whose
+   `overflow-y: auto` makes `overflow-x` compute to `auto` as well, so the
+   tooltip was clipped away and hovering an icon surfaced nothing at all.
+
+   It escapes that clip by going `position: fixed` with coordinates written
+   onto the row by the nav's mouseover handler. Without those a fixed box falls
+   back to its static position and lands on top of the icon it is naming. */
 .sidebar.collapsed .nav-item:hover .nav-label {
-  display: block;
-  position: absolute;
-  left: 76px; /* place to the right of collapsed sidebar */
-  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  position: fixed;
+  left: var(--tip-x, 100%);
+  top: var(--tip-y, 50%);
   transform: translateY(-50%);
-  background: white;
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 6px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 8px 13px;
+  background: #04331E;
+  color: #FFFFFF;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
   white-space: nowrap;
-  z-index: 9999;
-  min-width: 120px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  z-index: 400;
+  pointer-events: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
 }
 
-[data-theme="dark"] .sidebar.collapsed .nav-item:hover .nav-label {
-  background: #1E293B;
-  color: var(--text);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+/* Either of these makes the row the containing block for its own fixed label,
+   which drags the flyout back inside the clip and puts it in the wrong place.
+   The nudge and the brightness are decorative; the label is not.
+
+   `.sidebar-nav` and `.active` are in the selector to out-specify
+   `.sidebar-nav .nav-item.active:hover`, which sets brightness(1.04) further
+   down this file. Without them the two tie on specificity, the later rule
+   wins, and the current page is the one item whose label lands in the wrong
+   place — which is exactly how it behaved. */
+/* The current page's label takes the lighter pill, as on the admin rail — the
+   near-black one against its filled green tile read as two unrelated things. */
+.sidebar.collapsed .sidebar-nav .nav-item.active:hover .nav-label,
+.sidebar.collapsed .sidebar-nav .nav-card.active:hover .nav-label {
+  background: var(--primary-dark, #005C2E);
 }
 
-.sidebar.collapsed .nav-item:hover .badge-count {
-  display: inline-flex; /* show badge if present when hovering */
+.sidebar.collapsed .sidebar-nav .nav-item:hover,
+.sidebar.collapsed .sidebar-nav .nav-item.active:hover,
+.sidebar.collapsed .sidebar-nav .nav-card.active:hover {
+  transform: none;
+  filter: none;
+}
+
+/* The badge belongs on the icon's corner, where it is visible at rest rather
+   than only while hovering — an unread count you have to go looking for is not
+   doing its job. Matches the admin rail. */
+.sidebar.collapsed .badge-count {
+  display: inline-flex;
   position: absolute;
-  right: -28px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 4px;
+  right: 10px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 2px solid var(--surface, #fff);
+  background: #DC2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .sidebar .sidebar-toggle {
@@ -192,12 +302,62 @@
   color: var(--text-light);
 }
 
+/* Logout, sidebar expanded.
+
+   It was a 91px pale-green outline — the same treatment as a secondary link,
+   for the one control that ends your session, and washed out enough to read
+   as disabled. Collapsing the sidebar then turned it into a solid red tile,
+   so the same control changed identity depending on the sidebar's width.
+
+   Now it is the destructive button it always was, in both states: full width,
+   filled, and the only red in the sidebar. */
 .sidebar .sidebar-logout {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  font-size: 12px;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  height: 40px;
+  min-height: 0;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: var(--danger, #DC2626);
+  border: 1px solid var(--danger, #DC2626);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.sidebar .sidebar-logout:hover {
+  background: var(--danger-dark, #B91C1C);
+  border-color: var(--danger-dark, #B91C1C);
+  color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(185, 28, 28, 0.28);
+}
+
+.sidebar .sidebar-logout:focus-visible {
+  outline: 2px solid var(--danger, #DC2626);
+  outline-offset: 2px;
+}
+
+/* Dark flips `--danger` to a pale #F87171, where white text falls to 2.77:1.
+   Dark ink on the same red reads at 6.15:1. Matches the collapsed tile. */
+[data-theme="dark"] .sidebar .sidebar-logout,
+[data-theme="dark"] .sidebar .sidebar-logout:hover {
+  color: #3B0A0A;
+}
+
+[data-theme="dark"] .sidebar .sidebar-logout:hover {
+  background: var(--danger, #F87171);
+  border-color: var(--danger, #F87171);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.34);
+}
+
+/* 20px on every side made the button look inset from a sidebar it spans. */
+.sidebar .sidebar-footer {
+  padding: 14px 12px 16px;
 }
 
 .sidebar .btn-icon {
@@ -214,6 +374,91 @@
 /* Hide logout label when collapsed */
 .sidebar.collapsed .sidebar-logout .btn-label {
   display: none;
+}
+
+/* ---- logout in the icons-only rail --------------------------------------
+   It was a 42x36 outlined pill in a 20px-padded footer, which read as a stray
+   card bolted to the bottom of a column of tiles. The admin rail makes it the
+   same 44px square the nav items are, filled red — the one destructive action,
+   said once. */
+.sidebar.collapsed .sidebar-footer {
+  padding: 8px 0 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-logout {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  margin: 0 auto;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: var(--danger, #DC2626);
+  border: 1px solid var(--danger, #DC2626);
+  color: #FFFFFF;
+}
+
+.sidebar.collapsed .sidebar-logout:hover {
+  background: var(--danger-dark, #B91C1C);
+  border-color: var(--danger-dark, #B91C1C);
+  color: #FFFFFF;
+}
+
+.sidebar.collapsed .sidebar-logout .btn-icon { margin: 0; width: auto; }
+
+/* In dark mode `--danger` flips to a pale #F87171, where a white icon lands at
+   2.77:1 — under the 3:1 a non-text icon needs to stay legible. Dark ink on
+   that same red reads at 6.15:1 and keeps the tile unmistakably destructive. */
+[data-theme="dark"] .sidebar.collapsed .sidebar-logout {
+  color: #3B0A0A;
+}
+
+[data-theme="dark"] .sidebar.collapsed .sidebar-logout:hover {
+  background: var(--danger, #F87171);
+  border-color: var(--danger, #F87171);
+  color: #3B0A0A;
+}
+
+/* The label it lost, on hover — the same flyout the nav icons get, positioned
+   the same way and for the same reason. */
+.sidebar.collapsed .sidebar-logout::after {
+  content: 'Logout';
+  position: fixed;
+  left: var(--tip-x, 100%);
+  top: var(--tip-y, 50%);
+  transform: translateY(-50%);
+  background: #04331E;
+  color: #FFFFFF;
+  padding: 8px 13px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 400;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  transition: opacity 0.12s ease;
+}
+
+.sidebar.collapsed .sidebar-logout:hover::after { opacity: 1; }
+
+/* On phones the sidebar is a drawer, not a rail — the button goes back to
+   being a full-width labelled control and the flyout has no place. */
+@media screen and (max-width: 768px) {
+  .sidebar.collapsed .sidebar-footer { display: block; padding: inherit; }
+  .sidebar.collapsed .sidebar-logout {
+    width: 100%; height: auto; border-radius: 10px; gap: 8px; padding: 8px 10px;
+  }
+  .sidebar.collapsed .sidebar-logout .btn-label { display: inline; }
+  .sidebar.collapsed .sidebar-logout::after { display: none; }
 }
 
 /* Make logout full width when not collapsed on narrow viewports */
@@ -2642,7 +2887,7 @@ select.form-input:focus {
   }
 
   .sidebar.collapsed {
-    width: 80px;
+    width: 64px;
   }
 
   .sidebar.collapsed .sidebar-brand h2,
@@ -3179,23 +3424,25 @@ select.form-input:focus {
   }
 
   .sidebar.collapsed {
-    width: 80px;
+    width: 64px;
   }
 }
 
 @media screen and (min-width: 1025px) {
+  /* 248px, the width the admin sidebar uses. At 280 the longest label in this
+     tree ("Pending Withdrawals", 111px) left 121px of empty column beside it,
+     and the 340px step below left 181px. */
   .sidebar {
-    width: 280px;
+    width: 248px;
   }
 }
 
 @media screen and (min-width: 1440px) {
-  .sidebar {
-    width: 340px;
-  }
-
+  /* No width step here any more — a wider screen is not a reason for a wider
+     menu when the labels stopped needing the room two breakpoints ago. The
+     248px above carries. */
   .sidebar.collapsed {
-    width: 80px;
+    width: 64px;
   }
 
   .sidebar-nav .nav-item {
@@ -3296,6 +3543,55 @@ select.form-input:focus {
 .sidebar.collapsed .sidebar-brand .sidebar-toggle,
 .admin-layout.sidebar-collapsed .sidebar-brand .sidebar-toggle {
   margin: 0 auto;
+}
+
+/* Only one of the two is ever on screen. Below 769px the sidebar is an
+   off-canvas drawer with nothing to expand, the navbar control is hidden, and
+   this one takes back over. */
+.sidebar.collapsed .sidebar-brand .sidebar-toggle { display: none; }
+
+@media screen and (max-width: 768px) {
+  .navbar .navbar-sidebar-toggle { display: none; }
+  .sidebar.collapsed .sidebar-brand .sidebar-toggle { display: inline-flex; }
+}
+
+/* The expand control while the rail is icons-only. It lives in the navbar
+   because a 64px rail has no room for a button beside the logo mark — down
+   there it read as a stray icon rather than a control. Mirrors the admin. */
+/* Scoped to `.navbar` on purpose: the admin bar is `.admin-navbar` and carries
+   its own copy of this rule, and two unscoped rules of equal specificity in
+   different stylesheets would let import order decide the winner. */
+.navbar .navbar-sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  /* No margin of its own. The navbar already pads 20px and gaps 16px between
+     its children, so 16px left and 14px right on top of that pushed the rail
+     36px from the toggle and the toggle 30px from the page title — a third of
+     the bar spent on empty space before the first word. */
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 9px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.navbar .navbar-sidebar-toggle:hover {
+  color: var(--primary-dark, #005C2E);
+  border-color: var(--primary, #007A3D);
+  background: var(--surface-2, #F7FAF9);
+}
+
+.navbar .navbar-sidebar-toggle:focus-visible {
+  outline: 2px solid var(--primary, #007A3D);
+  outline-offset: 2px;
 }
 
 /* ==========================================================================
@@ -3512,3 +3808,246 @@ select.form-input:focus {
 
 [data-theme="dark"] .layout .navbar-page-title { color: #E2E8F0; }
 [data-theme="dark"] .layout .navbar-page-title svg { color: #A9EBD1; }
+
+
+/* ==========================================================================
+   Menu button and drawer — user and agent, small screens
+
+   The sidebar is `display: none !important` below 1033px, where the bottom nav
+   takes over. That nav carries five destinations; the sidebar carries seven
+   (user) or eight (agent) plus logout, so Profile, Notifications, Transactions,
+   Pull from User and Admin Requests had no route in at all on a phone. The
+   off-canvas rules for the drawer were already in the stylesheet and the
+   `menuOpen` state was already in the component — both were dead, because
+   nothing rendered a control and `display: none !important` outranked the
+   drawer anyway.
+
+   Styled to match `.admin-menu-btn` and `.admin-scrim` exactly, so the two
+   layouts open their drawer the same way.
+   ========================================================================== */
+
+.navbar-menu-btn {
+  display: none;               /* small screens only — enabled in the query below */
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  /* The global `button` rules set min-height 48px and width 100% for phones,
+     which is right for a form button and wrong for a 38px square. Beaten by
+     joining the icon-button list in design-system.css rather than by another
+     round of !important here. */
+  min-height: 0;
+  margin-right: 4px;
+  flex-shrink: 0;
+  /* The admin button ends up borderless at 11px after its own later rules —
+     these are its rendered values, so the two look identical. */
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--primary-dark, #087443);
+  cursor: pointer;
+  padding: 0;
+}
+
+.navbar-menu-btn:hover { background: #E8F7F0; }
+
+/* Only ever visible inside an open drawer; the rule that shows it lives in the
+   small-screen block below. */
+.drawer-close { display: none; }
+
+.navbar-menu-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+[data-theme="dark"] .navbar-menu-btn { border-color: #14532D; color: #A9EBD1; }
+[data-theme="dark"] .navbar-menu-btn:hover { background: #05512F; }
+
+.sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  /* Over the bottom nav, which sits at 1200 — a scrim the page's own navigation
+     punches through is not a scrim. */
+  z-index: 1300;
+  background: rgba(4, 24, 14, 0.5);
+  border: none;
+}
+
+@media screen and (max-width: 1032px) {
+  .navbar-menu-btn { display: grid; }
+
+  /* Beats the `display: none !important` that hides the sidebar at this width.
+     Only while open: closed, it stays out of the layout entirely rather than
+     sitting off-canvas and lengthening the page. */
+  .layout > .sidebar.open {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(300px, 86vw);
+    max-width: 300px;
+    height: 100%;
+    margin: 0;
+    padding: 0 0 12px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    border-radius: 0;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.22);
+    /* Above the scrim, and above the bottom nav it covers. */
+    z-index: 1400;
+    transform: none;
+  }
+
+  /* Expanded inside the drawer whatever the rail setting is: the collapsed
+     rail is a desktop affordance, and 64px of unlabelled icons is not what
+     someone opening a menu asked for. */
+  .layout > .sidebar.open.collapsed { width: min(300px, 86vw); padding: 0 0 12px; }
+  .layout > .sidebar.open.collapsed .nav-label,
+  .layout > .sidebar.open.collapsed .brand-label { display: inline; }
+
+  .layout > .sidebar.open.collapsed .sidebar-nav .nav-item,
+  .layout > .sidebar.open.collapsed .sidebar-nav .nav-card,
+  .layout > .sidebar.open.collapsed .nav-item,
+  .layout > .sidebar.open.collapsed .nav-card {
+    width: auto;
+    height: auto;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 11px 14px;
+    margin: 2px 10px;
+    border-radius: 10px;
+  }
+
+  .layout > .sidebar.open.collapsed .sidebar-logout {
+    width: auto;
+    height: 40px;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 10px;
+  }
+
+  .layout > .sidebar.open.collapsed .sidebar-logout::after { display: none; }
+
+  /* Brand row: the full wordmark and a close control, as the admin drawer has.
+     The rail shows only the 38px mark with the display toggle stacked under
+     it, which in a 300px drawer reads as a stray icon on an empty row. */
+  .layout > .sidebar.open .sidebar-brand,
+  .layout > .sidebar.open.collapsed .sidebar-brand {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .layout > .sidebar.open .brand-logo-full,
+  .layout > .sidebar.open.collapsed .brand-logo-full { display: block; }
+  .layout > .sidebar.open .brand-logo-mark,
+  .layout > .sidebar.open.collapsed .brand-logo-mark { display: none; }
+
+  /* The expand/collapse toggle is a desktop control — there is no rail to
+     collapse to in a drawer. */
+  .layout > .sidebar.open .sidebar-brand .sidebar-toggle,
+  .layout > .sidebar.open.collapsed .sidebar-brand .sidebar-toggle { display: none; }
+
+  /* 38px at 11px radius with a hairline border — the admin's close button is
+     declared at 34/10 and then raised to these by two later rules, so these
+     are the values it actually renders at. */
+  .layout > .sidebar.open .drawer-close {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    min-height: 0;
+    padding: 0;
+    margin-left: auto;
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--light, #E8F7F0);
+    color: var(--primary-dark, #087443);
+    cursor: pointer;
+  }
+
+  .layout > .sidebar.open .drawer-close:hover { background: #D1F0E3; }
+
+  [data-theme="dark"] .layout > .sidebar.open .drawer-close {
+    border-color: #14532D;
+    background: #05512F;
+    color: #A9EBD1;
+  }
+
+  [data-theme="dark"] .layout > .sidebar.open .drawer-close:hover { background: #087443; color: #FFFFFF; }
+
+  .layout > .sidebar.open .drawer-close:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  /* The rail's fixed-position hover flyout has no business in a drawer where
+     the labels are already on screen. */
+  .layout > .sidebar.open .nav-item:hover .nav-label {
+    position: static;
+    background: none;
+    color: inherit;
+    padding: 0;
+    box-shadow: none;
+    transform: none;
+  }
+}
+
+
+/* ==========================================================================
+   Top bar on small screens — matched to the admin's
+
+   Three things were wrong below 1033px, where this bar is the only navigation
+   above the page:
+
+   1. At 480px and under the bar was `flex-direction: column; gap: 60px`, which
+      on a 390px phone pushed the bell and avatar to x396–468 — 78px past the
+      right edge, unreachable. That rule predates the flex spacer that now sits
+      between the brand and the icons.
+   2. The rail expand toggle was on screen from 480px to 1032px, where the
+      sidebar is `display: none` and there is no rail to expand — a control
+      that did nothing, sitting between the logo and the page title.
+   3. The bar carried desktop padding and gaps, so nothing lined up with the
+      admin's.
+
+   The values below are the admin bar's, measured: padding 0 with the items
+   flush to both edges, 10px between them, 4px and a 52px bar on a phone.
+   ========================================================================== */
+
+@media screen and (max-width: 1032px) {
+  .navbar {
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    gap: 10px;
+  }
+
+  /* No rail at these widths, so nothing to expand back to. */
+  .navbar .navbar-sidebar-toggle { display: none; }
+
+  /* The admin bar runs its items flush to both edges. That reads fine on the
+     left, where the menu button's icon is already inset inside its 38px box,
+     but on the right the bell and avatar ended up touching the screen edge. */
+  .navbar .navbar-icons { padding-right: 12px; }
+}
+
+@media screen and (max-width: 480px) {
+  .navbar {
+    /* Was `column` with a 60px gap. */
+    flex-direction: row;
+    align-items: center;
+    height: 52px;
+    padding: 0;
+    gap: 4px;
+  }
+
+  /* It was aligned to the top-left for the column layout that is now gone. */
+  .navbar-brand {
+    justify-content: center;
+    align-items: center;
+  }
+}

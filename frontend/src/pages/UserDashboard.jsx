@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SkeletonRows from '../components/SkeletonRows';
-import styles from './UserDashboard.module.css';
+import styles from './DashboardMobile.module.css';
 import '../styles/user-dashboard.css';
 import { ArrowDown, ArrowUp, Banknote, ChartColumn, Clock, Files, Hand, HandCoins, Inbox, Landmark, MapPin, Send, Upload, User, Wallet } from 'lucide-react';
 import { useAuthStore } from '../context/store';
@@ -122,7 +122,10 @@ export default function UserDashboard() {
       {/* Actions */}
       <div className={styles.actions}>
         <button className={styles.actionBtnPrimary} onClick={() => navigate('/user/send-money')}><Send /><span>Send Money</span></button>
-        <button className={styles.actionBtnPrimary} onClick={() => navigate('/user/withdraw')}><Banknote /><span>Cash Out</span></button>
+        {/* The sidebar has called this "Withdraw" for a customer all along; the
+              tile said "Cash Out", which is the agent's word for the other side
+              of the same transaction. Each role now gets its own. */}
+          <button className={styles.actionBtnPrimary} onClick={() => navigate('/user/withdraw')}><Banknote /><span>{user?.role === 'agent' ? 'Cash Out' : 'Withdraw'}</span></button>
         <button className={styles.actionBtn} onClick={() => navigate('/user/receive')}><HandCoins /><span>Receive</span></button>
         <button className={styles.actionBtn} onClick={() => navigate('/user/pending-withdrawals')}><Clock /><span>Pendings</span></button>
       </div>

@@ -18,6 +18,27 @@ export const authMiddleware = (req, res, next) => {
   }
 };
 
+/* Reads a token when one is offered, and shrugs when it is not.
+
+   For a route that has to serve signed-out visitors but should still record who
+   a signed-in one is — Contact Us being the case in point. A bad or expired
+   token is treated as no token rather than an error: someone whose session
+   lapsed while typing should still have their message sent, just without an
+   account attached to it. */
+export const optionalAuth = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.userId = decoded.userId;
+      req.userRole = decoded.role;
+    } catch (error) {
+      /* Deliberately ignored — see above. */
+    }
+  }
+  next();
+};
+
 export const adminMiddleware = (req, res, next) => {
   if (req.userRole !== 'admin') {
     return res.status(403).json({ message: 'Admin access required' });

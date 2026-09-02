@@ -372,7 +372,7 @@ export default function AdminReports() {
     <>
     <div className="dashboard-container rp-page">
       <div className="dashboard-header">
-        <h1><TrendingUp size={20} /> Reports</h1>
+        <h1><TrendingUp size={20} /> Billing Reports</h1>
         <p>Every user, agent, admin and sub-admin, with what they moved in the selected period.</p>
       </div>
 
