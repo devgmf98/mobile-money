@@ -179,6 +179,13 @@ const Transaction = sequelize.define('Transaction', {
 Transaction.associate = (models) => {
   Transaction.belongsTo(models.User, { foreignKey: 'senderId', as: 'sender' });
   Transaction.belongsTo(models.User, { foreignKey: 'receiverId', as: 'receiver' });
+  /* Who settled a pending destination transfer. `constraints: false` on
+     purpose: sync({ alter: true }) re-adds an unnamed foreign key on every
+     boot, and this table has already hit MySQL's 64-key ceiling once. The
+     column is written by the settle handlers, not by a relation. */
+  Transaction.belongsTo(models.User, {
+    foreignKey: 'settledById', as: 'settledBy', constraints: false,
+  });
   Transaction.hasMany(models.Notification, { foreignKey: 'relatedTransactionId', as: 'notifications' });
 };
 

@@ -1,0 +1,648 @@
+/* Reports page.
+
+   The page is three bands — toolbar, overview, results — with a footer that
+   records what the figures cover. Everything is scoped to .rp-* so nothing
+   leaks into the rest of the admin area.
+
+   One row per person across every role makes the table wide by nature, so it
+   scrolls inside its own wrapper rather than shrinking columns until the
+   figures stop being readable. */
+
+.rp-page { padding-bottom: 8px; }
+
+/* The shared .dashboard-header lays the title and its description side by side
+   with no wrap and no gap, so on a narrow screen the description runs straight
+   over the title. Corrected here rather than in the shared stylesheet: every
+   admin page carries that class, and changing all of them is a bigger decision
+   than this page's redesign. */
+.rp-page .dashboard-header { flex-wrap: wrap; gap: 2px 24px; }
+.rp-page .dashboard-header p { margin: 0; }
+
+@media (max-width: 760px) {
+  .rp-page .dashboard-header { flex-direction: column; align-items: flex-start; }
+}
+
+/* ---- role colour ---------------------------------------------------------
+   Categorical slots 1-4 of the validated palette, assigned in a fixed order so
+   a role keeps its hue however many roles a filter leaves on screen. The house
+   green and orange used before failed CVD separation against each other
+   (deltaE 5.1 under protanopia), which secondary encoding cannot rescue. */
+.rp-page {
+  --rp-user: #2a78d6;
+  --rp-agent: #eb6834;
+  --rp-admin: #1baf7a;
+  --rp-sub-admin: #4a3aa7;
+  --rp-user-bg: #eaf2fd;
+  --rp-agent-bg: #fdeee8;
+  --rp-admin-bg: #e6f7f1;
+  --rp-sub-admin-bg: #eeebfa;
+}
+
+[data-theme="dark"] .rp-page {
+  --rp-user: #3987e5;
+  --rp-agent: #d95926;
+  --rp-admin: #199e70;
+  --rp-sub-admin: #9085e9;
+  --rp-user-bg: rgba(57, 135, 229, 0.16);
+  --rp-agent-bg: rgba(217, 89, 38, 0.16);
+  --rp-admin-bg: rgba(25, 158, 112, 0.16);
+  --rp-sub-admin-bg: rgba(144, 133, 233, 0.16);
+}
+
+/* ---- toolbar ------------------------------------------------------------- */
+.rp-toolbar { padding: 14px 16px; margin-bottom: 14px; }
+
+.rp-toolbar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* The seam between "when" and "who" — two questions, so two rows. */
+.rp-toolbar-row.is-secondary {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, #E3EAE7);
+}
+
+.rp-ranges {
+  display: inline-flex;
+  height: 36px;
+  padding: 3px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface-2, #F7FAF9);
+}
+
+.rp-range {
+  min-height: 0;
+  padding: 0 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-light, #5B6B66);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rp-range:hover { color: var(--text-dark, #16302B); }
+
+.rp-range.is-on {
+  background: var(--primary, #007A3D);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.rp-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.rp-field-grow { flex: 1 1 200px; max-width: 320px; }
+
+.rp-field > span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-field input,
+.rp-field select {
+  height: 36px;
+  min-height: 0;
+  padding: 0 10px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-dark, #16302B);
+  font-size: 12.5px;
+  max-width: 170px;
+}
+
+.rp-field select { padding-right: 26px; cursor: pointer; }
+
+.rp-field input:focus,
+.rp-field select:focus { outline: 2px solid var(--primary, #007A3D); outline-offset: -1px; }
+
+.rp-search-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-search-box input {
+  height: auto;
+  width: 100%;
+  max-width: none;
+  border: none;
+  padding: 0;
+  background: none;
+}
+
+.rp-search-box input:focus { outline: none; }
+.rp-search-box:focus-within { border-color: var(--primary, #007A3D); }
+
+.rp-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  min-height: 0;
+  margin-left: auto;
+  padding: 0 13px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rp-reset:hover { color: var(--primary-dark, #005C2E); border-color: var(--primary, #007A3D); }
+
+/* Reloading holds the previous content at reduced opacity — no skeleton flash
+   and no layout jump while narrowing a filter. */
+.rp-body { transition: opacity 140ms ease; }
+.rp-body.is-loading { opacity: 0.55; }
+.rp-error { padding: 18px; color: var(--error, #DC2626); font-size: 13px; }
+.rp-error p { margin: 0; }
+
+/* ---- overview ------------------------------------------------------------
+   The people panel is given the width because it carries the most: two hero
+   numbers, the split, and its legend. The money panels sit beside it at equal
+   width so none of them reads as more important than another. */
+.rp-overview {
+  display: grid;
+  grid-template-columns: minmax(230px, 1.2fr) repeat(4, minmax(155px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.rp-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  box-shadow: 0 1px 2px rgba(16, 40, 34, 0.04);
+  min-width: 0;
+}
+
+.rp-heroes { display: flex; gap: 26px; }
+.rp-hero { display: flex; flex-direction: column; gap: 1px; }
+
+.rp-hero-value {
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-hero-label,
+.rp-panel-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+/* The split. Segments are separated by a surface-coloured gap so two adjacent
+   fills never touch, which is what keeps the boundary readable when the hues
+   are close. */
+.rp-bar {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  margin-top: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rp-bar-seg { min-width: 4px; border-radius: 2px; }
+.rp-bar-seg.is-user { background: var(--rp-user); }
+.rp-bar-seg.is-agent { background: var(--rp-agent); }
+.rp-bar-seg.is-admin { background: var(--rp-admin); }
+.rp-bar-seg.is-sub-admin { background: var(--rp-sub-admin); }
+
+/* The legend carries the counts, so identity is never colour alone. */
+.rp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-legend b {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.rp-dot.is-user { background: var(--rp-user); }
+.rp-dot.is-agent { background: var(--rp-agent); }
+.rp-dot.is-admin { background: var(--rp-admin); }
+.rp-dot.is-sub-admin { background: var(--rp-sub-admin); }
+
+.rp-panel-empty { margin: 14px 0 0; font-size: 12.5px; color: var(--text-light, #5B6B66); }
+
+/* Money panels. The label leads because the value below it may be one line or
+   three, and a heading that moves is a heading that is hard to scan. */
+.rp-panel-money { justify-content: flex-start; }
+.rp-money-list { display: flex; flex-direction: column; gap: 1px; margin-top: 8px; }
+
+.rp-money {
+  display: flex;
+  align-items: baseline;
+  /* A figure like 1,625,700.00 SSP will not fit a narrow panel on one line.
+     Wrapping drops the currency code beneath the number; clipping would hide
+     which currency it even is. */
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: 0 5px;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-money-list .rp-money:not(:first-child) { font-size: 14px; opacity: 0.82; }
+
+.rp-money i {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-money-nil { margin-top: 8px; color: var(--text-light, #5B6B66); }
+
+.rp-panel-hint {
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-light, #5B6B66);
+}
+
+/* ---- results ------------------------------------------------------------- */
+.rp-results { overflow: hidden; }
+
+.rp-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border, #E3EAE7);
+}
+
+.rp-results-head h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-dark, #16302B);
+}
+
+.rp-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  min-height: 0;
+  padding: 0 14px;
+  border: 1px solid var(--primary, #007A3D);
+  border-radius: 10px;
+  background: var(--surface, #fff);
+  color: var(--primary-dark, #005C2E);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.rp-export:hover:not(:disabled) { background: var(--light, #E8F7F0); }
+
+.rp-export:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--border, #E3EAE7);
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-table-wrap { overflow-x: auto; }
+.rp-table { width: 100%; }
+.rp-table th, .rp-table td { vertical-align: middle; }
+.rp-table th.right, .rp-table td.right { text-align: right; }
+
+/* The header stays put while a long list scrolls past it. */
+.rp-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-2, #F7FAF9);
+  white-space: nowrap;
+}
+
+.rp-table tbody tr { transition: background 110ms ease; }
+.rp-table tbody tr:hover { background: var(--surface-2, #F7FAF9); }
+
+.rp-person { display: flex; align-items: center; gap: 10px; }
+
+/* Two letters in the role's colour — it ties a row to the split above it, and
+   gives the eye something to land on in a table of otherwise uniform text. */
+.rp-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.rp-avatar.is-user { background: var(--rp-user-bg); color: var(--rp-user); }
+.rp-avatar.is-agent { background: var(--rp-agent-bg); color: var(--rp-agent); }
+.rp-avatar.is-admin { background: var(--rp-admin-bg); color: var(--rp-admin); }
+.rp-avatar.is-sub-admin { background: var(--rp-sub-admin-bg); color: var(--rp-sub-admin); }
+
+.rp-person-text { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+
+.rp-name {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--text-dark, #16302B);
+  white-space: nowrap;
+}
+
+.rp-sub { font-size: 11px; color: var(--text-light, #5B6B66); white-space: nowrap; }
+.rp-sub.is-dim { opacity: 0.75; }
+
+/* Role wears its own colour, with the word doing the identifying. */
+.rp-role {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.rp-role.is-user { background: var(--rp-user-bg); color: var(--rp-user); }
+.rp-role.is-agent { background: var(--rp-agent-bg); color: var(--rp-agent); }
+.rp-role.is-admin { background: var(--rp-admin-bg); color: var(--rp-admin); }
+.rp-role.is-sub-admin { background: var(--rp-sub-admin-bg); color: var(--rp-sub-admin); }
+
+.rp-dest {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-dark, #16302B);
+  white-space: nowrap;
+}
+
+.rp-count { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+.rp-amounts {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 12px;
+  color: var(--text-dark, #16302B);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The currency code is a label on the number, not part of it. */
+.rp-amounts em {
+  font-style: normal;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-amounts .nb { white-space: nowrap; }
+.rp-none { color: var(--text-light, #5B6B66); }
+
+.rp-balance { font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A negative balance is a fact worth seeing, not something to read past. */
+.rp-balance.is-negative { color: var(--error, #DC2626); }
+
+.rp-kind {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-standing { display: flex; flex-direction: column; gap: 3px; align-items: flex-start; }
+
+.rp-standing b {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rp-standing .is-active { background: #DCFCE7; color: #0F7A43; }
+.rp-standing .is-suspended { background: #FEE2E2; color: #B42318; }
+.rp-standing .is-unverified { background: #FEF3C7; color: #B45309; }
+
+.rp-joined { font-size: 11.5px; color: var(--text-light, #5B6B66); white-space: nowrap; }
+
+.rp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 40px 12px;
+  color: var(--text-light, #5B6B66);
+  text-align: center;
+}
+
+.rp-empty h4 { margin: 4px 0 0; font-size: 14px; color: var(--text-dark, #16302B); }
+.rp-empty p { margin: 0; font-size: 12.5px; }
+
+/* ---- footer --------------------------------------------------------------
+   What the figures on screen cover, and when they were pulled. A report that
+   outlives the screen it was read on needs to say what it is. */
+.rp-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 18px;
+  margin-top: 14px;
+  padding: 14px 4px 4px;
+  border-top: 1px solid var(--border, #E3EAE7);
+  font-size: 11.5px;
+  color: var(--text-light, #5B6B66);
+}
+
+.rp-footer-main { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
+.rp-footer-main strong { font-size: 12px; font-weight: 700; color: var(--text-dark, #16302B); }
+
+.rp-footer-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border, #E3EAE7);
+}
+
+.rp-footer-meta { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.rp-footer-note { opacity: 0.8; }
+
+/* ---- narrow --------------------------------------------------------------
+   The overview drops to two columns, then one. The people panel keeps the full
+   width at every step, because its bar is the one thing that stops being
+   readable when squeezed. */
+@media (max-width: 1100px) {
+  .rp-overview { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rp-panel-people { grid-column: 1 / -1; }
+}
+
+@media (max-width: 640px) {
+  .rp-overview { grid-template-columns: minmax(0, 1fr); }
+  .rp-field input, .rp-field select, .rp-search-box { max-width: 100%; width: 100%; }
+  .rp-field { flex: 1 1 45%; }
+  .rp-field-grow { flex: 1 1 100%; max-width: none; }
+  .rp-ranges { width: 100%; }
+  .rp-range { flex: 1 1 auto; text-align: center; }
+  .rp-reset { margin-left: 0; width: 100%; justify-content: center; }
+  .rp-heroes { gap: 20px; }
+  .rp-results-head { flex-wrap: wrap; }
+  .rp-export { width: 100%; justify-content: center; }
+  .rp-footer { flex-direction: column; align-items: flex-start; }
+}
+
+/* ---- dark ---------------------------------------------------------------- */
+[data-theme="dark"] .rp-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: none;
+}
+
+[data-theme="dark"] .rp-ranges { background: rgba(255, 255, 255, 0.05); border-color: rgba(255, 255, 255, 0.10); }
+
+[data-theme="dark"] .rp-field input,
+[data-theme="dark"] .rp-field select,
+[data-theme="dark"] .rp-search-box,
+[data-theme="dark"] .rp-reset,
+[data-theme="dark"] .rp-export,
+[data-theme="dark"] .rp-dest {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #E6F2EC;
+}
+
+[data-theme="dark"] .rp-toolbar-row.is-secondary,
+[data-theme="dark"] .rp-results-head,
+[data-theme="dark"] .rp-footer,
+[data-theme="dark"] .rp-footer-sep { border-color: rgba(255, 255, 255, 0.10); }
+
+[data-theme="dark"] .rp-table thead th { background: rgba(255, 255, 255, 0.05); }
+[data-theme="dark"] .rp-table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
+
+[data-theme="dark"] .rp-name,
+[data-theme="dark"] .rp-hero-value,
+[data-theme="dark"] .rp-money,
+[data-theme="dark"] .rp-amounts,
+[data-theme="dark"] .rp-legend b,
+[data-theme="dark"] .rp-results-head h3,
+[data-theme="dark"] .rp-footer-main strong,
+[data-theme="dark"] .rp-empty h4 { color: #E6F2EC; }
+
+[data-theme="dark"] .rp-sub,
+[data-theme="dark"] .rp-joined,
+[data-theme="dark"] .rp-kind,
+[data-theme="dark"] .rp-panel-hint,
+[data-theme="dark"] .rp-hero-label,
+[data-theme="dark"] .rp-panel-label,
+[data-theme="dark"] .rp-footer { color: #9FB3AB; }
+
+/* Collected is a net figure, so a currency can legitimately land below zero —
+   worth seeing rather than reading past. */
+.rp-amounts .nb.is-negative { color: var(--error, #DC2626); }
+.rp-collected .rp-amounts { font-weight: 600; }
+
+/* A net figure can legitimately sit below zero — the company paid out more of
+   that currency than it took in over the period. */
+.rp-money.is-negative { color: var(--error, #DC2626); }
+
+/* Names run longer than a destination code, so this control gets more room. */
+.rp-field-person select { max-width: 240px; }
+
+/* The row action: a statement download, one person at a time. */
+.rp-doc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid var(--border, #E3EAE7);
+  border-radius: 8px;
+  background: var(--surface, #fff);
+  color: var(--text-light, #5B6B66);
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.rp-doc:hover:not(:disabled) {
+  color: var(--primary-dark, #005C2E);
+  border-color: var(--primary, #007A3D);
+  background: var(--light, #E8F7F0);
+}
+
+.rp-doc:disabled { cursor: progress; opacity: 0.7; }
+
+.rp-spin { animation: rp-spin 900ms linear infinite; }
+@keyframes rp-spin { to { transform: rotate(360deg); } }
+
+[data-theme="dark"] .rp-doc {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+  color: #9FB3AB;
+}

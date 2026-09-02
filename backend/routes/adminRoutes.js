@@ -41,6 +41,7 @@ import { createCurrency, getCurrencies, updateCurrency, deleteCurrency } from '.
 import { getPendingSendByStateCount } from '../controllers/adminController.js';
 import { authMiddleware, adminMiddleware, staffMiddleware, notSuspended } from '../middleware/auth.js';
 import { getTransactionAnalytics } from '../controllers/analyticsController.js';
+import { getPeopleReport, getPersonStatement } from '../controllers/reportsController.js';
 
 
 const router = express.Router();
@@ -72,6 +73,10 @@ router.get('/stats', staffMiddleware, getAdminStats);
 
 /* Transaction analytics — an oversight tool, so it stays with the admins. */
 router.get('/analytics/transactions', adminMiddleware, getTransactionAnalytics);
+
+/* Reports — who did what, across every role. Oversight, so admins only. */
+router.get('/reports/people', adminMiddleware, getPeopleReport);
+router.get('/reports/people/:id/statement', adminMiddleware, getPersonStatement);
 router.post('/grant-location', adminMiddleware, grantLocationPermissionToAll);
 router.get('/tiered-commission', adminMiddleware, getTieredCommission);
 router.post('/tiered-commission', adminMiddleware, setTieredCommission);

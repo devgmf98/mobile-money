@@ -397,10 +397,17 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
       receiverCredit = amount;
     }
 
-    // Update sender balance only and create a PENDING transaction
-    const currentSenderBalance = parseFloat(sender.balance) || 0;
-    sender.balance = Math.round((currentSenderBalance - senderDebit) * 100) / 100;
-    await sender.update({ balance: sender.balance });
+    /* A destination transfer moves money between destinations. It does not move
+       it between two staff wallets, so it does not touch a staff balance.
+
+       Staff send with no balance check — they have unlimited send rights — so
+       debiting the amount here only drove the figure further negative on every
+       transfer, with nothing that could bring it back: the balances had reached
+       -484,700 and -111,100. What a staff balance holds is what they have
+       actually earned — commission, credited when the transfer lands. The
+       amount itself lives on the transaction, which is where a transfer
+       belongs. */
+    const senderBalanceUnchanged = parseFloat(sender.balance) || 0;
 
     // attach currency if provided
     let currencyCode = null;
@@ -449,7 +456,7 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
       currencySymbol,
       exchangeRate,
       currencyTier,
-      senderBalance: sender.balance,
+      senderBalance: senderBalanceUnchanged,
       receiverBalance: receiver.balance,
       senderLocation: sender.currentLocation || null,
       receiverLocation: receiver.currentLocation || null
@@ -791,7 +798,10 @@ export const getAllTransactions = async (req, res) => {
       where,
       include: [
         { model: User, as: 'sender', attributes: ['name', 'phone', 'role'] },
-        { model: User, as: 'receiver', attributes: ['name', 'phone', 'role'] }
+        { model: User, as: 'receiver', attributes: ['name', 'phone', 'role'] },
+        /* Who marked a destination transfer as received. Until it is settled
+           nobody has, so this is null and the row has one party: the sender. */
+        { model: User, as: 'settledBy', attributes: ['id', 'name', 'phone', 'role'], required: false }
       ],
       order: [['createdAt', 'DESC']]
     });
@@ -1738,9 +1748,12 @@ export const receiveSendByState = async (req, res) => {
     const receiver = tx.receiverId ? await User.findByPk(tx.receiverId) : null;
     if (!receiver) return res.status(404).json({ message: 'The admin this transfer was addressed to no longer exists' });
 
+    /* The amount is not added to the receiving staff member's balance either —
+       the same reason it was never taken off the sender's. Marking a transfer
+       received records that the money arrived at the destination; it does not
+       hand that money to the admin personally. The figure stays on the
+       transaction, and the notification below still tells them what landed. */
     const receiverCredit = Number(tx.receiverCredit || tx.amount || 0);
-    receiver.balance = Math.round(((parseFloat(receiver.balance) || 0) + receiverCredit) * 100) / 100;
-    await receiver.update({ balance: receiver.balance });
 
     /* Pay the sender the commission they earned. The send screen states it
        plainly — "Commission, credited to your Admin Cash, +SSP 6,000.00" — but
@@ -1876,22 +1889,14 @@ export const cancelSendByState = async (req, res) => {
       return res.status(403).json({ message: 'Only the sender or an admin from the same state can cancel this transfer' });
     }
 
-    // Compute how much was debited from sender when creating the pending tx
     const amount = Number(tx.amount || 0);
-    const commission = Number(tx.commission || 0);
-    /* Both modes debit the sender the full amount — they differ only in what
-       the recipient is due and whether commission is earned — so cancelling
-       refunds the amount.
 
-       This used to read companyCommission to decide, which a destination
-       transfer never sets: it is 0 either way, so the test was always false
-       and every cancellation refunded amount-minus-commission. The sender
-       silently lost the commission on a transfer that never happened. */
-    const senderDebit = amount;
+    /* Cancelling settles no balance. Sending never debited the sender, so there
+       is nothing to refund; commission is credited only when a transfer is
+       received, so a cancelled one was never paid and needs no clawback.
 
-    // Refund sender
-    sender.balance = Math.round(((parseFloat(sender.balance) || 0) + senderDebit) * 100) / 100;
-    await sender.save();
+       Cancelling is purely a change of status on the transaction, which is the
+       only place the amount was ever recorded. */
 
     tx.status = 'cancelled';
     /* Was `tx.cancelledAt`, which is neither a model field nor a column — the
@@ -1928,7 +1933,7 @@ export const cancelSendByState = async (req, res) => {
       });
     }
 
-    try { await sendSMS(sender.phone, `MoneyPay: Your pending transfer of SSP ${amount.toFixed(2)} was cancelled and refunded.`); } catch (e) { }
+    try { await sendSMS(sender.phone, `MoneyPay: Your pending transfer of SSP ${amount.toFixed(2)} was cancelled.`); } catch (e) { }
     try { if (receiver) await sendSMS(receiver.phone, `MoneyPay: Pending transfer of SSP ${tx.receiverCredit ? Number(tx.receiverCredit).toFixed(2) : amount.toFixed(2)} was cancelled by sender.`); } catch (e) { }
 
     // Emit socket update for sender (and receiver if connected)
@@ -1981,12 +1986,22 @@ export const editSendByState = async (req, res) => {
       : null;
     const percent = destState ? parseFloat(destState.commissionPercent) || 0 : 0;
 
-    // Compute original sender debit
     const origCommission = Number(tx.commission || 0);
     const origReceiverCommission = Number(tx.receiverCommission || 0);
     const origAmount = Number(tx.amount || 0);
-    // In both modes, sender debited for full amount
-    const originalSenderDebit = origAmount;
+
+    /* Which mode the transfer was booked in, when the caller does not say.
+
+       This read `origCompanyCommission`, which is declared nowhere in the file
+       — so every edit that omitted deductCommissionFromAmount threw a
+       ReferenceError and returned a 500. The endpoint has never worked from the
+       edit dialog, which does not send the flag.
+
+       companyCommission would have been the wrong test anyway: a destination
+       transfer never sets it. What actually distinguishes the modes is whether
+       the recipient was shorted the commission, so that is what is read. */
+    const origDeducted = Number(tx.receiverCredit || 0) > 0 &&
+      Number(tx.receiverCredit) < origAmount;
 
     let newAmount = typeof amount !== 'undefined' ? parseFloat(amount) : Number(tx.amount || 0);
     if (isNaN(newAmount) || newAmount <= 0) newAmount = Number(tx.amount || 0);
@@ -1999,7 +2014,7 @@ export const editSendByState = async (req, res) => {
     let senderDebit = newAmount;
     let receiverCredit = newAmount;
 
-    const deduct = deductCommissionFromAmount === true || deductCommissionFromAmount === 'true' || (typeof deductCommissionFromAmount === 'undefined' ? (origCompanyCommission > 0) : false);
+    const deduct = deductCommissionFromAmount === true || deductCommissionFromAmount === 'true' || (typeof deductCommissionFromAmount === 'undefined' ? origDeducted : false);
 
     if (deduct) {
       // Deduct mode: receiver gets amount less commission, sender gets the commission
@@ -2013,18 +2028,12 @@ export const editSendByState = async (req, res) => {
       receiverCredit = newAmount;
     }
 
-    // Compute delta to apply to sender balance
-    const delta = Math.round((senderDebit - originalSenderDebit) * 100) / 100;
-    if (delta > 0) {
-      // Need additional funds from sender
-      const currentSenderBalance = parseFloat(sender.balance) || 0;
-      if (currentSenderBalance < delta) return res.status(400).json({ message: 'Insufficient sender balance for updated amount' });
-      sender.balance = Math.round(((currentSenderBalance - delta) * 100)) / 100;
-    } else if (delta < 0) {
-      sender.balance = Math.round(((parseFloat(sender.balance) || 0) - delta) * 100) / 100; // delta negative => refund
-    }
+    /* Changing a pending transfer's amount settles no balance difference, since
+       the original amount was never debited. It rewrites the transaction — and
+       the commission below — which is the whole of what changed.
 
-    await sender.save();
+       This also drops an "Insufficient sender balance" rejection that could
+       block an edit on an account that is not spending its own balance. */
 
     // Apply updates to transaction
     tx.amount = newAmount;

@@ -58,6 +58,8 @@ export const adminAPI = {
      filters combine freely and enumerating them here would just be a second
      place to keep in step. */
   getTransactionAnalytics: (qs) => api.get('/admin/analytics/transactions' + (qs ? '?' + qs : '')),
+  getPeopleReport: (qs) => api.get('/admin/reports/people' + (qs ? '?' + qs : '')),
+  getPersonStatement: (id, qs) => api.get('/admin/reports/people/' + id + '/statement' + (qs ? '?' + qs : '')),
   createStateSetting: (data) => api.post('/admin/state-settings', data),
   updateStateSetting: (id, data) => api.put(`/admin/state-settings/${id}`, data),
   deleteStateSetting: (id) => api.delete(`/admin/state-settings/${id}`),

@@ -143,6 +143,7 @@ const AdminSettings = React.lazy(() => import('./pages/AdminSettings'))
 const AdminTieredCommission = React.lazy(() => import('./pages/AdminTieredCommission'))
 const AdminStateSettings = React.lazy(() => import('./pages/AdminStateSettings'))
 const AdminStateSend = React.lazy(() => import('./pages/AdminStateSend'))
+const AdminReports = React.lazy(() => import('./pages/AdminReports'))
 const AdminStatePending = React.lazy(() => import('./pages/AdminStatePending'))
 const AdminCurrency = React.lazy(() => import('./pages/AdminCurrency'))
 const AdminCurrencyRates = React.lazy(() => import('./pages/AdminCurrencyRates'))
@@ -191,6 +192,7 @@ import './styles/profile.css'
 import './styles/profile-flow.css'
 import './styles/composition-chart.css'
 import './styles/admin-dashboard.css'
+import './styles/admin-reports.css'
 import './styles/admin-users.css'
 import './styles/admin-transactions.css'
 import './styles/select.css'
@@ -320,6 +322,9 @@ const router = createBrowserRouter(
             { path: 'users', element: <AdminOnly path="/admin/users"><AdminUsers /></AdminOnly> },
             { path: 'transactions', element: <AdminOnly path="/admin/transactions"><AdminTransactions /></AdminOnly> },
             { path: 'notifications', element: <AdminOnly path="/admin/notifications"><AdminNotifications /></AdminOnly> },
+            /* The sidebar has linked here since before the page existed — the
+               route was simply missing, so the link went nowhere. */
+            { path: 'reports', element: <AdminOnly path="/admin/reports"><AdminReports /></AdminOnly> },
             { path: 'topup', element: <AdminOnly path="/admin/topup"><AdminTopup /></AdminOnly> },
             { path: 'push-money', element: <AdminOnly path="/admin/push-money"><AdminPushMoney /></AdminOnly> },
             { path: 'withdraw-agent', element: <AdminOnly path="/admin/withdraw-agent"><AdminWithdraw /></AdminOnly> },

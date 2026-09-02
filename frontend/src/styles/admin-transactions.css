@@ -136,3 +136,22 @@
   .tx-parties { min-width: 0; }
   .admin-tx .icon-btn { width: 30px; height: 30px; }
 }
+
+/* --- who took part -------------------------------------------------------
+   A state push names its parties by what they did, not by which side of the
+   row they sit on: the sender, then whoever settled it. The label says which,
+   so "Marked received by" is never mistaken for "was sent to". */
+.tx-party-role {
+  font-style: normal;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-light);
+  opacity: 0.85;
+}
+
+/* A cancellation is not a receipt, so it does not wear the green arrow the
+   last-child rule above would otherwise give it. */
+.tx-party.is-cancelled svg { color: var(--error, #DC2626) !important; }
+.tx-party.is-cancelled .tx-party-role { color: var(--error, #DC2626); opacity: 1; }

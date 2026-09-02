@@ -31,6 +31,75 @@ const fmtAmount = (tx) => {
   return { code, value: n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) };
 };
 
+const who = (u) => u?.name || u?.phone || '—';
+
+function Party({ icon, label, person, tone }) {
+  return (
+    <span className={'tx-party' + (tone ? ' is-' + tone : '')}>
+      {icon}
+      <span>
+        <strong>{who(person)}</strong>
+        {person?.phone && person?.name ? <em>{person.phone}</em> : null}
+        {label ? <i className="tx-party-role">{label}</i> : null}
+      </span>
+    </span>
+  );
+}
+
+/* Who took part in a transaction.
+
+   A state push is not a transfer between two people at the moment it is
+   created. It is a request: the sender pushes money toward a destination, and
+   nobody on the other side has done anything yet. Naming the addressee as a
+   party while the transfer sits pending claimed a participation that had not
+   happened — and, once any admin could settle any transfer, named the wrong
+   person outright, because whoever ends up confirming it need not be the admin
+   it was addressed to.
+
+   So a pending push has exactly one party, the sender. A settled one has two:
+   the sender, and whoever acted on it — marked it received, or cancelled it.
+
+   Every other type still reads sender to receiver, because for those the two
+   sides really are fixed when the row is written. */
+function Parties({ tx }) {
+  const isPush = tx.type === 'admin_state_push';
+
+  if (isPush) {
+    const settled = tx.status === 'completed' || tx.status === 'cancelled';
+    /* Transfers completed before settledById existed record no settler. The
+       addressee is the best evidence of who took delivery, so it stands in
+       there — but never for a cancellation, where the acting person is the
+       whole point and guessing would be inventing one. */
+    const actor = tx.settledBy || (tx.status === 'completed' ? tx.receiver : null);
+
+    return (
+      <div className="tx-parties">
+        <Party icon={<ArrowUpRight size={13} />} person={tx.sender} label="Sender" />
+        {settled && actor ? (
+          <Party
+            icon={tx.status === 'cancelled' ? <X size={13} /> : <ArrowDownLeft size={13} />}
+            person={actor}
+            tone={tx.status === 'cancelled' ? 'cancelled' : null}
+            label={tx.status === 'cancelled' ? 'Cancelled' : 'Receiver'}
+          />
+        ) : (
+          <span className="tx-party is-none">Awaiting receipt</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="tx-parties">
+      <Party icon={<ArrowUpRight size={13} />} person={tx.sender} />
+      {tx.receiver ? (
+        <Party icon={<ArrowDownLeft size={13} />} person={tx.receiver} />
+      ) : (
+        <span className="tx-party is-none">No recipient</span>
+      )}
+    </div>
+  );
+}
 
 export default function AdminTransactions() {
   const [transactions, setTransactions] = useState([]);
@@ -205,28 +274,7 @@ export default function AdminTransactions() {
                   {filteredTransactions.map(tx => (
                     <tr key={tx.id}>
                       <td><code className="tx-id">{tx.transactionId}</code></td>
-                      <td>
-                        <div className="tx-parties">
-                          <span className="tx-party">
-                            <ArrowUpRight size={13} />
-                            <span>
-                              <strong>{tx.sender?.name || tx.sender?.phone || '—'}</strong>
-                              {tx.sender?.phone && tx.sender?.name && <em>{tx.sender.phone}</em>}
-                            </span>
-                          </span>
-                          {tx.receiver ? (
-                            <span className="tx-party">
-                              <ArrowDownLeft size={13} />
-                              <span>
-                                <strong>{tx.receiver.name || tx.receiver.phone}</strong>
-                                {tx.receiver.phone && tx.receiver.name && <em>{tx.receiver.phone}</em>}
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="tx-party is-none">No recipient</span>
-                          )}
-                        </div>
-                      </td>
+                      <td><Parties tx={tx} /></td>
                       <td>
                         <span className={'badge tx-type is-' + tx.type}>{typeLabel(tx.type)}</span>
                       </td>
