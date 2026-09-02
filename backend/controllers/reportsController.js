@@ -48,6 +48,43 @@ function presetWindow(range) {
    balance is held in, so that is where it belongs. */
 const code = (c) => (c || 'SSP').toUpperCase();
 
+/* ==========================================================================
+   The date a row is filtered by.
+
+   Every window on this page — Today, Weekly, Monthly, Yearly and a custom
+   from/to — is measured against settledAt, so a transfer counts in the period
+   it was actually settled rather than the period someone raised the request.
+   A push created on the 30th and received on the 1st belongs to the new month,
+   which is what a cash report is asking about.
+
+   It falls back to createdAt where settledAt is null, and that fallback is not
+   optional. settledAt is written by exactly two handlers, the state-push
+   receive and cancel; nothing else in the ledger ever sets it. Filtering on the
+   bare column would have dropped 26 of 29 rows here — every top-up, every money
+   exchange and every agent cash-out, which are three of the seven terms of
+   Amount Collected, plus every pending push, whose commission now counts.
+   A report that silently deleted its own inputs is not the ask.
+
+   Sequelize aliases the main table as the model name, hence `Transaction`.
+   The raw variant is for the two hand-written UNION queries, which have no
+   joins and so need no qualification.
+   ========================================================================== */
+const effectiveDate = () =>
+  sequelize.literal('COALESCE(`Transaction`.`settledAt`, `Transaction`.`createdAt`)');
+
+const EFFECTIVE_DATE_SQL = 'COALESCE(settledAt, createdAt)';
+
+/* The window as a where-fragment that can be spread into any query on this
+   model. Returns {} when no window applies, so callers need no special case. */
+function periodWhere(fromDate, toDate) {
+  const usable = (d) => d && !isNaN(d);
+  let clause = null;
+  if (usable(fromDate) && usable(toDate)) clause = { [Op.between]: [fromDate, toDate] };
+  else if (usable(fromDate)) clause = { [Op.gte]: fromDate };
+  else if (usable(toDate)) clause = { [Op.lte]: toDate };
+  return clause ? { [Op.and]: [sequelize.where(effectiveDate(), clause)] } : {};
+}
+
 const asList = (map) =>
   Object.entries(map || {})
     .map(([currency, amount]) => ({ currency, amount: Math.round(amount * 100) / 100 }))
@@ -70,10 +107,7 @@ export const getPeopleReport = async (req, res) => {
     const preset = presetWindow(range);
     const fromDate = from ? startOfDay(new Date(from)) : (preset ? preset.from : null);
     const toDate = to ? endOfDay(new Date(to)) : (preset ? preset.to : null);
-    const period = {};
-    if (fromDate && !isNaN(fromDate) && toDate && !isNaN(toDate)) period.createdAt = { [Op.between]: [fromDate, toDate] };
-    else if (fromDate && !isNaN(fromDate)) period.createdAt = { [Op.gte]: fromDate };
-    else if (toDate && !isNaN(toDate)) period.createdAt = { [Op.lte]: toDate };
+    const period = periodWhere(fromDate, toDate);
 
     /* --- who is in the report --- */
     const where = {};
@@ -139,9 +173,25 @@ export const getPeopleReport = async (req, res) => {
               where: {
                 ...period,
                 senderId: { [Op.in]: ids },
-                /* A cancelled transfer earned nothing; its commission is left
-                   on the row for the record, so it is excluded by status. */
-                status: { [Op.ne]: 'cancelled' },
+                /* State pushes only. `commission` also carries the fee a
+                   customer PAID on a withdrawal, and on a transfer to an agent
+                   it holds the agent's fee — neither is the sender's earnings.
+                   Staff send neither today, but this figure now feeds a money
+                   calculation, so it says what it means. */
+                type: 'admin_state_push',
+                /* Every status counts — completed, pending AND cancelled.
+
+                   Commission is charged for putting the transfer up, so it
+                   stands whatever became of the transfer afterwards. Cancelled
+                   rows used to be excluded here on the reasoning that a
+                   cancelled transfer earned nothing, which is not the rule this
+                   business runs.
+
+                   This is the one figure on the page that is not completed-only,
+                   and it is deliberate. It also settles a disagreement: the
+                   table counted completed + pending while the statement counted
+                   completed alone, so the same person could show 31,000 in one
+                   and 15,000 in the other. Both now read every status. */
                 commission: { [Op.gt]: 0 },
               },
               attributes: [
@@ -324,9 +374,16 @@ export const getPeopleReport = async (req, res) => {
       acc[cur] = (acc[cur] || 0) + delta;
     };
 
-    for (const r of cSent) {
-      post(r.senderId, r.currencyCode, Number(r.amount) || 0);
-      post(r.senderId, r.currencyCode, Number(r.commission) || 0);
+    /* The AMOUNT sent is completed-only — money that never moved cannot be cash
+       in a drawer. The COMMISSION is not: it is charged for putting the
+       transfer up and stands whether the transfer completed or was cancelled.
+
+       So the commission term is taken from commBy, the very figure the
+       Commission column shows, rather than re-summed off the completed rows.
+       Read from one place, the column and this calculation cannot drift. */
+    for (const r of cSent) post(r.senderId, r.currencyCode, Number(r.amount) || 0);
+    for (const [personId, entry] of Object.entries(commBy)) {
+      for (const [cur, v] of Object.entries(entry.byCurrency)) post(Number(personId), cur, v);
     }
     for (const r of cSettled) post(r.settledById, r.currencyCode, -(Number(r.amount) || 0));
     for (const r of cExchange) {
@@ -353,8 +410,8 @@ export const getPeopleReport = async (req, res) => {
        true answer to "how much UGX should I be holding". */
     const presenceSql = (() => {
       let clause = '';
-      if (fromDate && !isNaN(fromDate)) clause += ' AND createdAt >= :from';
-      if (toDate && !isNaN(toDate)) clause += ' AND createdAt <= :to';
+      if (fromDate && !isNaN(fromDate)) clause += ' AND ' + EFFECTIVE_DATE_SQL + ' >= :from';
+      if (toDate && !isNaN(toDate)) clause += ' AND ' + EFFECTIVE_DATE_SQL + ' <= :to';
       const side = (idCol, curCol, types) =>
         'SELECT ' + idCol + ' personId, ' + curCol + ' cur FROM Transactions WHERE type IN (' + types +
         ') AND ' + idCol + ' IN (:ids) AND ' + curCol + ' IS NOT NULL' + clause;
@@ -409,8 +466,8 @@ export const getPeopleReport = async (req, res) => {
     if (ids.length) {
       let clause = '';
       const replacements = { ids };
-      if (fromDate && !isNaN(fromDate)) { clause += ' AND createdAt >= :from'; replacements.from = fromDate; }
-      if (toDate && !isNaN(toDate)) { clause += ' AND createdAt <= :to'; replacements.to = toDate; }
+      if (fromDate && !isNaN(fromDate)) { clause += ' AND ' + EFFECTIVE_DATE_SQL + ' >= :from'; replacements.from = fromDate; }
+      if (toDate && !isNaN(toDate)) { clause += ' AND ' + EFFECTIVE_DATE_SQL + ' <= :to'; replacements.to = toDate; }
       const side = (col) =>
         'SELECT ' + col + ' personId, id FROM Transactions WHERE ' + col + ' IN (:ids)' + clause;
       const rows = await sequelize.query(
@@ -591,18 +648,24 @@ export const getPersonStatement = async (req, res) => {
     const preset = presetWindow(range);
     const fromDate = from ? startOfDay(new Date(from)) : (preset ? preset.from : null);
     const toDate = to ? endOfDay(new Date(to)) : (preset ? preset.to : null);
-    const period = {};
-    if (fromDate && !isNaN(fromDate) && toDate && !isNaN(toDate)) period.createdAt = { [Op.between]: [fromDate, toDate] };
-    else if (fromDate && !isNaN(fromDate)) period.createdAt = { [Op.gte]: fromDate };
-    else if (toDate && !isNaN(toDate)) period.createdAt = { [Op.lte]: toDate };
+    const period = periodWhere(fromDate, toDate);
 
     const done = { ...period, status: 'completed' };
     const sum = (col, alias) => [sequelize.fn('SUM', sequelize.col(col)), alias];
 
-    const [sent, received, topup, cashOut, exchanges, agentComm, txns] = await Promise.all([
+    const [sent, commissionRows, received, topup, cashOut, exchanges, agentComm, txns] = await Promise.all([
       Transaction.findAll({
         where: { ...done, type: 'admin_state_push', senderId: id },
-        attributes: ['currencyCode', sum('amount', 'amount'), sum('commission', 'commission')],
+        attributes: ['currencyCode', sum('amount', 'amount')],
+        group: ['currencyCode'], raw: true,
+      }),
+      /* Commission is the one term that is NOT completed-only. It is charged
+         for putting the transfer up, so it stands whether the transfer
+         completed or was cancelled — hence `period` rather than `done`. Same
+         rule as the Commission column, so the invoice and the row agree. */
+      Transaction.findAll({
+        where: { ...period, type: 'admin_state_push', senderId: id, commission: { [Op.gt]: 0 } },
+        attributes: ['currencyCode', sum('commission', 'commission')],
         group: ['currencyCode'], raw: true,
       }),
       Transaction.findAll({
@@ -659,7 +722,7 @@ export const getPersonStatement = async (req, res) => {
     };
 
     const sentBy = bucket(sent);
-    const commissionBy = bucket(sent, 'commission');
+    const commissionBy = bucket(commissionRows, 'commission');
     const receivedBy = bucket(received);
     const topupBy = bucket(topup);
     const cashOutBy = bucket(cashOut);

@@ -6,7 +6,8 @@ import {
 import { adminAPI } from '../utils/api';
 import SkeletonRows from '../components/SkeletonRows';
 import { downloadStatementDoc } from '../utils/statementDoc';
-import { saveBlob, uniqueFileName } from '../utils/download';
+import Footer from '../components/Footer';
+import { downloadReportSheet } from '../utils/reportSheet';
 import '../styles/admin-reports.css';
 
 /* ==========================================================================
@@ -18,8 +19,8 @@ import '../styles/admin-reports.css';
    boundary.
 
    The page reads top to bottom as three questions: when and who (the toolbar),
-   the shape of the answer (the overview), then the answer itself (the table).
-   The footer records what the figures on screen actually cover.
+   the shape of the answer (the overview), then the answer itself (the table),
+   closing with the standard site footer the rest of the admin area carries.
 
    Money is shown per currency and never summed across them: there is no
    cross-rate at report time, so one figure spanning SSP, USD and UGX would be
@@ -74,13 +75,6 @@ const whole = (n) => Number(n || 0).toLocaleString(undefined);
 const when = (v) => {
   const d = new Date(v);
   return isNaN(d) ? '—' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-};
-
-const stamp = (v) => {
-  const d = v ? new Date(v) : null;
-  return !d || isNaN(d) ? '—' : d.toLocaleString(undefined, {
-    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
 };
 
 /* Two letters standing in for a face. Names here are often a single word, so
@@ -213,7 +207,6 @@ export default function AdminReports() {
   const [people_, setPeople_] = useState([]);
   const [destinations, setDestinations] = useState([]);
   const [data, setData] = useState(null);
-  const [fetchedAt, setFetchedAt] = useState(null);
   const [busyId, setBusyId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -265,7 +258,7 @@ export default function AdminReports() {
     setLoading(true);
     setError(null);
     adminAPI.getPeopleReport(query)
-      .then((r) => { if (alive) { setData(r.data); setFetchedAt(new Date()); } })
+      .then((r) => { if (alive) setData(r.data); })
       .catch((e) => { if (alive) setError(e?.response?.data?.message || 'Could not load the report'); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
@@ -283,24 +276,6 @@ export default function AdminReports() {
 
   const people = data?.people || [];
   const summary = data?.summary;
-
-  /* What the figures on screen actually cover, said in words. A report read
-     later — printed, or pasted into a message — is worth very little if the
-     period and filters behind it have to be guessed. */
-  const coverage = useMemo(() => {
-    const bits = [];
-    if (from || to) bits.push((from || 'the beginning') + ' to ' + (to || 'today'));
-    else bits.push((RANGES.find((r) => r.key === range) || {}).label || 'Monthly');
-    if (role !== 'all') bits.push((ROLES.find((r) => r.key === role) || {}).label);
-    if (person !== 'all') {
-      const u = people_.find((x) => String(x.id) === String(person));
-      bits.push(u ? (u.name || u.email) : 'one person');
-    }
-    if (destination !== 'all') bits.push(destination);
-    if (status !== 'all') bits.push((STATUSES.find((s) => s.key === status) || {}).label);
-    if (search.trim()) bits.push('matching "' + search.trim() + '"');
-    return bits.filter(Boolean).join(' · ');
-  }, [from, to, range, role, destination, status, search, person, people_]);
 
   /* One person's statement, as a Word document.
 
@@ -327,21 +302,19 @@ export default function AdminReports() {
   };
 
   /* Exported from the rows on screen, so the file always matches what was
-     being looked at when the button was pressed. */
-  const exportCsv = () => {
-    /* Numbers go out as numbers, so a spreadsheet can sum and sort them.
+     being looked at when the button was pressed.
 
-       A money column cannot be one number, because it holds a figure per
-       currency — "3,000,100.00 SSP | 101.00 USD" in a single cell is text and
-       stays text however it is quoted. So each money column is split into one
-       column per currency, and every one of those cells is a bare numeric
-       value. Only the currencies actually present in the visible rows get
-       columns, so the file does not sprout empty ones.
+     Every column declares its own type, and that type drives three things at
+     once: the Excel number format, the alignment, and the width. Nothing is
+     inferred from the value, which is how a phone number came to be rendered
+     as 2.11912E+11 in the first place.
 
-       A blank cell means no activity in that currency, which is not the same as
-       0.00 — Collected prints a real zero where the terms cancel out, and that
-       distinction would be lost if absence were written as zero. */
-    const CURRENCY_COLUMNS = [
+     A money column cannot be one column, because it holds a figure per
+     currency -- "3,000,100.00 SSP | 101.00 USD" in a single cell is text and
+     stays text however it is written. So each splits into one column per
+     currency, and only currencies actually present get one. */
+  const exportSheet = () => {
+    const MONEY_COLUMNS = [
       ['Sent', (p) => p.sent.totals],
       ['Received', (p) => p.received.totals],
       ['Commission', (p) => p.commission.totals],
@@ -349,53 +322,54 @@ export default function AdminReports() {
     ];
 
     const currencies = [...new Set(
-      people.flatMap((p) => CURRENCY_COLUMNS.flatMap(([, pick]) => (pick(p) || []).map((t) => t.currency))),
+      people.flatMap((p) => MONEY_COLUMNS.flatMap(([, pick]) => (pick(p) || []).map((t) => t.currency))),
     )].sort();
 
-    const head = [
-      'Name', 'Email', 'Phone', 'Role', 'Destination', 'Reference', 'Transactions',
-      ...CURRENCY_COLUMNS.flatMap(([label]) => currencies.map((c) => label + ' ' + c)),
-      'Balance', 'Verified', 'Suspended', 'Joined',
-    ];
-
-    /* Quote text; leave numbers bare. A quoted number is a string to Excel. */
-    const cell = (v) =>
-      typeof v === 'number' && isFinite(v)
-        ? String(v)
-        : '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-
+    /* Blank, not zero: no activity in a currency is not the same as nought of
+       it, and Collected prints a real zero where the terms cancel out. */
     const amountIn = (totals, currency) => {
       const hit = (totals || []).find((t) => t.currency === currency);
       return hit ? hit.amount : '';
     };
 
-    const lines = [head.map(cell).join(',')];
-    for (const p of people) {
-      lines.push([
-        p.name, p.email, p.phone, ROLE_LABEL[p.role] || p.role, p.destination || '', p.reference || '',
-        p.transactions,
-        ...CURRENCY_COLUMNS.flatMap(([, pick]) => currencies.map((c) => amountIn(pick(p), c))),
-        p.balance,
-        p.isVerified ? 'Yes' : 'No', p.isSuspended ? 'Yes' : 'No',
-        p.joined ? new Date(p.joined).toISOString().slice(0, 10) : '',
-      ].map(cell).join(','));
-    }
-    /* The name carries the filters, so two exports taken minutes apart under
-       different filters are told apart by their names rather than by opening
-       them. The BOM keeps Excel from mangling the currency codes. */
-    saveBlob(
-      ['﻿', lines.join('\n')],
-      'text/csv;charset=utf-8;',
-      uniqueFileName('moneypay-report', 'csv', [
+    const columns = [
+      { label: 'Name', type: 'text', value: (p) => p.name },
+      { label: 'Email', type: 'text', value: (p) => p.email },
+      { label: 'Phone', type: 'id', value: (p) => p.phone },
+      { label: 'Role', type: 'text', value: (p) => ROLE_LABEL[p.role] || p.role },
+      { label: 'Destination', type: 'text', value: (p) => p.destination || '' },
+      { label: 'Reference', type: 'id', value: (p) => p.reference || '' },
+      { label: 'Transactions', type: 'count', value: (p) => p.transactions },
+      ...MONEY_COLUMNS.flatMap(([label, pick]) =>
+        currencies.map((c) => ({
+          label: label + ' ' + c,
+          type: 'number',
+          value: (p) => amountIn(pick(p), c),
+        }))),
+      { label: 'Balance', type: 'number', value: (p) => p.balance },
+      { label: 'Verified', type: 'text', value: (p) => (p.isVerified ? 'Yes' : 'No') },
+      { label: 'Suspended', type: 'text', value: (p) => (p.isSuspended ? 'Yes' : 'No') },
+      { label: 'Joined', type: 'text', value: (p) => (p.joined ? new Date(p.joined).toISOString().slice(0, 10) : '') },
+    ];
+
+    downloadReportSheet(
+      {
+        columns,
+        rows: people,
+        title: 'MoneyPay report',
+        subtitle: 'Amounts are listed per currency and are never added across them.',
+      },
+      [
         role !== 'all' ? role : null,
         destination !== 'all' ? destination : null,
         status !== 'all' ? status : null,
         from || to ? 'custom' : range,
-      ]),
+      ],
     );
   };
 
   return (
+    <>
     <div className="dashboard-container rp-page">
       <div className="dashboard-header">
         <h1><TrendingUp size={20} /> Reports</h1>
@@ -533,8 +507,8 @@ export default function AdminReports() {
                   <Coins size={15} />
                   {whole(people.length)} {people.length === 1 ? 'person' : 'people'}
                 </h3>
-                <button type="button" className="rp-export" onClick={exportCsv} disabled={!people.length}>
-                  <Download size={14} /> Export CSV
+                <button type="button" className="rp-export" onClick={exportSheet} disabled={!people.length}>
+                  <Download size={14} /> Export Excel
                 </button>
               </div>
 
@@ -679,23 +653,8 @@ export default function AdminReports() {
         )}
       </div>
 
-      {/* --- what this report covers, and when it was pulled --- */}
-      <footer className="rp-footer">
-        <div className="rp-footer-main">
-          <strong>MoneyPay</strong>
-          <span className="rp-footer-sep" aria-hidden="true" />
-          <span>
-            {whole(people.length)} {people.length === 1 ? 'person' : 'people'}
-            {coverage ? ' · ' + coverage : ''}
-          </span>
-        </div>
-        <div className="rp-footer-meta">
-          <span>Generated {stamp(fetchedAt)}</span>
-          <span className="rp-footer-note">
-            Amounts are listed per currency and are never added across them.
-          </span>
-        </div>
-      </footer>
-    </div>
+      </div>
+      <Footer />
+    </>
   );
 }

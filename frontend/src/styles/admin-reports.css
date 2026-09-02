@@ -505,33 +505,6 @@
 .rp-empty h4 { margin: 4px 0 0; font-size: 14px; color: var(--text-dark, #16302B); }
 .rp-empty p { margin: 0; font-size: 12.5px; }
 
-/* ---- footer --------------------------------------------------------------
-   What the figures on screen cover, and when they were pulled. A report that
-   outlives the screen it was read on needs to say what it is. */
-.rp-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px 18px;
-  margin-top: 14px;
-  padding: 14px 4px 4px;
-  border-top: 1px solid var(--border, #E3EAE7);
-  font-size: 11.5px;
-  color: var(--text-light, #5B6B66);
-}
-
-.rp-footer-main { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
-.rp-footer-main strong { font-size: 12px; font-weight: 700; color: var(--text-dark, #16302B); }
-
-.rp-footer-sep {
-  width: 1px;
-  height: 12px;
-  background: var(--border, #E3EAE7);
-}
-
-.rp-footer-meta { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
-.rp-footer-note { opacity: 0.8; }
 
 /* ---- narrow --------------------------------------------------------------
    The overview drops to two columns, then one. The people panel keeps the full
@@ -553,7 +526,6 @@
   .rp-heroes { gap: 20px; }
   .rp-results-head { flex-wrap: wrap; }
   .rp-export { width: 100%; justify-content: center; }
-  .rp-footer { flex-direction: column; align-items: flex-start; }
 }
 
 /* ---- dark ---------------------------------------------------------------- */
@@ -578,8 +550,7 @@
 
 [data-theme="dark"] .rp-toolbar-row.is-secondary,
 [data-theme="dark"] .rp-results-head,
-[data-theme="dark"] .rp-footer,
-[data-theme="dark"] .rp-footer-sep { border-color: rgba(255, 255, 255, 0.10); }
+
 
 [data-theme="dark"] .rp-table thead th { background: rgba(255, 255, 255, 0.05); }
 [data-theme="dark"] .rp-table tbody tr:hover { background: rgba(255, 255, 255, 0.04); }
@@ -590,7 +561,6 @@
 [data-theme="dark"] .rp-amounts,
 [data-theme="dark"] .rp-legend b,
 [data-theme="dark"] .rp-results-head h3,
-[data-theme="dark"] .rp-footer-main strong,
 [data-theme="dark"] .rp-empty h4 { color: #E6F2EC; }
 
 [data-theme="dark"] .rp-sub,
@@ -599,7 +569,6 @@
 [data-theme="dark"] .rp-panel-hint,
 [data-theme="dark"] .rp-hero-label,
 [data-theme="dark"] .rp-panel-label,
-[data-theme="dark"] .rp-footer { color: #9FB3AB; }
 
 /* Collected is a net figure, so a currency can legitimately land below zero —
    worth seeing rather than reading past. */
