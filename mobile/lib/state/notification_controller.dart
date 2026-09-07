@@ -108,24 +108,48 @@ class NotificationController extends ChangeNotifier {
     }
   }
 
-  /// A live arrival from the socket. Socket payloads carry no real id, so a
-  /// duplicate cannot be detected by id — matching on the text and a recent
-  /// timestamp keeps a push and the row it mirrors from appearing twice.
+  /// A live arrival from the socket or a push.
+  ///
+  /// Matched on the server's row id, which both routes now carry: the same
+  /// notification arriving twice is the same id, and two genuinely separate
+  /// events are two ids however alike they read.
+  ///
+  /// The text-and-timestamp fallback below is only for a payload with no id —
+  /// a server that has not been redeployed. It was the only rule, and it was
+  /// wrong: two top-ups of the same amount inside thirty seconds produce the
+  /// same title and the same message, so the second was silently swallowed and
+  /// never reached the tray. Identical payments are ordinary, not duplicates.
+  ///
   /// Returns whether it was added, so the caller can tell a new event from a
   /// repeat of one already held.
   bool _prepend(AppNotification incoming) {
-    final alreadyThere = _items.any(
+    if (isDuplicate(_items, incoming)) return false;
+
+    _items = [incoming, ..._items];
+    notifyListeners();
+    return true;
+  }
+
+  /// Whether [incoming] is something already held, rather than a new event.
+  ///
+  /// Pure and static so the rule can be tested directly: building the
+  /// controller means building an API client and a session store, and this is
+  /// the part worth pinning.
+  @visibleForTesting
+  static bool isDuplicate(
+    List<AppNotification> items,
+    AppNotification incoming,
+  ) {
+    if (incoming.id > 0) {
+      return items.any((item) => item.id == incoming.id);
+    }
+    return items.any(
       (item) =>
           item.title == incoming.title &&
           item.message == incoming.message &&
           incoming.createdAt.difference(item.createdAt).abs() <
               const Duration(seconds: 30),
     );
-    if (alreadyThere) return false;
-
-    _items = [incoming, ..._items];
-    notifyListeners();
-    return true;
   }
 
   void _replace(int id, AppNotification updated) {

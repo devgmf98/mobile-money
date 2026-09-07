@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneypay/data/models/app_user.dart';
 import 'package:moneypay/data/models/fee_quote.dart';
+import 'package:moneypay/data/models/app_notification.dart';
 import 'package:moneypay/data/models/lookup.dart';
+import 'package:moneypay/state/notification_controller.dart';
 import 'package:moneypay/data/models/parse.dart';
 import 'package:moneypay/data/models/wallet_transaction.dart';
 
@@ -349,6 +351,81 @@ void main() {
       // What actually leaves the balance, which is the figure the screen leads
       // with — the fees are what surprise people.
       expect(WithdrawalRequestItem.fromJson(raw('agent')).totalCost, 5150);
+    });
+  });
+
+  group('Notification de-duplication', () {
+    AppNotification make({
+      required int id,
+      String title = 'Account Topped Up',
+      String message = 'Your account has been topped up with SSP 5000',
+      Duration ago = Duration.zero,
+    }) => AppNotification(
+      id: id,
+      title: title,
+      message: message,
+      kind: NotificationKind.transaction,
+      isRead: false,
+      createdAt: DateTime.now().subtract(ago),
+    );
+
+    test('two identical payments moments apart are both kept', () {
+      // The rule used to match on title, message and a 30-second window, so
+      // topping the same person up twice for the same amount showed once and
+      // the second reached neither the list nor the tray. Two top-ups of 5000
+      // in a row is ordinary, not a duplicate.
+      final held = [make(id: 101)];
+      expect(NotificationController.isDuplicate(held, make(id: 102)), isFalse);
+    });
+
+    test('the same notification arriving twice is caught', () {
+      // Socket and push both deliver the same row, and both carry its id.
+      final held = [make(id: 101)];
+      expect(NotificationController.isDuplicate(held, make(id: 101)), isTrue);
+    });
+
+    test('a socket payload with no id reports zero, not an invented one', () {
+      // The fallback used to invent a positive id from the clock, which made
+      // every arrival unique by definition -- so de-duplication matched on the
+      // id, never compared the text, and the same event arriving over both the
+      // socket and a push showed twice.
+      final parsed = AppNotification.fromSocket({
+        'title': 'Money Received',
+        'message': 'You received SSP 5,000.00',
+        'type': 'transaction',
+      });
+      expect(parsed.id, 0);
+
+      // And a real id is carried through, which is what keeps two separate
+      // payments apart in the tray.
+      expect(
+        AppNotification.fromSocket({
+          'id': 4242,
+          'title': 'x',
+          'message': 'y',
+        }).id,
+        4242,
+      );
+    });
+
+    test('without an id it falls back to text and a short window', () {
+      // A server that has not been redeployed sends no id.
+      final held = [make(id: 0)];
+      expect(NotificationController.isDuplicate(held, make(id: 0)), isTrue);
+      expect(
+        NotificationController.isDuplicate(
+          held,
+          make(id: 0, message: 'Your account has been topped up with SSP 9000'),
+        ),
+        isFalse,
+      );
+      expect(
+        NotificationController.isDuplicate(
+          held,
+          make(id: 0, ago: const Duration(minutes: 5)),
+        ),
+        isFalse,
+      );
     });
   });
 }

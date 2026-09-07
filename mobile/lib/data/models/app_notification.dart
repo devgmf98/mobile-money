@@ -88,7 +88,12 @@ class AppNotification {
   /// They are only ever shown, never acted on by id, so a synthetic id is fine.
   factory AppNotification.fromSocket(Map<String, dynamic> json) {
     return AppNotification(
-      id: P.toInt(json['id'], -DateTime.now().millisecondsSinceEpoch % 100000),
+      // Zero means "the server did not say", which is a thing callers need to
+       // be able to tell. Inventing a plausible-looking id here made every
+       // arrival unique by definition, so de-duplication matched on it and
+       // never fell back to comparing the text -- and the same event arriving
+       // over both the socket and a push showed twice.
+      id: P.toInt(json['id']),
       title: P.toText(json['title'], 'Notification'),
       message: P.toText(json['message']),
       kind: NotificationKind.parse(json['type']),

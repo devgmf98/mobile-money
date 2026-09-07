@@ -108,10 +108,18 @@ class LocalNotifications {
 
     try {
       await _plugin.show(
-        // The server's own id, so the same event arriving twice — a reconnect
-        // replaying it, say — replaces its entry rather than stacking a
-        // duplicate underneath.
-        notification.id,
+        // The server's own row id, so each notification is its own entry and
+        // the same one arriving twice — over the socket and again as a push —
+        // replaces itself rather than stacking a duplicate underneath.
+        //
+        // Without an id every notification was posted under the same key, so
+        // each new one quietly replaced the last and only ever one was in the
+        // tray. A time-derived value keeps them distinct in that case; it
+        // gives up the replace-on-repeat behaviour, which is the right trade
+        // when the alternative is showing only the most recent.
+        notification.id > 0
+            ? notification.id
+            : DateTime.now().microsecondsSinceEpoch.remainder(0x7FFFFFFF),
         notification.title,
         notification.message,
         _details,
