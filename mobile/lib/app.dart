@@ -62,9 +62,11 @@ class MoneyPayApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider(create: (_) => SessionStore()),
-        Provider(
+        // A ChangeNotifier so the notification status row can watch the
+        // connection rather than sampling it once when it happens to build.
+        ChangeNotifierProvider(
+          // ChangeNotifierProvider disposes it for us.
           create: (_) => RealtimeService(),
-          dispose: (_, s) => s.dispose(),
         ),
         Provider(
           create: (context) => ApiClient(session: context.read<SessionStore>()),

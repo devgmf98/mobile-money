@@ -570,7 +570,11 @@ class _NotificationStatusRowState extends State<_NotificationStatusRow> {
   Widget build(BuildContext context) {
     final local = LocalNotifications.instance;
     final push = PushService.instance;
-    final live = context.read<RealtimeService>().isConnected;
+    // Watched, not read: the socket connects a moment after this screen can
+    // first be opened, and a value sampled once at build time reported "Not
+    // live" for a connection that was about to come up.
+    final realtime = context.watch<RealtimeService>();
+    final live = realtime.isConnected;
 
     final parts = <String>[
       local.isReady ? 'Alerts on' : 'Alerts off',
@@ -582,7 +586,7 @@ class _NotificationStatusRowState extends State<_NotificationStatusRow> {
       live ? 'Live' : 'Not live',
     ];
 
-    final problem = local.lastError ?? push.lastError;
+    final problem = local.lastError ?? push.lastError ?? realtime.lastSocketError;
     final healthy = local.isReady && push.registered && live;
 
     return SettingsRow(

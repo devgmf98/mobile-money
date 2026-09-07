@@ -16,7 +16,7 @@ import '../data/models/parse.dart';
 /// socket has to announce itself with `join-user` before anything arrives —
 /// connecting alone is not enough, and forgetting that is the difference
 /// between a live balance and one that only moves on pull-to-refresh.
-class RealtimeService {
+class RealtimeService extends ChangeNotifier {
   io.Socket? _socket;
   int? _joinedUserId;
 
@@ -36,6 +36,13 @@ class RealtimeService {
   Stream<void> get transactionUpdates => _transactions.stream;
 
   bool get isConnected => _socket?.connected ?? false;
+
+  /// Why the socket is not connected, when it is not.
+  ///
+  /// Connection errors used to print in debug and nowhere else, so on a
+  /// release build a socket that never came up was indistinguishable from one
+  /// that was working and simply had nothing to say.
+  String? lastSocketError;
 
   void connect(int userId, {required String token}) {
     if (_joinedUserId == userId && isConnected) return;
@@ -63,7 +70,25 @@ class RealtimeService {
     // room the old one was in.
     // The argument is vestigial -- the server takes the id from the token --
     // but the event is still what asks to be put in the room.
-    socket.onConnect((_) => socket.emit('join-user', userId));
+    socket.onConnect((_) {
+      lastSocketError = null;
+      socket.emit('join-user', userId);
+      notifyListeners();
+    });
+
+    // Listeners are told, so a status row reading this shows what is true now
+    // rather than what was true when it was first built.
+    socket.onDisconnect((_) => notifyListeners());
+
+    socket.onConnectError((error) {
+      lastSocketError = '$error';
+      notifyListeners();
+    });
+
+    socket.onError((error) {
+      lastSocketError = '$error';
+      notifyListeners();
+    });
 
     socket.on('balance-updated', (data) {
       final map = P.toMap(data);
@@ -84,10 +109,6 @@ class RealtimeService {
     // nothing else would tell the list to look again.
     socket.on('transaction-updated', (_) => _transactions.add(null));
 
-    if (kDebugMode) {
-      socket.onConnectError((error) => debugPrint('Socket error: $error'));
-    }
-
     _socket = socket;
   }
 
@@ -95,11 +116,15 @@ class RealtimeService {
     _socket?.dispose();
     _socket = null;
     _joinedUserId = null;
+    notifyListeners();
   }
 
+  @override
   void dispose() {
     disconnect();
     _balances.close();
     _notifications.close();
+    _transactions.close();
+    super.dispose();
   }
 }
