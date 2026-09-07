@@ -1550,30 +1550,69 @@ export const getTieredCommission = async (req, res) => {
   }
 };
 
+/* The two tables the pricing code actually reads. quoteSendMoney looks at
+   SendMoneyCommissionTier and quoteWithdrawal at WithdrawalCommissionTier, so
+   every route that claims to save tiers has to write here or it has not saved
+   anything that affects a price. Replace-all rather than upsert, because the
+   admin screen sends the whole ladder and a removed band has to disappear. */
+const replaceSendTiers = async (tiers) => {
+  await SendMoneyCommissionTier.destroy({ where: {} });
+  const created = [];
+  for (const tier of tiers) {
+    created.push(await SendMoneyCommissionTier.create({
+      minAmount: tier.minAmount,
+      maxAmount: tier.maxAmount,
+      companyPercent: tier.companyPercent || 0,
+      userPercent: tier.userPercent || 0
+    }));
+  }
+  return created;
+};
+
+const replaceWithdrawalTiers = async (tiers) => {
+  await WithdrawalCommissionTier.destroy({ where: {} });
+  const created = [];
+  for (const tier of tiers) {
+    created.push(await WithdrawalCommissionTier.create({
+      minAmount: tier.minAmount,
+      maxAmount: tier.maxAmount,
+      agentPercent: tier.agentPercent || 0,
+      companyPercent: tier.companyPercent || 0
+    }));
+  }
+  return created;
+};
+
+/* Saves both ladders at once.
+
+   This used to write to the TieredCommission table instead -- a table nothing
+   reads. Saving through here therefore looked like it worked, returned the
+   tiers it had "saved", and changed no price at all; the admin screen, which
+   reads the real tables, then showed no tiers. Anything still calling this
+   route (an older bundle, a cached client) was silently unable to configure
+   commission. It now writes where the quotes look. */
 export const setTieredCommission = async (req, res) => {
   try {
     const { tiers, withdrawalTiers } = req.body;
 
-    // Update or create send-money tiers
-    let sendDoc = await TieredCommission.findOne({ where: { type: 'send-money' } });
-    if (sendDoc) {
-      await sendDoc.update({ tiers: tiers || [] });
-    } else {
-      sendDoc = await TieredCommission.create({ type: 'send-money', tiers: tiers || [] });
+    if (tiers !== undefined && !Array.isArray(tiers)) {
+      return res.status(400).json({ message: 'Tiers must be an array' });
+    }
+    if (withdrawalTiers !== undefined && !Array.isArray(withdrawalTiers)) {
+      return res.status(400).json({ message: 'Withdrawal tiers must be an array' });
     }
 
-    // Update or create withdrawal tiers
-    let withdrawDoc = await TieredCommission.findOne({ where: { type: 'withdraw' } });
-    if (withdrawDoc) {
-      await withdrawDoc.update({ withdrawalTiers: withdrawalTiers || [] });
-    } else {
-      withdrawDoc = await TieredCommission.create({ type: 'withdraw', withdrawalTiers: withdrawalTiers || [] });
-    }
+    /* Absent means "leave this ladder alone"; an empty array means "clear it",
+       which is a real instruction and the only way to price at zero. */
+    const savedSend = tiers === undefined ? undefined : await replaceSendTiers(tiers);
+    const savedWithdrawal = withdrawalTiers === undefined
+      ? undefined
+      : await replaceWithdrawalTiers(withdrawalTiers);
 
     res.json({
       message: 'Tiered commission settings saved successfully',
-      tiers: sendDoc.tiers,
-      withdrawalTiers: withdrawDoc.withdrawalTiers
+      tiers: savedSend,
+      withdrawalTiers: savedWithdrawal
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -1588,20 +1627,7 @@ export const setSendMoneyTiers = async (req, res) => {
       return res.status(400).json({ message: 'Tiers must be an array' });
     }
 
-    // Delete all existing send money tiers
-    await SendMoneyCommissionTier.destroy({ where: {} });
-
-    // Create new send money tiers
-    const createdTiers = [];
-    for (const tier of tiers) {
-      const newTier = await SendMoneyCommissionTier.create({
-        minAmount: tier.minAmount,
-        maxAmount: tier.maxAmount,
-        companyPercent: tier.companyPercent || 0,
-        userPercent: tier.userPercent || 0
-      });
-      createdTiers.push(newTier);
-    }
+    const createdTiers = await replaceSendTiers(tiers);
 
     res.json({
       message: 'Send Money Commission Tiers saved successfully',
@@ -1620,20 +1646,7 @@ export const setWithdrawalTiers = async (req, res) => {
       return res.status(400).json({ message: 'Withdrawal tiers must be an array' });
     }
 
-    // Delete all existing withdrawal tiers
-    await WithdrawalCommissionTier.destroy({ where: {} });
-
-    // Create new withdrawal tiers
-    const createdTiers = [];
-    for (const tier of withdrawalTiers) {
-      const newTier = await WithdrawalCommissionTier.create({
-        minAmount: tier.minAmount,
-        maxAmount: tier.maxAmount,
-        agentPercent: tier.agentPercent || 0,
-        companyPercent: tier.companyPercent || 0
-      });
-      createdTiers.push(newTier);
-    }
+    const createdTiers = await replaceWithdrawalTiers(withdrawalTiers);
 
     res.json({
       message: 'Withdrawal Commission Tiers saved successfully',

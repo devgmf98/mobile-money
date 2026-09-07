@@ -444,6 +444,23 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
               if (_amountValue > 0) ...[
                 const SizedBox(height: 14),
                 FeeBreakdown(quote: _quote, loading: _quoting),
+                // Paying an agent is a cash-out, and the server prices it from
+                // the withdrawal tiers rather than the send-money ones. Without
+                // saying so, a charge on a transfer looks like a fee appearing
+                // from nowhere when the send-money tiers are empty. The web
+                // send form has carried this line all along.
+                if (_quote.isCashOut && _quote.hasFee) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Paying an agent is a cash-out, so it is charged at '
+                    'cash-out rates rather than transfer rates.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.4,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ],
 
               const SizedBox(height: 20),
