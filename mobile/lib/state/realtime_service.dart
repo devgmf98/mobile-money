@@ -53,7 +53,20 @@ class RealtimeService extends ChangeNotifier {
     final socket = io.io(
       Env.socketUrl,
       io.OptionBuilder()
-          .setTransports(['websocket'])
+          /* Polling first, then upgrade -- not websocket alone.
+
+             A websocket-only client has no fallback: where a carrier, a
+             captive portal or a corporate proxy refuses the upgrade
+             handshake, it does not degrade, it simply never connects, and
+             every live update is silently lost while the app looks fine. That
+             is a mobile network all over, and it is why this connected from a
+             desktop and not from a phone on 4G.
+
+             Socket.IO opens with HTTP long-polling, which goes through
+             anything, then upgrades to a websocket when it can. Where the
+             upgrade works the end state is identical to before; where it does
+             not, the connection still stands. */
+          .setTransports(['polling', 'websocket'])
           // The server reads the identity from this and ignores whatever id
           // the client claims. Without it the connection is accepted and joins
           // nothing, so a stale build degrades to pull-to-refresh instead of
@@ -61,6 +74,9 @@ class RealtimeService extends ChangeNotifier {
           .setAuth({'token': token})
           .enableReconnection()
           .setReconnectionDelay(2000)
+          // Retry rather than wait forever on a network that accepted the
+          // socket and then went quiet.
+          .setTimeout(15000)
           .enableAutoConnect()
           .build(),
     );

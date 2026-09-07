@@ -55,8 +55,19 @@ if (process.env.API_PRODUCTION_URL && !allowedOrigins.includes(process.env.API_P
 
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: allowedOrigins,
-    methods: ['GET', 'POST']
+    /* A list alone is not enough now that the app falls back to HTTP polling.
+
+       CORS is a browser rule, and a native client sends no Origin header at
+       all -- matching that against a list of allowed origins fails, because
+       there is nothing to match. Requests without an Origin are allowed
+       explicitly; requests with one are still checked against the list, so a
+       browser gains nothing it did not have. */
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      callback(null, allowedOrigins.includes(origin));
+    },
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
