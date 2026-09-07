@@ -247,6 +247,25 @@ async function startServer() {
     await sequelize.sync({ alter: true });
     console.log('Database synchronized and schema updated');
 
+    /* Created on its own as well, and after the alter rather than instead of
+       it.
+
+       sync({ alter: true }) walks every model, and one model it cannot alter
+       takes the whole call down with it -- leaving later tables uncreated.
+       DeviceToken is new, so it is exactly the kind of table that goes missing
+       that way, and when it does every device registration answers 500 into a
+       catch that says nothing: no rows, no push, no clue why.
+
+       sync() without alter creates the table when absent and does nothing when
+       present, so this is safe to run on every boot. */
+    try {
+      await DeviceToken.sync();
+      const registered = await DeviceToken.count();
+      console.log(`Device tokens table ready (${registered} registered)`);
+    } catch (err) {
+      console.error('Device tokens table unavailable - push will not work:', err.message);
+    }
+
     /* The Help Center opens on whatever is in the table, so an empty one would
        greet the first customer with an apology. Seeded once, only when there is
        nothing there — it never overwrites what staff have written. */

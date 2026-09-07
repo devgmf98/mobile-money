@@ -12,6 +12,9 @@ import '../../../data/models/app_user.dart';
 import '../../../routing/routes.dart';
 import '../../../state/auth_controller.dart';
 import '../../../state/notification_controller.dart';
+import '../../../state/realtime_service.dart';
+import '../../../state/push_service.dart';
+import '../../../state/local_notifications.dart';
 import '../../../state/wallet_controller.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
@@ -142,6 +145,7 @@ class ProfileScreen extends StatelessWidget {
             child: _Group(
               title: 'Support',
               children: [
+                const _NotificationStatusRow(),
                 SettingsRow(
                   icon: Icons.help_outline_rounded,
                   label: 'Help Centre',
@@ -525,6 +529,78 @@ class _AutoAdminCashOutRowState extends State<_AutoAdminCashOutRow> {
               child: CircularProgressIndicator(strokeWidth: 2),
             )
           : Switch(value: on, onChanged: _set),
+    );
+  }
+}
+
+/// What the notification system is actually doing, on the device.
+///
+/// Everything in that path swallows its own failures so a phone that cannot
+/// post notifications still runs the app. That is the right call and it left
+/// no way to tell "working" from "silently broken" on a release build — the
+/// only symptom of a missing permission, a Firebase that would not start, or a
+/// token the server never received is the same silence. This says which.
+///
+/// Tapping retries, because two of the three fail in ways that come good on a
+/// second attempt: a permission just granted, or a network that was down.
+class _NotificationStatusRow extends StatefulWidget {
+  const _NotificationStatusRow();
+
+  @override
+  State<_NotificationStatusRow> createState() => _NotificationStatusRowState();
+}
+
+class _NotificationStatusRowState extends State<_NotificationStatusRow> {
+  bool _busy = false;
+
+  Future<void> _retry() async {
+    // Read before the first await: the context must not be used across one.
+    final auth = context.read<AuthController>();
+    setState(() => _busy = true);
+    try {
+      await LocalNotifications.instance.init();
+      await LocalNotifications.instance.requestPermission();
+      await auth.retryPushRegistration();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final local = LocalNotifications.instance;
+    final push = PushService.instance;
+    final live = context.read<RealtimeService>().isConnected;
+
+    final parts = <String>[
+      local.isReady ? 'Alerts on' : 'Alerts off',
+      push.registered
+          ? 'Push registered'
+          : push.token != null
+          ? 'Push not registered'
+          : 'No push token',
+      live ? 'Live' : 'Not live',
+    ];
+
+    final problem = local.lastError ?? push.lastError;
+    final healthy = local.isReady && push.registered && live;
+
+    return SettingsRow(
+      icon: healthy
+          ? Icons.notifications_active_outlined
+          : Icons.notifications_off_outlined,
+      label: 'Notification status',
+      subtitle: problem == null
+          ? parts.join(' · ')
+          : '${parts.join(' · ')} — $problem',
+      tone: healthy ? null : AppColors.warning,
+      trailing: _busy
+          ? const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.refresh_rounded, size: 18),
+      onTap: _busy ? null : _retry,
     );
   }
 }

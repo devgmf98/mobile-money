@@ -45,6 +45,16 @@ class PushService {
   /// The current device token, or null if push is unavailable here.
   String? token;
 
+  /// Why push is unavailable, kept for the status row on the profile.
+  String? lastError;
+
+  /// Whether the token reached the server. Registering is best-effort, and a
+  /// token the server never received is the difference between a notification
+  /// arriving and nothing happening at all.
+  bool registered = false;
+
+  bool get isReady => _initialised;
+
   /// Starts Firebase and returns the device token.
   ///
   /// [onToken] is called with the token now and again whenever Firebase
@@ -69,6 +79,7 @@ class PushService {
       FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
       _initialised = true;
     } catch (error) {
+      lastError = '$error';
       if (kDebugMode) debugPrint('Firebase unavailable: $error');
     } finally {
       _initInFlight = null;
@@ -123,6 +134,7 @@ class PushService {
 
       _started = true;
     } catch (error) {
+      lastError = '$error';
       if (kDebugMode) debugPrint('Push unavailable: $error');
     }
   }

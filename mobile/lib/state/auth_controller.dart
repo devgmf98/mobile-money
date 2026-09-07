@@ -302,6 +302,7 @@ class AuthController extends ChangeNotifier {
       PushService.instance.start(
         onToken: (token) async {
           try {
+            PushService.instance.registered = false;
             await _authApi.registerDeviceToken(
               token,
               platform: defaultTargetPlatform == TargetPlatform.iOS
@@ -313,13 +314,25 @@ class AuthController extends ChangeNotifier {
               deviceName: '${Platform.operatingSystem} '
                   '${Platform.operatingSystemVersion}',
             );
-          } catch (_) {
-            // Registering is best-effort. Losing it costs a notification, not
-            // the session, and the next launch tries again.
+            PushService.instance.registered = true;
+          } catch (error) {
+            // Best-effort, but no longer invisible: without this the only
+            // symptom of a token the server never received is silence.
+            PushService.instance.lastError = 'Could not register device: $error';
           }
         },
       ),
     );
+  }
+
+  /// Tries the push registration again, for the status row on the profile.
+  ///
+  /// The usual reasons it failed the first time — permission not yet granted,
+  /// the network down at sign-in — are all things a second attempt fixes.
+  Future<void> retryPushRegistration() async {
+    final user = _user;
+    if (user == null) return;
+    _startSession(user);
   }
 
   Future<void> _releaseDevice() async {

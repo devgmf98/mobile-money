@@ -23,6 +23,16 @@ class LocalNotifications {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
+  /// Why setup failed, kept for the status row on the profile.
+  ///
+  /// Everything here swallows its own failures so a device that cannot post
+  /// notifications still runs the app. That is right, but it left no way to
+  /// tell "working" from "silently broken" on a release build, which is how
+  /// three rounds of guessing started.
+  String? lastError;
+
+  bool get isReady => _ready;
+
   /// Android needs a channel declared before anything can be posted to it, and
   /// the importance set here is what decides whether a notification appears as
   /// a heads-up banner or only in the shade. Money arriving is worth a banner.
@@ -79,6 +89,7 @@ class LocalNotifications {
       // A device that refuses to set the plugin up should not take the app
       // down with it — everything here is an extra on top of a screen that
       // already updates itself.
+      lastError = '$error';
       if (kDebugMode) debugPrint('Notifications unavailable: $error');
     }
   }
