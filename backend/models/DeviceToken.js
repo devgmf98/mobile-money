@@ -33,6 +33,19 @@ const DeviceToken = sequelize.define('DeviceToken', {
     type: DataTypes.ENUM('android', 'ios', 'web'),
     allowNull: false,
     defaultValue: 'android'
+  },
+  /* Something a person could recognise -- "Android 14", "Chrome on Windows".
+     A token is 163 characters of opaque text, so without this there is no way
+     to answer "which of my devices is this?" when a row looks wrong. */
+  deviceName: {
+    type: DataTypes.STRING(120),
+    allowNull: true
+  },
+  /* Refreshed on every sign-in, so a device nobody has used for months can be
+     told apart from the one in someone's hand. */
+  lastSeenAt: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   indexes: [{ fields: ['userId'] }]

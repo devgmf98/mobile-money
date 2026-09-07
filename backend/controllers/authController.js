@@ -502,22 +502,41 @@ export const resetPassword = async (req, res) => {
    rather than the user is the unique key. */
 export const registerDeviceToken = async (req, res) => {
   try {
-    const { token, platform } = req.body;
+    const { token, platform, deviceName } = req.body;
     if (!token || typeof token !== 'string') {
       return res.status(400).json({ message: 'A device token is required' });
     }
+
+    const resolved = ['android', 'ios', 'web'].includes(platform) ? platform : 'android';
+    const label = typeof deviceName === 'string' && deviceName.trim()
+      ? deviceName.trim().slice(0, 120)
+      : null;
 
     const [row, created] = await DeviceToken.findOrCreate({
       where: { token },
       defaults: {
         token,
         userId: req.userId,
-        platform: ['android', 'ios', 'web'].includes(platform) ? platform : 'android',
+        platform: resolved,
+        deviceName: label,
+        lastSeenAt: new Date(),
       },
     });
 
-    if (!created && row.userId !== req.userId) {
-      await row.update({ userId: req.userId });
+    /* Rewritten on every sign-in, not only when the row is new.
+
+       The account is what changes: a phone handed to a colleague, or a shared
+       counter device, keeps its Firebase token for the life of the install, so
+       the token is the constant and the user is not. Pointing the row at
+       whoever just signed in is what stops the previous person's money
+       notifications arriving on it. */
+    if (!created) {
+      await row.update({
+        userId: req.userId,
+        platform: resolved,
+        deviceName: label ?? row.deviceName,
+        lastSeenAt: new Date(),
+      });
     }
 
     res.json({ message: 'Device registered' });

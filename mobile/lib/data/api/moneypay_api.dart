@@ -109,10 +109,28 @@ class AuthApi {
 
   /// Where to push this account's notifications. Sent after sign-in and on
   /// every token rotation, since Firebase reissues on reinstall and restore.
-  Future<void> registerDeviceToken(String token, {String platform = 'android'}) {
+  Future<void> registerDeviceToken(
+    String token, {
+    String platform = 'android',
+    String? deviceName,
+  }) {
     return _client.post<void>(
       '/auth/device-token',
-      body: {'token': token, 'platform': platform},
+      body: {
+        'token': token,
+        'platform': platform,
+        if (deviceName != null) 'deviceName': deviceName,
+      },
+      parse: (_) {},
+    );
+  }
+
+  /// Hands the device back on sign-out, so this phone stops receiving the
+  /// notifications of whoever was signed in a moment ago.
+  Future<void> removeDeviceToken(String token) {
+    return _client.delete<void>(
+      '/auth/device-token',
+      body: {'token': token},
       parse: (_) {},
     );
   }

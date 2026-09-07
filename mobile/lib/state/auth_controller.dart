@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
@@ -266,7 +267,11 @@ class AuthController extends ChangeNotifier {
     unawaited(LocalNotifications.instance.clearAll());
     // Drops the Firebase token as well, so the next person to sign in on this
     // phone does not receive the last person's money.
-    unawaited(PushService.instance.stop());
+    // Released on the server first, then locally. Waiting for FCM to notice
+     // the token is dead leaves this phone on the previous person's account
+     // until it next fails to deliver, which on a shared counter device is a
+     // window where their money notifications arrive for someone else.
+    unawaited(_releaseDevice());
     await _session.clear();
     _user = null;
     _expiryNotice = expired
@@ -302,6 +307,11 @@ class AuthController extends ChangeNotifier {
               platform: defaultTargetPlatform == TargetPlatform.iOS
                   ? 'ios'
                   : 'android',
+              // Something recognisable in a list of devices. Read from the
+              // platform rather than a package, so this costs no dependency
+              // and no native build.
+              deviceName: '${Platform.operatingSystem} '
+                  '${Platform.operatingSystemVersion}',
             );
           } catch (_) {
             // Registering is best-effort. Losing it costs a notification, not
@@ -310,6 +320,19 @@ class AuthController extends ChangeNotifier {
         },
       ),
     );
+  }
+
+  Future<void> _releaseDevice() async {
+    final token = PushService.instance.token;
+    if (token != null && token.isNotEmpty) {
+      try {
+        await _authApi.removeDeviceToken(token);
+      } catch (_) {
+        // Best effort. A token the server still holds is pruned the first
+        // time a send to it fails, so this is a shortcut, not the only route.
+      }
+    }
+    await PushService.instance.stop();
   }
 
   Future<void> _connectRealtime(AppUser user) async {

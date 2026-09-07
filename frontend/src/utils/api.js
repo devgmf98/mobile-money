@@ -27,7 +27,31 @@ export const authAPI = {
   updateProfile: (data) => api.put('/auth/profile', data),
   // Where to push this browser's notifications, and how to stop.
   registerDeviceToken: (token) =>
-    api.post('/auth/device-token', { token, platform: 'web' }),
+    api.post('/auth/device-token', {
+      token,
+      platform: 'web',
+      /* Something recognisable in a list of devices. The user agent is long
+         and full of legacy tokens, so this takes the browser and the platform
+         and leaves the rest. */
+      deviceName: (() => {
+        const ua = navigator.userAgent || '';
+        const browser =
+          /Edg\//.test(ua) ? 'Edge'
+          : /OPR\//.test(ua) ? 'Opera'
+          : /Chrome\//.test(ua) ? 'Chrome'
+          : /Firefox\//.test(ua) ? 'Firefox'
+          : /Safari\//.test(ua) ? 'Safari'
+          : 'Browser';
+        const os =
+          /Windows/.test(ua) ? 'Windows'
+          : /Android/.test(ua) ? 'Android'
+          : /iPhone|iPad/.test(ua) ? 'iOS'
+          : /Mac OS/.test(ua) ? 'macOS'
+          : /Linux/.test(ua) ? 'Linux'
+          : '';
+        return os ? `${browser} on ${os}` : browser;
+      })(),
+    }),
   removeDeviceToken: (token) =>
     api.delete('/auth/device-token', { data: { token } }),
   forgotPassword: (data) => api.post('/auth/forgot-password', data),

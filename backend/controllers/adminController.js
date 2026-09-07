@@ -1410,14 +1410,12 @@ export const rejectAdminWithdrawalRequest = async (req, res) => {
        written by this point, and a notification nobody receives must not be
        reported as a failure of the thing that did happen. */
     try {
-      await Notification.create({
-        recipientId: agentId,
-        title: 'Withdrawal Rejected',
-        message: `You rejected the admin withdrawal request of SSP ${request.amount}`,
-        type: 'system'
-      });
+      /* The admin who asked, and only them.
 
-      // The admin who asked is the one waiting on an answer.
+         The agent just pressed Decline and watched the row disappear; telling
+         them what they did a second later is noise. The person waiting on an
+         answer is the one who asked for the money, and until now they were the
+         one who heard nothing. */
       if (request.userId) {
         await Notification.create({
           recipientId: request.userId,
@@ -1427,6 +1425,8 @@ export const rejectAdminWithdrawalRequest = async (req, res) => {
             (reason ? `: ${reason}` : '.'),
           type: 'alert'
         });
+      } else {
+        console.warn(`[notify] request ${request.id} has no userId - admin not notified`);
       }
     } catch (error) {
       console.error('Notification failed after a completed rejection:', error.message);

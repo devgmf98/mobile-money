@@ -1,4 +1,10 @@
-import admin from 'firebase-admin';
+/* The modular API, which is the only one firebase-admin v13+ has. The
+   namespaced form -- admin.credential.cert, admin.messaging() -- reads like
+   every example written before v12 and is simply absent now: `admin.credential`
+   is undefined, so init threw, the catch below reported "push is off", and
+   nothing was ever sent. */
+import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 import DeviceToken from '../models/DeviceToken.js';
 
 /* Push notifications, for the case the socket cannot cover: the app closed, no
@@ -20,6 +26,14 @@ let warned = false;
 const init = () => {
   if (app) return app;
 
+  /* A default app may already exist -- another import, a reload -- and
+     initializeApp throws rather than returning it. */
+  const existing = getApps();
+  if (existing.length) {
+    app = existing[0];
+    return app;
+  }
+
   try {
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
     if (raw) {
@@ -29,10 +43,10 @@ const init = () => {
       if (credentials.private_key) {
         credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
       }
-      app = admin.initializeApp({ credential: admin.credential.cert(credentials) });
+      app = initializeApp({ credential: cert(credentials) });
       console.log(`[push] Firebase ready for project ${credentials.project_id}`);
     } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      app = admin.initializeApp({ credential: admin.credential.applicationDefault() });
+      app = initializeApp({ credential: applicationDefault() });
     } else if (!warned) {
       warned = true;
       console.warn('[push] No Firebase credentials set - push notifications are off.');
@@ -69,7 +83,7 @@ export const sendPushToUser = async (userId, { title, body, data = {} }) => {
       return { sent: 0 };
     }
 
-    const response = await admin.messaging().sendEachForMulticast({
+    const response = await getMessaging(app).sendEachForMulticast({
       tokens,
       notification: { title, body: body || '' },
       /* Every value has to be a string or FCM rejects the whole message. */

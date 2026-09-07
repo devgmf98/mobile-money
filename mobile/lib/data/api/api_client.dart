@@ -123,8 +123,11 @@ class ApiClient {
     T Function(Object? data)? parse,
   }) => _send<T>(() => _dio.patch(path, data: body), parse);
 
-  Future<T> delete<T>(String path, {T Function(Object? data)? parse}) =>
-      _send<T>(() => _dio.delete(path), parse);
+  Future<T> delete<T>(
+    String path, {
+    Object? body,
+    T Function(Object? data)? parse,
+  }) => _send<T>(() => _dio.delete(path, data: body), parse);
 
   Future<T> _send<T>(
     Future<Response<dynamic>> Function() call,
