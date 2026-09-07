@@ -136,28 +136,12 @@ export const sendMoney = async (req, res) => {
       const io = getIO();
       if (io) {
         // Sender notification + balance update
-        io.to(`user-${req.userId}`).emit('new-notification', {
-          recipient: req.userId,
-          title: 'Money Sent',
-          message: `You sent SSP ${amount} to ${recipient.phone}`,
-          type: 'transaction',
-          relatedTransaction: transaction._id
-        });
-
         io.to(`user-${req.userId}`).emit('balance-updated', {
           userId: req.userId,
           balance: parseFloat(sender.balance)
         });
 
         // Recipient notification + balance update
-        io.to(`user-${recipient.id}`).emit('new-notification', {
-          recipientId: recipient.id,
-          title: 'Money Received',
-          message: `You received SSP ${amount} from ${sender.phone}`,
-          type: 'transaction',
-          relatedTransactionId: transaction.id
-        });
-
         io.to(`user-${recipient.id}`).emit('balance-updated', {
           userId: recipient.id,
           balance: parseFloat(recipient.balance)
@@ -278,28 +262,12 @@ export const withdrawMoney = async (req, res) => {
         console.log(`Emitting balance-updated to user-${agent._id} with balance ${agent.balance}`);
 
         // Notify user of withdrawal and update balance
-        io.to(`user-${req.userId}`).emit('new-notification', {
-          recipient: req.userId,
-          title: userNotif.title,
-          message: userNotif.message,
-          type: userNotif.type,
-          relatedTransaction: userNotif.relatedTransaction
-        });
-
         io.to(`user-${req.userId}`).emit('balance-updated', {
           userId: req.userId,
           balance: parseFloat(user.balance)
         });
 
         // Notify agent of withdrawal request and update balance
-        io.to(`user-${agent.id}`).emit('new-notification', {
-          recipientId: agent.id,
-          title: agentNotif.title,
-          message: agentNotif.message,
-          type: agentNotif.type,
-          relatedTransactionId: agentNotif.relatedTransactionId
-        });
-
         io.to(`user-${agent.id}`).emit('balance-updated', {
           userId: agent.id,
           balance: parseFloat(agent.balance)

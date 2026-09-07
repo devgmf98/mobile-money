@@ -627,13 +627,6 @@ export const withdrawFromAgent = async (req, res) => {
       try {
         const io = getIO();
         if (io) {
-          io.to(`user-${agentId}`).emit('new-notification', {
-            recipient: agentId,
-            title: notification.title,
-            message: notification.message,
-            type: notification.type,
-            relatedTransaction: request.id
-          });
         }
       } catch (err) {
         console.error('Socket emit failed:', err);
@@ -711,7 +704,6 @@ export const withdrawFromAgent = async (req, res) => {
         if (io) {
           io.to(`user-${agentId}`).emit('balance-updated', { userId: agentId, balance: parseFloat(agent.balance) });
           io.to(`user-${adminId}`).emit('balance-updated', { userId: adminId, balance: parseFloat(admin.balance) });
-          io.to(`user-${agentId}`).emit('new-notification', { recipient: agentId, title: notification.title, message: notification.message, type: notification.type });
         }
       } catch (err) {
         console.error('Socket emit failed:', err);
@@ -1314,11 +1306,20 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
     // Update request status
     await request.update({ status: 'approved', approvedAt: new Date() });
 
-    // Notify
+    // Notify both sides. The agent knows they approved it; the admin, whose
+    // balance is what actually moved, was told nothing at all.
     const notification = await Notification.create({
       recipientId: agentId,
       title: 'Withdrawal Approved',
       message: `Your withdrawal of SSP ${request.amount} has been completed.`,
+      type: 'transaction',
+      relatedTransactionId: transaction.id
+    });
+
+    await Notification.create({
+      recipientId: request.userId,
+      title: 'Cash-out Approved',
+      message: `${agent.name || 'The agent'} approved your cash-out of SSP ${request.amount}.`,
       type: 'transaction',
       relatedTransactionId: transaction.id
     });
@@ -1343,12 +1344,6 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
           balance: parseFloat(admin.balance)
         });
 
-        io.to(`user-${agentId}`).emit('new-notification', {
-          recipient: agentId,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type
-        });
       }
     } catch (err) {
       console.error('Socket emit failed:', err);
@@ -1399,12 +1394,6 @@ export const rejectAdminWithdrawalRequest = async (req, res) => {
     try {
       const io = getIO();
       if (io) {
-        io.to(`user-${request.userId}`).emit('new-notification', {
-          recipient: request.userId,
-          title: 'Withdrawal Request Rejected',
-          message: `Agent rejected your withdrawal request of SSP ${request.amount}`,
-          type: 'system'
-        });
       }
     } catch (err) {
       console.error('Socket emit failed:', err);
@@ -2173,6 +2162,43 @@ export const createMoneyExchangeTransaction = async (req, res) => {
       receiverCredit: convertedAmount,
       exchangeRate: effectiveRate
     });
+
+    /* The only transaction type that told nobody anything.
+
+       Staff only, and every one of them: an exchange moves the company's own
+       money rather than a customer's, so it is the admin team's business and
+       nobody else's. The route is staff-gated, so this cannot reach a customer
+       even if one somehow called it -- the recipients are looked up by role
+       rather than taken from the request.
+
+       individualHooks, because the afterCreate hook is what delivers each row
+       over the socket and as a push; a plain bulkCreate would write the rows
+       and deliver none of them. */
+    try {
+      const staff = await User.findAll({
+        where: { role: { [Op.in]: ['admin', 'sub-admin'] } },
+        attributes: ['id'],
+      });
+
+      if (staff.length) {
+        await Notification.bulkCreate(
+          staff.map((member) => ({
+            recipientId: member.id,
+            title: 'Money Exchange',
+            message:
+              `${adminName} exchanged ${amount} ${fromCurrency} to ` +
+              `${convertedAmount} ${toCurrency} at ${effectiveRate}.`,
+            type: 'transaction',
+            relatedTransactionId: transaction.id,
+          })),
+          { individualHooks: true }
+        );
+      }
+    } catch (error) {
+      /* The exchange itself is already saved and must not be undone because
+         telling people about it failed. */
+      console.warn('[notify] money exchange notification failed:', error.message);
+    }
 
     res.status(201).json({
       message: 'Money exchange transaction saved successfully',

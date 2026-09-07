@@ -213,19 +213,6 @@ export const approveWithdrawalRequest = async (req, res) => {
           balance: parseFloat(agent.balance)
         });
 
-        io.to(`user-${userId}`).emit('new-notification', {
-          recipientId: userId,
-          title: userNotif.title,
-          message: userNotif.message,
-          type: userNotif.type
-        });
-
-        io.to(`user-${request.agentId}`).emit('new-notification', {
-          recipientId: request.agentId,
-          title: agentNotif.title,
-          message: agentNotif.message,
-          type: agentNotif.type
-        });
       }
     } catch (err) {
       console.error('Socket emit failed:', err);
@@ -290,19 +277,6 @@ export const rejectWithdrawalRequest = async (req, res) => {
     try {
       const io = getIO();
       if (io) {
-        io.to(`user-${userId}`).emit('new-notification', {
-          recipient: userId,
-          title: userNotif.title,
-          message: userNotif.message,
-          type: userNotif.type
-        });
-
-        io.to(`user-${request.agentId}`).emit('new-notification', {
-          recipientId: request.agentId,
-          title: agentNotif.title,
-          message: agentNotif.message,
-          type: agentNotif.type
-        });
       }
     } catch (err) {
       console.error('Socket emit failed:', err);

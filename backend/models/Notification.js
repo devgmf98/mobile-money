@@ -1,5 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
+import { getIO } from '../utils/socket.js';
 
 const Notification = sequelize.define('Notification', {
   id: {
@@ -68,6 +69,35 @@ Notification.associate = (models) => {
    already been committed. The sender swallows its own errors; the catch here
    is for the case it cannot even be imported. */
 Notification.addHook('afterCreate', (notification) => {
+  /* Live delivery, for whoever has the app open.
+
+     This used to be a manual emit in each controller, and only 12 of the 31
+     places that create a notification remembered it -- a top-up wrote the row,
+     emitted the new balance, and never told anyone a notification existed, so
+     the bell only moved when the screen was next refetched and no tray entry
+     ever appeared. Emitting here means every row reaches the socket, including
+     from code not yet written.
+
+     The row's real id goes out with it, so a client can tell one notification
+     from another rather than inventing a key from the text. */
+  try {
+    const io = getIO();
+    if (io) {
+      io.to(`user-${notification.recipientId}`).emit('new-notification', {
+        id: notification.id,
+        recipientId: notification.recipientId,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        relatedTransactionId: notification.relatedTransactionId ?? null,
+        isRead: false,
+        createdAt: notification.createdAt,
+      });
+    }
+  } catch (error) {
+    console.warn('[socket] notification emit failed:', error.message);
+  }
+
   import('../utils/push.js')
     .then(({ sendPushToUser }) =>
       sendPushToUser(notification.recipientId, {

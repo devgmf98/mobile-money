@@ -15,10 +15,14 @@ class NotificationController extends ChangeNotifier {
     required RealtimeService realtime,
   }) : _api = api {
     _subscription = realtime.notifications.listen((notification) {
-      _prepend(notification);
-      // Into the phone's tray as well as the app's own list, so it reaches
-      // someone who is not looking at the screen. Fire and forget: the list
-      // above is the source of truth and must not wait on the platform.
+      // Only posted to the tray when it was actually new. The same event can
+      // arrive twice -- over the socket and again as a push -- and posting on
+      // both would leave two entries for one payment, since the two carry
+      // different ids and the system would not collapse them.
+      if (!_prepend(notification)) return;
+
+      // Fire and forget: the list above is the source of truth and must not
+      // wait on the platform.
       unawaited(LocalNotifications.instance.show(notification));
     });
   }
@@ -107,7 +111,9 @@ class NotificationController extends ChangeNotifier {
   /// A live arrival from the socket. Socket payloads carry no real id, so a
   /// duplicate cannot be detected by id — matching on the text and a recent
   /// timestamp keeps a push and the row it mirrors from appearing twice.
-  void _prepend(AppNotification incoming) {
+  /// Returns whether it was added, so the caller can tell a new event from a
+  /// repeat of one already held.
+  bool _prepend(AppNotification incoming) {
     final alreadyThere = _items.any(
       (item) =>
           item.title == incoming.title &&
@@ -115,10 +121,11 @@ class NotificationController extends ChangeNotifier {
           incoming.createdAt.difference(item.createdAt).abs() <
               const Duration(seconds: 30),
     );
-    if (alreadyThere) return;
+    if (alreadyThere) return false;
 
     _items = [incoming, ..._items];
     notifyListeners();
+    return true;
   }
 
   void _replace(int id, AppNotification updated) {
