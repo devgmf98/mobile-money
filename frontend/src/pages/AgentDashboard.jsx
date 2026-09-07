@@ -6,6 +6,7 @@ import { transactionAPI } from '../utils/api';
 import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, CreditCard, Eye, EyeOff, Files, Hand, HandCoins, Inbox, Landmark, RefreshCw, Send, Smartphone, Upload, Wallet } from 'lucide-react';
 import styles from './DashboardMobile.module.css';
 import { txLabel } from '../data/transactionTypes';
+import useLiveData from '../hooks/useLiveData';
 
 /* Digits only, in groups of four — the same shaping the user dashboard gives
    an account number, so the two cards read alike. */
@@ -29,6 +30,12 @@ export default function AgentDashboard() {
   /* Hidden until asked for, as on the Flutter dashboard. An agent's screen is
      open at a counter all day. */
   const [balanceHidden, setBalanceHidden] = useState(true);
+  /* Bumped when the socket says money moved, which re-runs the fetch below.
+     A page someone is already looking at updates itself rather than waiting
+     for them to navigate away and back. */
+  const [liveTick, setLiveTick] = useState(0);
+  useLiveData(() => setLiveTick((n) => n + 1));
+
 
   // Handle window resize for responsive design
   // matchMedia only fires when the breakpoint is actually crossed. The old
@@ -50,7 +57,8 @@ export default function AgentDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        // First load only -- see the user dashboard.
+        if (liveTick === 0) setLoading(true);
         const [statsRes, txRes] = await Promise.all([
           transactionAPI.getStats(),
           transactionAPI.getTransactions()
@@ -72,7 +80,7 @@ export default function AgentDashboard() {
     if (user?.id) {
       fetchData();
     }
-  }, [user]);
+  }, [user, liveTick]);
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-US', {

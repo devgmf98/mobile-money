@@ -28,22 +28,32 @@ class WalletController extends ChangeNotifier {
       // The balance itself is applied at once - it is the number on screen.
       _auth.applyBalance(balance);
 
-      // The lists behind it are refreshed on a short delay instead. A balance
-      // moving means a transaction landed, but each refresh is three HTTP
-      // requests, and settling a cash-out can push several updates within a
-      // second or two. Without this, one counter interaction fired a dozen
-      // requests and the dashboard rebuilt through all of them.
-      _refreshDebounce?.cancel();
-      _refreshDebounce = Timer(
-        const Duration(milliseconds: 700),
-        () => unawaited(refresh(silent: true)),
-      );
+      _scheduleRefresh();
     });
+
+    // A status change moves no money, so no balance event follows it. Same
+    // debounce, because an admin editing a row can emit several in a moment.
+    _transactionSubscription = realtime.transactionUpdates.listen(
+      (_) => _scheduleRefresh(),
+    );
+  }
+
+  void _scheduleRefresh() {
+    // Lists are refreshed on a short delay rather than at once. Each refresh is
+    // three or four HTTP requests, and settling a cash-out can push several
+    // events within a second or two; without this, one counter interaction
+    // fired a dozen requests and the dashboard rebuilt through all of them.
+    _refreshDebounce?.cancel();
+    _refreshDebounce = Timer(
+      const Duration(milliseconds: 700),
+      () => unawaited(refresh(silent: true)),
+    );
   }
 
   final WalletApi _api;
   final AuthController _auth;
   late final StreamSubscription<double> _balanceSubscription;
+  late final StreamSubscription<void> _transactionSubscription;
   Timer? _refreshDebounce;
 
   List<WalletTransaction> _transactions = const [];
@@ -260,6 +270,7 @@ class WalletController extends ChangeNotifier {
   void dispose() {
     _refreshDebounce?.cancel();
     _balanceSubscription.cancel();
+    _transactionSubscription.cancel();
     super.dispose();
   }
 }

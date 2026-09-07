@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../context/store';
+import useLiveData from '../hooks/useLiveData';
 import Toast from '../components/Toast';
 import Footer from '../components/Footer';
 import { withdrawalAPI, authAPI } from '../utils/api';
@@ -19,6 +20,8 @@ export default function PendingWithdrawals() {
   const [toastType, setToastType] = useState('success');
   const [showToast, setShowToast] = useState(false);
 
+
+  useLiveData(() => fetchPendingRequests());
 
   useEffect(() => {
     fetchPendingRequests();

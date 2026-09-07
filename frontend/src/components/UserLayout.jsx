@@ -8,6 +8,7 @@ import { useAuthStore } from '../context/store';
 import { useNotificationStore } from '../context/store';
 import { notificationAPI } from '../utils/api';
 import io from 'socket.io-client';
+import { announceDataChanged } from '../hooks/useLiveData';
 import '../styles/layout.css';
 import './HamburgerMenu.css';
 
@@ -95,32 +96,56 @@ export default function UserLayout() {
 
     fetchNotifications();
 
-    // Connect to socket
-    const socket = io(import.meta.env.VITE_SOCKET_URL || 'https://cash-app-apis.up.railway.app');
-    socket.emit('join-user', user?.id);
+    /* The socket lives on the same host as the API. The fallback used to name
+       a different service outright, so an environment that forgot
+       VITE_SOCKET_URL connected somewhere real and simply never received an
+       event -- a silent failure that looks like the server not emitting. */
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL ||
+      String(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') ||
+      window.location.origin;
+
+    const socket = io(socketUrl);
+
+    /* Joined on every connect, not once at setup. Events are addressed to a
+       per-user room, and a socket that has not announced itself is in no room
+       at all -- so after any reconnect the old code went quiet for good while
+       still looking connected. */
+    const join = () => {
+      if (user?.id) socket.emit('join-user', user.id);
+    };
+    socket.on('connect', join);
+    join();
 
     socket.on('new-notification', (data) => {
       addNotification(data);
+      announceDataChanged('notification');
     });
 
-    // Listen for balance updates and update auth store when relevant
+    // Balance updates go straight to the store — it is the number on screen.
     socket.on('balance-updated', (payload) => {
       try {
-        if (payload?.userId === user?.id) {
-          // fetch current user object and update the store with new balance
+        if (String(payload?.userId) === String(user?.id)) {
           const updated = { ...user, balance: parseFloat(payload.balance) || 0 };
-          // update local storage and zustand store
           localStorage.setItem('user', JSON.stringify(updated));
-          // call store updater
-          // import/useAuthStore here would cause hook rule issues; instead dispatch a custom event
+          // Dispatched rather than set directly: calling the store hook here
+          // would break the rules of hooks.
           window.dispatchEvent(new CustomEvent('mpay:user-updated', { detail: updated }));
         }
+        // The lists behind the figure are stale either way, including on the
+        // other side of a transfer whose id is not this user's.
+        announceDataChanged('balance');
       } catch (err) {
         console.error('Failed to apply balance update', err);
       }
     });
 
-    return () => socket.disconnect();
+    socket.on('transaction-updated', () => announceDataChanged('transaction'));
+
+    return () => {
+      socket.off('connect', join);
+      socket.disconnect();
+    };
   }, [user?.id]);
 
   // close mobile menu when clicking outside

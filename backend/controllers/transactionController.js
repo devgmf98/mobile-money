@@ -347,20 +347,38 @@ export const getTransactionStats = async (req, res) => {
   try {
     const userId = req.userId;
 
-    // Calculate pending commissions from pending withdrawal requests
-    const pendingAgentCommission = await WithdrawalRequest.sum('agentCommission', {
-      where: {
-        agentId: userId,
-        status: 'pending'
-      }
-    }) || 0;
+    /* Pending requests, split by who raised them.
 
-    const pendingCompanyCommission = await WithdrawalRequest.sum('companyCommission', {
-      where: {
-        agentId: userId,
-        status: 'pending'
-      }
-    }) || 0;
+       `agentId = me AND pending` matches two different things that move money
+       in opposite directions, because the two flows store the columns in
+       opposite orders. A pull this agent raised is waiting on a customer and
+       will bring money IN. An admin cash-out is waiting on this agent and will
+       take money OUT. Summing them together, as one figure called "awaiting
+       approval", answered a question nobody asked.
+
+       Read once and split here rather than in four separate SUMs: the rows are
+       few (only what is pending) and the role join is needed either way. */
+    const pendingRequests = await WithdrawalRequest.findAll({
+      where: { agentId: userId, status: 'pending' },
+      include: [{ model: User, as: 'user', attributes: ['role'] }],
+    });
+
+    const num = (v) => parseFloat(v) || 0;
+    const raisedByAdmin = (r) => ['admin', 'sub-admin'].includes(r.user?.role);
+    const fromCustomers = pendingRequests.filter((r) => !raisedByAdmin(r));
+    const fromAdmins = pendingRequests.filter(raisedByAdmin);
+
+    /* Commission this agent earns once customers approve. Note this is a
+       commission, not an amount: with no withdrawal tier configured it is zero
+       on every row, so the figure reads 0.00 however many requests are
+       outstanding -- which is correct, and is why the amounts below exist. */
+    const pendingAgentCommission = fromCustomers.reduce((t, r) => t + num(r.agentCommission), 0);
+    const pendingCompanyCommission = fromCustomers.reduce((t, r) => t + num(r.companyCommission), 0);
+
+    // Cash this agent is owed once customers approve, and cash they will hand
+    // over once they approve an admin. Amounts, so they are never zero.
+    const pendingCustomerApprovalAmount = fromCustomers.reduce((t, r) => t + num(r.amount), 0);
+    const pendingAdminCashOutAmount = fromAdmins.reduce((t, r) => t + num(r.amount), 0);
 
     // Get transaction statistics using separate queries
     const totalTransactions = await Transaction.count({
@@ -411,7 +429,11 @@ export const getTransactionStats = async (req, res) => {
       commissionEarned: parseFloat(commissionEarned),
       pullsReceivedAmount: 0,
       transfersReceivedAmount: 0,
-      pendingAgentCommission,
+      pendingAgentCommission: parseFloat(pendingAgentCommission.toFixed(2)),
+      pendingCustomerApprovalAmount: parseFloat(pendingCustomerApprovalAmount.toFixed(2)),
+      pendingAdminCashOutAmount: parseFloat(pendingAdminCashOutAmount.toFixed(2)),
+      pendingCustomerApprovalCount: fromCustomers.length,
+      pendingAdminCashOutCount: fromAdmins.length,
       pendingCompanyCommission
     });
   } catch (error) {

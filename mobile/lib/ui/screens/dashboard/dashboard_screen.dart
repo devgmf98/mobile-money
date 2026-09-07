@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/motion.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/profile_image.dart';
@@ -123,6 +124,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'paused. Contact customer care to restore access.'
                     : 'Your account is suspended, so payments are paused. '
                           'Contact customer care to restore access.',
+              ),
+            ),
+
+          // Standing state, not an event, so it sits on the dashboard rather
+          // than being a message that scrolls away: while this is on, an admin
+          // can take cash from the float without asking, and the agent will
+          // find out from the balance rather than from a request. Tapping goes
+          // to the switch that turns it off.
+          if (isAgent && user.autoAdminCashout)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+              child: InkWell(
+                onTap: () => Navigator.of(context).pushNamed(Routes.profile),
+                borderRadius: BorderRadius.circular(AppSizes.radiusControl),
+                child: Notice.info(
+                  message:
+                      'Admin cash-out approval is off: an admin can take cash '
+                      'from your account without asking you first. Tap to '
+                      'change it.',
+                ),
               ),
             ),
 
@@ -473,13 +494,24 @@ class _Stats extends StatelessWidget {
           value: Fmt.money(stats.commissionEarned),
           rail: AppColors.warning,
         ),
-        // Not on the web dashboard, but the figure is already in the stats
-        // response and it is the agent's own money: commission on cash-outs a
-        // customer has been asked to approve and has not yet.
+        // Two pending figures, not one, because they move in opposite
+        // directions and adding them together would answer nothing. The first
+        // is cash coming in once customers approve the pulls this agent
+        // raised; the second is cash going out once this agent approves the
+        // admins waiting on them.
+        //
+        // Both are amounts. The old single tile showed pending *commission*,
+        // which reads 0.00 whenever no withdrawal tier is configured however
+        // many requests are outstanding — a true figure that looked like a bug.
         StatTile(
-          label: 'Awaiting Approval',
-          value: Fmt.money(stats.pendingAgentCommission),
+          label: 'Awaiting Customers',
+          value: Fmt.money(stats.pendingCustomerApprovalAmount),
           rail: AppColors.info,
+        ),
+        StatTile(
+          label: 'Admin Requests',
+          value: Fmt.money(stats.pendingAdminCashOutAmount),
+          rail: AppColors.warning,
         ),
       ],
     ];

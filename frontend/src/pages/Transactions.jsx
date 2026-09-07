@@ -8,6 +8,7 @@ import PrintReceipt from '../components/PrintReceipt';
 import { transactionAPI } from '../utils/api';
 import { generateTransactionDocument } from '../utils/pdf';
 import { useAuthStore } from '../context/store';
+import useLiveData from '../hooks/useLiveData';
 import '../styles/transactions.css';
 import '../styles/transactions-flow.css';
 
@@ -68,6 +69,9 @@ export default function Transactions() {
   const [detailTransaction, setDetailTransaction] = useState(null);
   const user = useAuthStore((state) => state.user);
 
+  const [liveTick, setLiveTick] = useState(0);
+  useLiveData(() => setLiveTick((n) => n + 1));
+
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
@@ -81,7 +85,7 @@ export default function Transactions() {
     };
 
     fetchTransactions();
-  }, []);
+  }, [liveTick]);
 
   const isOutgoing = (tx) => tx.senderId === user?.id;
 

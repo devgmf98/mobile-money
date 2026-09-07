@@ -91,6 +91,8 @@ class WalletStats {
     required this.totalReceived,
     required this.commissionEarned,
     required this.pendingAgentCommission,
+    required this.pendingCustomerApprovalAmount,
+    required this.pendingAdminCashOutAmount,
   });
 
   const WalletStats.empty()
@@ -98,7 +100,9 @@ class WalletStats {
       totalSent = 0,
       totalReceived = 0,
       commissionEarned = 0,
-      pendingAgentCommission = 0;
+      pendingAgentCommission = 0,
+      pendingCustomerApprovalAmount = 0,
+      pendingAdminCashOutAmount = 0;
 
   final int totalTransactions;
   final double totalSent;
@@ -108,12 +112,27 @@ class WalletStats {
   final double commissionEarned;
 
   /// Commission on requests a customer has not approved yet, so an agent can
-  /// see what is still in flight.
+  /// see what is still in flight. A commission rather than an amount, so it is
+  /// zero whenever no withdrawal tier is configured however many requests are
+  /// outstanding — which is why the two amounts below exist beside it.
   final double pendingAgentCommission;
+
+  /// Cash the agent is owed once customers approve their pulls. Money coming
+  /// in.
+  final double pendingCustomerApprovalAmount;
+
+  /// Cash the agent will hand over once they approve the admin requests
+  /// waiting on them. Money going out — the opposite direction from the figure
+  /// above it, which is why the two are never added together.
+  final double pendingAdminCashOutAmount;
 
   factory WalletStats.fromJson(Map<String, dynamic> json) {
     return WalletStats(
       totalTransactions: P.toInt(json['totalTransactions']),
+      pendingCustomerApprovalAmount: P.toDouble(
+        json['pendingCustomerApprovalAmount'],
+      ),
+      pendingAdminCashOutAmount: P.toDouble(json['pendingAdminCashOutAmount']),
       totalSent: P.toDouble(json['totalSent']),
       totalReceived: P.toDouble(json['totalReceived']),
       commissionEarned: P.toDouble(json['commissionEarned']),

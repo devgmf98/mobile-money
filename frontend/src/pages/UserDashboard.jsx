@@ -7,6 +7,7 @@ import { useAuthStore } from '../context/store';
 import { transactionAPI, authAPI } from '../utils/api';
 import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
+import useLiveData from '../hooks/useLiveData';
 import { txLabel } from '../data/transactionTypes';
 
 /* Sets the account number the way a bank prints one: digits only, in groups of
@@ -29,6 +30,12 @@ export default function UserDashboard() {
   const [stats, setStats] = useState(null);
   /* Hidden until asked for, as on the Flutter dashboard. */
   const [balanceHidden, setBalanceHidden] = useState(true);
+  /* Bumped when the socket says money moved, which re-runs the fetch below.
+     A page someone is already looking at updates itself rather than waiting
+     for them to navigate away and back. */
+  const [liveTick, setLiveTick] = useState(0);
+  useLiveData(() => setLiveTick((n) => n + 1));
+
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1032px)').matches);
 
   // matchMedia only fires when the breakpoint is actually crossed. The old
@@ -49,8 +56,10 @@ export default function UserDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoadingTx(true);
-        
+        // Only on the first load: a live refresh replacing the rows with
+        // skeletons would make the page flicker every time money moved.
+        if (liveTick === 0) setLoadingTx(true);
+
         // Fetch user profile
         const { data: userData } = await authAPI.getProfile();
         updateUser(userData);
@@ -71,7 +80,7 @@ export default function UserDashboard() {
     };
 
     fetchData();
-  }, [updateUser]);
+  }, [updateUser, liveTick]);
 
   // A transaction is outgoing if it is typed 'sent' or this user is the sender.
   const isOutgoing = (tx) => tx.type === 'sent' || tx.senderId === user?.id;

@@ -9,9 +9,10 @@ import '../data/models/parse.dart';
 
 /// The live half of the app.
 ///
-/// The server pushes two things over Socket.IO: `balance-updated` when an
-/// account's figure changes, and `new-notification` when something happens
-/// worth telling someone about. Both are emitted into a per-user room, so the
+/// The server pushes three things over Socket.IO: `balance-updated` when an
+/// account's figure changes, `new-notification` when something happens worth
+/// telling someone about, and `transaction-updated` when a row changes state
+/// without any money moving. All are emitted into a per-user room, so the
 /// socket has to announce itself with `join-user` before anything arrives —
 /// connecting alone is not enough, and forgetting that is the difference
 /// between a live balance and one that only moves on pull-to-refresh.
@@ -21,12 +22,18 @@ class RealtimeService {
 
   final _balances = StreamController<double>.broadcast();
   final _notifications = StreamController<AppNotification>.broadcast();
+  final _transactions = StreamController<void>.broadcast();
 
   /// The account's new balance, straight from the server.
   Stream<double> get balanceUpdates => _balances.stream;
 
   /// Notifications as they are created, so the bell fills without a refresh.
   Stream<AppNotification> get notifications => _notifications.stream;
+
+  /// A transaction changed state. Carries nothing: the row is refetched rather
+  /// than patched, because the payload names an id and a status while the list
+  /// shows a title, a counterparty and a total that all derive from more.
+  Stream<void> get transactionUpdates => _transactions.stream;
 
   bool get isConnected => _socket?.connected ?? false;
 
@@ -65,6 +72,10 @@ class RealtimeService {
       if (map == null) return;
       _notifications.add(AppNotification.fromSocket(map));
     });
+
+    // A status change moves no money, so no balance event follows it and
+    // nothing else would tell the list to look again.
+    socket.on('transaction-updated', (_) => _transactions.add(null));
 
     if (kDebugMode) {
       socket.onConnectError((error) => debugPrint('Socket error: $error'));
