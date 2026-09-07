@@ -325,6 +325,18 @@ class AuthController extends ChangeNotifier {
     );
   }
 
+  /// Reconnects the socket if it is not live.
+  ///
+  /// Called when the app comes back to the foreground. socket_io_client
+  /// reconnects on its own after a dropped connection, but an isolate that was
+  /// suspended for an hour comes back with a socket the server has long since
+  /// forgotten, and nothing restarts it.
+  Future<void> ensureRealtime() async {
+    final user = _user;
+    if (user == null || _realtime.isConnected) return;
+    await _connectRealtime(user);
+  }
+
   /// Tries the push registration again, for the status row on the profile.
   ///
   /// The usual reasons it failed the first time — permission not yet granted,

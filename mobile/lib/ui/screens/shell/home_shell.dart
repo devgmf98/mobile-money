@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -32,7 +34,7 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends State<HomeShell> with WidgetsBindingObserver {
   final _navigator = GlobalKey<NavigatorState>();
 
   static const String _dashboardRoute = '/';
@@ -44,12 +46,43 @@ class _HomeShellState extends State<HomeShell> {
   @override
   void initState() {
     super.initState();
-    // One load for the whole session; every screen reads the same controllers.
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<WalletController>().refresh();
-      context.read<NotificationController>().refresh(silent: true);
+      _reload();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /* Android suspends the isolate when the app is not visible, which takes the
+     socket with it. Nothing is replayed on reconnect, so every event that
+     happened while the app was away is simply not delivered -- the balance,
+     the lists and the bell all stay as they were, and the first thing back on
+     screen is out of date without looking it.
+
+     Reloading on resume is what closes that gap. It is also the only route for
+     an event missed while away: push puts it in the tray, and this is what
+     puts it in the app. */
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) _reload();
+  }
+
+  void _reload() {
+    // The socket first: reconnecting it is what stops the next event needing
+    // this same catch-up.
+    unawaited(context.read<AuthController>().ensureRealtime());
+
+    // Silent: this runs on every return to the app, and a spinner over content
+    // that is almost always still correct reads as a fault rather than a
+    // refresh.
+    context.read<WalletController>().refresh(silent: true);
+    context.read<NotificationController>().refresh(silent: true);
   }
 
   /// Goes to a destination without stacking duplicates.

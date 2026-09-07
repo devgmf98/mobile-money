@@ -90,7 +90,12 @@ export const sendPushToUser = async (userId, { title, body, data = {} }) => {
       data: Object.fromEntries(
         Object.entries(data).map(([key, value]) => [key, String(value ?? '')])
       ),
-      android: { priority: 'high', notification: { channelId: 'moneypay_activity' } },
+      /* Must match LocalNotifications.channelId in the app exactly. A push
+         naming a channel the device does not have makes Android create one at
+         default importance, and a channel's importance is fixed at creation --
+         so a mismatch here does not fail loudly, it quietly downgrades every
+         notification on that phone for the life of the install. */
+      android: { priority: 'high', notification: { channelId: 'moneypay_activity_v2' } },
       apns: { payload: { aps: { sound: 'default', badge: 1 } } },
     });
 

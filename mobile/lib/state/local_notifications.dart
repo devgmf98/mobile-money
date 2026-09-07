@@ -36,8 +36,21 @@ class LocalNotifications {
   /// Android needs a channel declared before anything can be posted to it, and
   /// the importance set here is what decides whether a notification appears as
   /// a heads-up banner or only in the shade. Money arriving is worth a banner.
+  /// The channel id carries a version for a reason.
+  ///
+  /// Android fixes a channel's importance when it is first created and ignores
+  /// every later change to it. FCM will also create a channel implicitly, at
+  /// default importance, if a push names one that does not exist yet -- which
+  /// is what happened on any phone that received a push before this app had
+  /// declared the channel itself. From then on notifications land silently in
+  /// the shade instead of appearing, and nothing in the app can raise it.
+  ///
+  /// A new id is the only way out: bump this and the server's channelId
+  /// together whenever the channel's settings need to change.
+  static const channelId = 'moneypay_activity_v2';
+
   static const _channel = AndroidNotificationDetails(
-    'moneypay_activity',
+    channelId,
     'Account activity',
     channelDescription:
         'Money sent and received, and requests waiting on your approval.',
@@ -108,13 +121,14 @@ class LocalNotifications {
   /// before. It must never take the rest of the feature down with it.
   Future<void> _createAndroidChannel() async {
     try {
-      await _plugin
+      final android = _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.createNotificationChannel(
+          >();
+
+      await android?.createNotificationChannel(
             const AndroidNotificationChannel(
-              'moneypay_activity',
+              channelId,
               'Account activity',
               description:
                   'Money sent and received, and requests waiting on your '
@@ -122,6 +136,11 @@ class LocalNotifications {
               importance: Importance.high,
             ),
           );
+      /* The channel this replaced, removed so a phone that has both does not
+         show a dead "Account activity" entry in its notification settings --
+         and so anything still addressing the old id fails visibly rather than
+         posting into a muted channel nobody looks at. */
+      await android?.deleteNotificationChannel('moneypay_activity');
     } catch (error) {
       if (kDebugMode) debugPrint('Notification channel not created: $error');
     }
@@ -177,7 +196,8 @@ class LocalNotifications {
         _details,
       );
     } catch (error) {
-      if (kDebugMode) debugPrint('Could not post notification: $error');
+      lastError = 'Could not post notification: $error';
+      if (kDebugMode) debugPrint(lastError);
     }
   }
 
