@@ -328,7 +328,7 @@ export default function SendMoney() {
                     <div className="sm-fee-row is-total"><span>Total deducted</span><span>{money(totalCost)}</span></div>
                     {quote.tier === 'withdrawal' && (
                       <p className="sm-fee-note">
-                        Paying an agent is charged at cash-out rates.
+                        Paying an agent is a withdrawal, charged at withdrawal rates.
                       </p>
                     )}
                   </div>

@@ -116,7 +116,7 @@ class ProfileScreen extends StatelessWidget {
                   SettingsRow(
                     icon: Icons.schedule_rounded,
                     label: 'Approvals',
-                    subtitle: 'Cash-outs waiting on you',
+                    subtitle: 'Withdrawals waiting on you',
                     onTap: () => Navigator.of(
                       context,
                     ).pushNamed(Routes.pendingApprovals),

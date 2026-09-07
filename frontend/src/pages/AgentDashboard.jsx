@@ -3,7 +3,7 @@ import SkeletonRows from '../components/SkeletonRows';
 import Footer from '../components/Footer';
 import { useAuthStore } from '../context/store';
 import { transactionAPI } from '../utils/api';
-import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, CreditCard, Files, Hand, HandCoins, Inbox, Landmark, RefreshCw, Send, Smartphone, Upload, Wallet } from 'lucide-react';
+import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, CreditCard, Eye, EyeOff, Files, Hand, HandCoins, Inbox, Landmark, RefreshCw, Send, Smartphone, Upload, Wallet } from 'lucide-react';
 import styles from './DashboardMobile.module.css';
 import { txLabel } from '../data/transactionTypes';
 
@@ -26,6 +26,9 @@ export default function AgentDashboard() {
   });
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  /* Hidden until asked for, as on the Flutter dashboard. An agent's screen is
+     open at a counter all day. */
+  const [balanceHidden, setBalanceHidden] = useState(true);
 
   // Handle window resize for responsive design
   // matchMedia only fires when the breakpoint is actually crossed. The old
@@ -88,7 +91,28 @@ export default function AgentDashboard() {
     : 'N/A');
 
   const txAmount = (tx) =>
-    (isOutgoing(tx) ? '-' : '+') + 'SSP ' + formatCurrency(tx.amount);
+    (isOutgoing(tx) ? '-' : '+') + 'SSP ' + formatCurrency(chargedTotal(tx));
+
+  /* One figure: what the balance actually moved by, amount plus both
+     commissions on anything outgoing. */
+  const n2 = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+  const chargedTotal = (tx) => isOutgoing(tx)
+    ? n2(tx.amount) + n2(tx.agentCommission ?? tx.commission) + n2(tx.companyCommission)
+    : n2(tx.amount);
+
+  const initials = (name) => String(name || '?')
+    .trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
+  /* Avatars only -- names and numbers are deliberately not printed. */
+  const recentPayees = (() => {
+    const seen = new Map();
+    for (const tx of transactions) {
+      if (!isOutgoing(tx) || !tx.receiver?.phone) continue;
+      if (!seen.has(tx.receiver.phone)) seen.set(tx.receiver.phone, tx.receiver);
+      if (seen.size === 4) break;
+    }
+    return [...seen.values()];
+  })();
 
   const handleNavigate = (path) => {
     window.location.href = path;
@@ -119,14 +143,25 @@ export default function AgentDashboard() {
         <div className={styles.balanceCard}>
           <div className={styles.balanceTop}>
             <span className={styles.balanceLabel}>My Balance</span>
+            <button
+              type="button"
+              className={styles.balanceToggle}
+              onClick={() => setBalanceHidden((v) => !v)}
+              aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
+              title={balanceHidden ? 'Show balance' : 'Hide balance'}
+            >
+              {balanceHidden ? <Eye size={16} /> : <EyeOff size={16} />}
+            </button>
           </div>
 
           <div className={styles.balanceAmount}>
             <span className={styles.currency}>SSP</span>
-            {(parseFloat(user?.balance) || 0).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {balanceHidden
+              ? <span className={styles.balanceMasked}>••••••</span>
+              : (parseFloat(user?.balance) || 0).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
           </div>
 
           {/* The user's card shows their account code here. An agent's working
@@ -141,7 +176,7 @@ export default function AgentDashboard() {
         {/* The two that move money are the primary pair, as on the user side. */}
         <div className={styles.actions}>
           <button className={styles.actionBtnPrimary} onClick={() => handleNavigate('/agent/send-money')}><Send /><span>Send Money</span></button>
-          <button className={styles.actionBtnPrimary} onClick={() => handleNavigate('/agent/pull-from-user')}><RefreshCw /><span>Pull from User</span></button>
+          <button className={styles.actionBtnPrimary} onClick={() => handleNavigate('/agent/pull-from-user')}><RefreshCw /><span>Pull Funds</span></button>
           <button className={styles.actionBtn} onClick={() => handleNavigate('/agent/receive')}><HandCoins /><span>Receive</span></button>
           <button className={styles.actionBtn} onClick={() => handleNavigate('/agent/transactions')}><ChartColumn /><span>Transactions</span></button>
         </div>
@@ -151,20 +186,49 @@ export default function AgentDashboard() {
             <span>History</span>
           </div>
           <div className={styles.statsGrid}>
-            <div className={styles.statItem}>
+            <div className={styles.statItem + ' ' + styles.railSent}>
               <span className={styles.statLabel}>Money Sent</span>
               <span className={styles.statValue}>SSP {formatCurrency(stats.totalSent)}</span>
             </div>
-            <div className={styles.statItem}>
+            <div className={styles.statItem + ' ' + styles.railReceived}>
               <span className={styles.statLabel}>Money Received</span>
               <span className={styles.statValue}>SSP {formatCurrency(stats.totalReceived)}</span>
             </div>
-            <div className={styles.statItem}>
+            <div className={styles.statItem + ' ' + styles.railCommission}>
               <span className={styles.statLabel}>Commission Earned</span>
               <span className={styles.statValue}>SSP {formatCurrency(stats.commissionEarned)}</span>
             </div>
+            {/* The agent's own money: commission on cash-outs a customer has
+                been asked to approve and has not yet. Already in the stats
+                response, and on the Flutter dashboard. */}
+            <div className={styles.statItem + ' ' + styles.railPending}>
+              <span className={styles.statLabel}>Awaiting Approval</span>
+              <span className={styles.statValue}>SSP {formatCurrency(stats.pendingAgentCommission)}</span>
+            </div>
           </div>
         </div>
+
+        {recentPayees.length > 0 && (
+          <div className={styles.section}>
+            <div className={styles.sectionHeader}>
+              <span>Send again</span>
+            </div>
+            <div className={styles.payeeRow}>
+              {recentPayees.map((payee) => (
+                <button
+                  key={payee.phone}
+                  type="button"
+                  className={styles.payee}
+                  title={`${payee.name || 'Unknown'} · ${payee.phone}`}
+                  aria-label={`Send to ${payee.name || payee.phone}`}
+                  onClick={() => handleNavigate('/agent/send-money?to=' + encodeURIComponent(payee.phone))}
+                >
+                  {initials(payee.name)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
@@ -193,7 +257,7 @@ export default function AgentDashboard() {
                     </span>
                   </div>
                   <span className={styles.txAmount}>
-                    {isOutgoing(tx) ? '-' : '+'}SSP {(parseFloat(tx.amount) || 0).toFixed(2)}
+                    {isOutgoing(tx) ? '-' : '+'}SSP {chargedTotal(tx).toFixed(2)}
                   </span>
                 </div>
               ))

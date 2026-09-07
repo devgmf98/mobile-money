@@ -313,6 +313,27 @@ void main() {
       expect(WithdrawalRequestItem.fromJson(raw(null)).requesterLabel, 'Agent');
     });
 
+    test('does not print the role twice when the name is the role', () {
+      // Real accounts are named after their role -- an agent called "Agent" --
+      // and the card read "Agent (Agent) asked to pay you...".
+      final named = WithdrawalRequestItem.fromJson({
+        ...raw('agent'),
+        'agent': {'name': 'Agent', 'agentId': '575794', 'role': 'agent'},
+      });
+      expect(named.requesterLabel, 'Agent');
+      expect(named.roleAside, isNull);
+
+      // A different name still gets the role beside it.
+      expect(WithdrawalRequestItem.fromJson(raw('admin')).roleAside, 'Admin');
+
+      // And no name means the role is the title, so there is no aside either.
+      final anonymous = WithdrawalRequestItem.fromJson({
+        ...raw('agent'),
+        'agent': {'agentId': '575794', 'role': 'agent'},
+      });
+      expect(anonymous.roleAside, isNull);
+    });
+
     test('falls back to the role when there is no name', () {
       final named = WithdrawalRequestItem.fromJson(raw('admin'));
       expect(named.who, 'Peter Daniel');

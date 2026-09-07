@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/motion.dart';
 import '../../core/utils/formatters.dart';
 import '../../core/utils/phone.dart';
 import '../../core/utils/profile_image.dart';
@@ -736,10 +737,23 @@ class FeeBreakdown extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 11),
               child: Divider(height: 1),
             ),
-            _row(
-              'Total to pay',
-              loading ? '…' : Fmt.money(quote.totalDebit),
-              emphasis: true,
+            // The last figure stays on screen while a new quote is in flight,
+            // dimmed rather than blanked. Tapping Continue re-prices before
+            // opening the confirm sheet, and replacing the total with an
+            // ellipsis for that round-trip read as the amount disappearing at
+            // the exact moment someone was deciding whether to pay it. An
+            // ellipsis is only right before the first quote has ever landed,
+            // when there genuinely is no figure to show.
+            AnimatedOpacity(
+              duration: Motion.quick,
+              opacity: loading && quote.amount > 0 ? 0.45 : 1,
+              child: _row(
+                'Total to pay',
+                loading && quote.amount <= 0
+                    ? '…'
+                    : Fmt.money(quote.totalDebit),
+                emphasis: true,
+              ),
             ),
           ],
         ),

@@ -11,7 +11,10 @@ import '../../../state/wallet_controller.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
 
-/// Cash-outs an agent or an admin has asked you to approve.
+/// Withdrawals an agent or an admin has asked you to approve.
+///
+/// Worded from the customer's side throughout: they are withdrawing cash, and
+/// "cash-out" is the agent's word for the other side of the same transaction.
 ///
 /// Approving moves the money immediately, so what leaves the balance is the
 /// headline rather than the cash handed over — the two differ by the
@@ -40,7 +43,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     final confirmed = await showConfirmDialog(
       context,
       icon: Icons.point_of_sale_rounded,
-      title: 'Approve this cash-out?',
+      title: 'Approve this withdrawal?',
       message:
           '${Fmt.money(request.totalCost)} will leave your balance now, and '
           'you receive ${Fmt.money(request.amount)} in cash.\n\n'
@@ -53,7 +56,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
     setState(() => _working = request.id);
     try {
       await context.read<WalletController>().approveWithdrawal(request.id);
-      if (mounted) AppSnack.success(context, 'Cash-out approved.');
+      if (mounted) AppSnack.success(context, 'Withdrawal approved.');
     } on ApiException catch (error) {
       if (mounted) AppSnack.error(context, error.message);
     } finally {
@@ -156,6 +159,7 @@ class _RequestCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 width: 42,
@@ -175,17 +179,42 @@ class _RequestCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      request.agentName ?? request.requesterLabel,
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                      ),
+                    // The date sits on the title's line and nowhere else. It
+                    // used to be a third column beside the whole block, which
+                    // squeezed the details into a width that broke a phone
+                    // number across two lines mid-number.
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            request.agentName ?? request.requesterLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          Fmt.dayHeading(request.createdAt),
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       [
-                        request.requesterLabel,
+                        // Dropped when the title is already the role, which
+                        // it is both when no name was sent and when the name
+                        // itself is "Agent".
+                        if (request.roleAside != null) request.roleAside!,
                         if (request.agentCode != null)
                           'ID ${request.agentCode}',
                         if (request.agentPhone != null)
@@ -193,17 +222,11 @@ class _RequestCard extends StatelessWidget {
                       ].join(' · '),
                       style: const TextStyle(
                         fontSize: 12,
+                        height: 1.35,
                         color: AppColors.textMuted,
                       ),
                     ),
                   ],
-                ),
-              ),
-              Text(
-                Fmt.dayHeading(request.createdAt),
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  color: AppColors.textMuted,
                 ),
               ),
             ],
@@ -211,7 +234,7 @@ class _RequestCard extends StatelessWidget {
 
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
             decoration: BoxDecoration(
               color: AppColors.canvas,
               borderRadius: BorderRadius.circular(AppSizes.radiusControl),
@@ -281,22 +304,37 @@ class _Line extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: emphasis ? 13.5 : 12.5,
-            fontWeight: emphasis ? FontWeight.w600 : FontWeight.w400,
-            color: AppColors.textSecondary,
+        Expanded(
+          flex: 5,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: emphasis ? 13.5 : 12.5,
+              fontWeight: emphasis ? FontWeight.w600 : FontWeight.w400,
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: emphasis ? 15 : 13,
-            fontWeight: emphasis ? FontWeight.w700 : FontWeight.w500,
-            color: emphasis ? AppColors.primary : AppColors.textPrimary,
+        const SizedBox(width: 12),
+        // Given its own share of the row and shrunk to fit inside it, so a
+        // large figure can neither run into the label nor overflow the card.
+        Expanded(
+          flex: 4,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerRight,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: emphasis ? 15 : 13,
+                fontWeight: emphasis ? FontWeight.w700 : FontWeight.w500,
+                color: emphasis ? AppColors.primary : AppColors.textPrimary,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
           ),
         ),
       ],

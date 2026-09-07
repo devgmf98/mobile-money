@@ -123,6 +123,17 @@ class WithdrawalRequestItem {
     _ => 'Agent',
   };
 
+  /// The role as an aside beside the name, or null when it would only repeat
+  /// it. Accounts are sometimes named after their role -- an agent literally
+  /// called "Agent" -- and "Agent (Agent)" tells nobody anything.
+  String? get roleAside {
+    final name = agentName?.trim();
+    if (name == null || name.isEmpty) return null;
+    return name.toLowerCase() == requesterLabel.toLowerCase()
+        ? null
+        : requesterLabel;
+  }
+
   /// How to refer to the requester in running text: their name if the server
   /// sent one, otherwise "the agent" / "the admin".
   String get who => agentName ?? 'the ${requesterLabel.toLowerCase()}';

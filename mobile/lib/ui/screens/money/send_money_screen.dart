@@ -241,7 +241,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
 
     final confirmed = await showConfirmSheet(
       context,
-      title: _quote.isCashOut ? 'Confirm cash-out' : 'Confirm transfer',
+      title: _quote.isCashOut ? 'Confirm withdrawal' : 'Confirm transfer',
       partyName: recipient.name,
       partyDetail: Phone.pretty(recipient.phone),
       amount: _amountValue,
@@ -267,7 +267,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
       Navigator.of(context).pushReplacementNamed(
         Routes.transferReceipt,
         arguments: ReceiptDetails(
-          title: _quote.isCashOut ? 'Cash-out sent' : 'Money sent',
+          title: _quote.isCashOut ? 'Withdrawal sent' : 'Money sent',
           reference: reference,
           amount: _amountValue,
           total: _quote.totalDebit,
@@ -452,8 +452,8 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                 if (_quote.isCashOut && _quote.hasFee) ...[
                   const SizedBox(height: 8),
                   const Text(
-                    'Paying an agent is a cash-out, so it is charged at '
-                    'cash-out rates rather than transfer rates.',
+                    'Paying an agent is a withdrawal, so it is charged at '
+                    'withdrawal rates rather than transfer rates.',
                     style: TextStyle(
                       fontSize: 11.5,
                       height: 1.4,

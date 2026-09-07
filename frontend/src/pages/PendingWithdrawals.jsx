@@ -137,7 +137,7 @@ export default function PendingWithdrawals() {
         <div className="page-header pw-header">
           <div>
             <h1>Withdrawal Requests</h1>
-            <p>Review and approve cash-out requests waiting on you.</p>
+            <p>Review and approve withdrawal requests waiting on you.</p>
           </div>
           <button
             type="button"

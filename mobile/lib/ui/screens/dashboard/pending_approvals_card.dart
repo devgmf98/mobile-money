@@ -42,8 +42,8 @@ class PendingApprovalsCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   extra > 0
-                      ? '${requests.length} cash-outs need your approval'
-                      : 'A cash-out needs your approval',
+                      ? '${requests.length} withdrawals need your approval'
+                      : 'A withdrawal needs your approval',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
@@ -54,10 +54,10 @@ class PendingApprovalsCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            // Named, the role goes in brackets after it; unnamed, the role is
-            // all there is to say — "Agent (Agent)" is what naming them twice
-            // would produce.
-            '${first.agentName == null ? first.requesterLabel : '${first.agentName} (${first.requesterLabel})'}'
+            // The role rides in brackets after the name, and drops out when
+            // the name already is the role.
+            '${first.agentName ?? first.requesterLabel}'
+            '${first.roleAside == null ? '' : ' (${first.roleAside})'}'
             ' asked to pay you ${Fmt.money(first.amount)} in cash. '
             'It will cost ${Fmt.money(first.totalCost)} from your balance '
             'including fees.',

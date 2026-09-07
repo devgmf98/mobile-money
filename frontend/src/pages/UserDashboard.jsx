@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import SkeletonRows from '../components/SkeletonRows';
 import styles from './DashboardMobile.module.css';
 import '../styles/user-dashboard.css';
-import { ArrowDown, ArrowUp, Banknote, ChartColumn, Clock, Files, Hand, HandCoins, Inbox, Landmark, MapPin, Send, Upload, User, Wallet } from 'lucide-react';
+import { ArrowDown, ArrowUp, Banknote, ChartColumn, Clock, Eye, EyeOff, Files, Hand, HandCoins, Inbox, Landmark, MapPin, Send, Upload, User, Wallet } from 'lucide-react';
 import { useAuthStore } from '../context/store';
 import { transactionAPI, authAPI } from '../utils/api';
 import Footer from '../components/Footer';
@@ -27,6 +27,8 @@ export default function UserDashboard() {
   const [transactions, setTransactions] = useState([]);
   const [loadingTx, setLoadingTx] = useState(false);
   const [stats, setStats] = useState(null);
+  /* Hidden until asked for, as on the Flutter dashboard. */
+  const [balanceHidden, setBalanceHidden] = useState(true);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 1032px)').matches);
 
   // matchMedia only fires when the breakpoint is actually crossed. The old
@@ -78,9 +80,33 @@ export default function UserDashboard() {
     ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : 'N/A');
 
+  /* One figure: what the balance actually moved by. A sender pays the amount
+     plus both commissions; a recipient receives the amount whole. */
+  const n2 = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+  const chargedTotal = (tx) => isOutgoing(tx)
+    ? n2(tx.amount) + n2(tx.agentCommission ?? tx.commission) + n2(tx.companyCommission)
+    : n2(tx.amount);
+
   const txAmount = (tx) =>
     (isOutgoing(tx) ? '-' : '+') + 'SSP ' +
-    (parseFloat(tx.amount) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    chargedTotal(tx).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  /* Who this person has paid recently, most recent first, no repeats. Avatars
+     only -- the Flutter dashboard prints initials rather than names and
+     numbers, because the row is a shortcut and not a contact list to leave on
+     screen in public. */
+  const initials = (name) => String(name || '?')
+    .trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
+  const recentPayees = (() => {
+    const seen = new Map();
+    for (const tx of transactions) {
+      if (!isOutgoing(tx) || !tx.receiver?.phone) continue;
+      if (!seen.has(tx.receiver.phone)) seen.set(tx.receiver.phone, tx.receiver);
+      if (seen.size === 4) break;
+    }
+    return [...seen.values()];
+  })();
 
   /* Both views are plain JSX, not components. Declaring them as components
      inside this one gave them a new identity on every render, so React
@@ -100,14 +126,25 @@ export default function UserDashboard() {
           <div className={styles.balanceCard}>
             <div className={styles.balanceTop}>
               <span className={styles.balanceLabel}>My Balance</span>
+              <button
+                type="button"
+                className={styles.balanceToggle}
+                onClick={() => setBalanceHidden((v) => !v)}
+                aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
+                title={balanceHidden ? 'Show balance' : 'Hide balance'}
+              >
+                {balanceHidden ? <Eye size={16} /> : <EyeOff size={16} />}
+              </button>
             </div>
 
             <div className={styles.balanceAmount}>
               <span className={styles.currency}>SSP</span>
-              {(parseFloat(user?.balance) || 0).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {balanceHidden
+                ? <span className={styles.balanceMasked}>••••••</span>
+                : (parseFloat(user?.balance) || 0).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
             </div>
 
             {/* the account the money sits in — still the real number, but set
@@ -136,16 +173,38 @@ export default function UserDashboard() {
           <span>History</span>
         </div>
         <div className={styles.statsGrid}>
-          <div className={styles.statItem}>
+          <div className={styles.statItem + ' ' + styles.railSent}>
             <span className={styles.statLabel}>Money Sent</span>
             <span className={styles.statValue}>SSP {(parseFloat(stats?.totalSent) || 0).toFixed(2)}</span>
           </div>
-          <div className={styles.statItem}>
-            <span className={styles.statLabel}>Total Received</span>
+          <div className={styles.statItem + ' ' + styles.railReceived}>
+            <span className={styles.statLabel}>Money Received</span>
             <span className={styles.statValue}>SSP {(parseFloat(stats?.totalReceived) || 0).toFixed(2)}</span>
           </div>
         </div>
       </div>
+
+      {recentPayees.length > 0 && (
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <span>Send again</span>
+          </div>
+          <div className={styles.payeeRow}>
+            {recentPayees.map((payee) => (
+              <button
+                key={payee.phone}
+                type="button"
+                className={styles.payee}
+                title={`${payee.name || 'Unknown'} · ${payee.phone}`}
+                aria-label={`Send to ${payee.name || payee.phone}`}
+                onClick={() => navigate('/user/send-money?to=' + encodeURIComponent(payee.phone))}
+              >
+                {initials(payee.name)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Transactions */}
       <div className={styles.section}>

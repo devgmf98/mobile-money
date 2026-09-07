@@ -127,56 +127,6 @@
   gap: 12px;
 }
 
-.statsGrid {
-  display: flex;
-  flex-direction: row;
-  gap: 18px;
-  justify-content: center;
-  margin-left: auto;
-  margin-right: auto;
-  max-width: 500px;
-  width: 100%;
-  border: 2px solid #34C88E;
-  background: #E8F7F0;
-  border-radius: 18px;
-  padding: 18px 0;
-}
-
-.statItem {
-  background: #fff;
-  border-radius: 14px;
-  padding: 14px 10px;
-  flex: 1 1 0;
-  min-width: 0;
-  max-width: none;
-  width: auto;
-  margin: 0 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.statItem:hover {
-  transform: translateY(-4px);
-  
-}
-
-.statLabel {
-  color: #34C88E;
-  font-size: 0.75rem;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.statValue {
-  font-size: 0.906rem;
-  font-weight: 700;
-  color: #222;
-}
-
 .moverCard {
   background: #fff;
   border-radius: 14px;
@@ -729,14 +679,18 @@
   background: #94A3B8;
 }
 
-.statItem:nth-child(1)::before { background: #DC2626; }   /* out */
-.statItem:nth-child(2)::before { background: #16A34A; }   /* in */
-.statItem:nth-child(3)::before { background: #D97706; }   /* commission */
+/* Keyed by what the figure means, not where it sits. Position worked while
+   there were three tiles; the agent's fourth — commission on cash-outs still
+   waiting on a customer — fell through to the default grey because no rule
+   covered position four, and a fifth would have done the same. */
+.railSent::before { background: #DC2626; }        /* out */
+.railReceived::before { background: #16A34A; }    /* in */
+.railCommission::before { background: #D97706; }  /* earned */
+.railPending::before { background: #087443; }     /* earned, not yet approved */
 
-/* The user dashboard shows two stats and fills the row. The agent shows a
-   third — commission — which would otherwise sit alone in the left column with
-   a hole beside it. A lone last item takes the full width instead. */
-.statsGrid > .statItem:nth-child(3):last-child {
+/* A lone last tile takes the full width rather than sitting in the left column
+   with a hole beside it — two stats fill the row, three or five do not. */
+.statsGrid > .statItem:last-child:nth-child(odd) {
   grid-column: 1 / -1;
 }
 
@@ -1106,3 +1060,60 @@
 }
 
 :global([data-theme='dark']) .moverPrice { color: #E2E8F0; }
+
+/* The balance is hidden until asked for, as it is on the Flutter dashboard:
+   this screen gets opened in public, and the figure is the one thing on it
+   worth shoulder-surfing. */
+.balanceToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  /* The card is white, so a white icon on it was invisible -- this takes the
+     same green the label above it uses. */
+  background: rgba(8, 116, 67, 0.09);
+  color: #087443;
+  cursor: pointer;
+}
+
+.balanceToggle:hover { background: rgba(8, 116, 67, 0.16); }
+
+/* Round dots rather than the figure. Kept at the same size so the card does
+   not change height when it is revealed. */
+.balanceMasked {
+  letter-spacing: 2px;
+}
+
+/* Recent payees -- avatars only, as on the Flutter dashboard. The name and
+   number are deliberately not printed: this row is a shortcut, and a list of
+   who you pay is not something to leave on screen in public. */
+.payeeRow {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.payee {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  border: 1px solid #EAF2ED;
+  background: #E8F7F0;
+  color: #087443;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+.payee:hover { background: #D6F0E3; }
