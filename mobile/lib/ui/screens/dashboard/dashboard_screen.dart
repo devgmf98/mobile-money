@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/motion.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/profile_image.dart';
@@ -124,26 +123,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           'paused. Contact customer care to restore access.'
                     : 'Your account is suspended, so payments are paused. '
                           'Contact customer care to restore access.',
-              ),
-            ),
-
-          // Standing state, not an event, so it sits on the dashboard rather
-          // than being a message that scrolls away: while this is on, an admin
-          // can take cash from the float without asking, and the agent will
-          // find out from the balance rather than from a request. Tapping goes
-          // to the switch that turns it off.
-          if (isAgent && user.autoAdminCashout)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: InkWell(
-                onTap: () => Navigator.of(context).pushNamed(Routes.profile),
-                borderRadius: BorderRadius.circular(AppSizes.radiusControl),
-                child: Notice.info(
-                  message:
-                      'Admin cash-out approval is off: an admin can take cash '
-                      'from your account without asking you first. Tap to '
-                      'change it.',
-                ),
               ),
             ),
 
@@ -320,15 +299,91 @@ class _Header extends StatelessWidget {
           const SizedBox(width: 10),
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed(Routes.profile),
-            child: UserAvatar(
-              initials: Fmt.initials(user.name),
-              imageProvider: _picture,
-              size: 40,
-              background: const Color(0x2EFFFFFF),
-              foreground: Colors.white,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                UserAvatar(
+                  initials: Fmt.initials(user.name),
+                  imageProvider: _picture,
+                  size: 40,
+                  background: const Color(0x2EFFFFFF),
+                  foreground: Colors.white,
+                ),
+                // While admins can take cash without asking, a dot pulses on
+                // the way in to the screen that turns it off. It replaced a
+                // full-width banner: this is a standing state rather than news,
+                // and something that is true every day should not take a
+                // paragraph of the dashboard every day.
+                if (user.autoAdminCashout)
+                  const Positioned(
+                    right: -1,
+                    top: -1,
+                    child: _PulsingDot(),
+                  ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A small dot that breathes, for a state worth noticing but not worth
+/// interrupting anyone over.
+///
+/// Only the dot's own opacity animates, inside a RepaintBoundary, so the
+/// repeating animation costs one tiny layer per frame and never touches the
+/// list it sits above.
+class _PulsingDot extends StatefulWidget {
+  const _PulsingDot();
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  late final Animation<double> _fade = Tween<double>(
+    begin: 0.35,
+    end: 1,
+  ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label:
+          'Admins can cash out without your approval. Open your profile to '
+          'change it.',
+      child: Tooltip(
+        message: 'Admins can cash out without your approval',
+        child: RepaintBoundary(
+          child: FadeTransition(
+            opacity: _fade,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                color: AppColors.warning,
+                shape: BoxShape.circle,
+                // A ring in the header's own green, so the dot reads as sitting
+                // on the avatar rather than behind it.
+                border: Border.all(color: AppColors.primaryDark, width: 2),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

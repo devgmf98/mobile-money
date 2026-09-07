@@ -23,7 +23,11 @@ export default function AgentDashboard() {
   const [stats, setStats] = useState({
     totalSent: 0,
     totalReceived: 0,
-    commissionEarned: 0
+    commissionEarned: 0,
+    // Defaulted so the tiles read 0.00 rather than NaN before the first fetch,
+    // and on a server that has not deployed the split yet.
+    pendingCustomerApprovalAmount: 0,
+    pendingAdminCashOutAmount: 0
   });
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -186,7 +190,10 @@ export default function AgentDashboard() {
           <button className={styles.actionBtnPrimary} onClick={() => handleNavigate('/agent/send-money')}><Send /><span>Send Money</span></button>
           <button className={styles.actionBtnPrimary} onClick={() => handleNavigate('/agent/pull-from-user')}><RefreshCw /><span>Pull Funds</span></button>
           <button className={styles.actionBtn} onClick={() => handleNavigate('/agent/receive')}><HandCoins /><span>Receive</span></button>
-          <button className={styles.actionBtn} onClick={() => handleNavigate('/agent/transactions')}><ChartColumn /><span>Transactions</span></button>
+          {/* Admin cash-outs waiting on this agent, as on the app. The ledger
+              gave up the tile: it is on the bottom bar as History and nothing
+              about it needs acting on, while these do. */}
+          <button className={styles.actionBtn} onClick={() => handleNavigate('/agent/pending-admin-requests')}><Inbox /><span>Requests</span></button>
         </div>
 
         <div className={styles.section}>
@@ -209,9 +216,18 @@ export default function AgentDashboard() {
             {/* The agent's own money: commission on cash-outs a customer has
                 been asked to approve and has not yet. Already in the stats
                 response, and on the Flutter dashboard. */}
+            {/* Two figures, not one: they move in opposite directions, so
+                adding them together answered nothing. The old single tile also
+                showed pending *commission*, which reads 0.00 whenever no
+                withdrawal tier is configured however many requests are
+                outstanding -- a true figure that looked like a bug. */}
             <div className={styles.statItem + ' ' + styles.railPending}>
-              <span className={styles.statLabel}>Awaiting Approval</span>
-              <span className={styles.statValue}>SSP {formatCurrency(stats.pendingAgentCommission)}</span>
+              <span className={styles.statLabel}>Awaiting Customers</span>
+              <span className={styles.statValue}>SSP {formatCurrency(stats.pendingCustomerApprovalAmount)}</span>
+            </div>
+            <div className={styles.statItem + ' ' + styles.railCommission}>
+              <span className={styles.statLabel}>Admin Requests</span>
+              <span className={styles.statValue}>SSP {formatCurrency(stats.pendingAdminCashOutAmount)}</span>
             </div>
           </div>
         </div>

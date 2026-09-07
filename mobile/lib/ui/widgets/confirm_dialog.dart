@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 
 /// A yes/no question, laid out properly.
 ///
@@ -28,81 +27,112 @@ Future<bool?> showConfirmDialog(
   return showDialog<bool>(
     context: context,
     builder: (dialogContext) => Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      backgroundColor: AppColors.surface,
+      // Rounder than the theme's default. A dialog is a card that arrived
+      // rather than one that was always there, and the softer corner is what
+      // says so.
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 24, 22, 18),
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (icon != null) ...[
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
+              // Centred and circular, with a wash ring around it. Square in
+              // the top-left corner, it read as a stray list icon that had
+              // wandered into a dialog rather than as the subject of one.
+              Center(
+                child: Container(
+                  width: 66,
+                  height: 66,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.14),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, size: 24, color: accent),
+                    ),
+                  ),
                 ),
-                child: Icon(icon, size: 22, color: accent),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
             ],
 
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18.5,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.2,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 9),
             Text(
               message,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
+                fontSize: 13.5,
+                height: 1.55,
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 24),
 
             Row(
               children: [
                 Expanded(
                   child: SizedBox(
-                    height: 46,
+                    height: 50,
                     child: TextButton(
                       onPressed: () => Navigator.of(dialogContext).pop(false),
                       style: TextButton.styleFrom(
-                        foregroundColor: AppColors.textSecondary,
-                        backgroundColor: AppColors.canvas,
+                        foregroundColor: AppColors.textPrimary,
+                        backgroundColor: AppColors.surface,
                         textStyle: const TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusControl,
-                          ),
+                          borderRadius: BorderRadius.circular(14),
+                          // An outline rather than a wash: on a white dialog
+                          // the tinted fill barely registered, so the pair read
+                          // as one button beside a gap.
+                          side: const BorderSide(color: AppColors.border),
                         ),
                       ),
                       child: Text(cancelLabel),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: SizedBox(
-                    height: 46,
+                    height: 50,
                     child: FilledButton(
                       onPressed: () => Navigator.of(dialogContext).pop(true),
                       style: FilledButton.styleFrom(
                         backgroundColor: accent,
                         // Overrides the theme's form-button height, which is
                         // what broke this layout in the first place.
-                        minimumSize: const Size(0, 46),
+                        minimumSize: const Size(0, 50),
+                        elevation: 0,
                         textStyle: const TextStyle(
-                          fontSize: 14.5,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusControl,
-                          ),
+                          borderRadius: BorderRadius.circular(14),
                         ),
                       ),
                       child: Text(confirmLabel),

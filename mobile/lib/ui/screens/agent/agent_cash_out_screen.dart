@@ -186,7 +186,6 @@ class _AgentCashOutScreenState extends State<AgentCashOutScreen> {
               if (user?.agentId != null)
                 _AgentBadge(
                   agentId: user!.agentId!,
-                  float: user.balance,
                   earned: wallet.stats.commissionEarned,
                 ),
               const SizedBox(height: 20),
@@ -300,15 +299,21 @@ class _AgentCashOutScreenState extends State<AgentCashOutScreen> {
   }
 }
 
+/// The agent's identity, which is what this screen actually needs.
+///
+/// It used to lead with the agent's own balance, which was wrong three times
+/// over. Pulling funds moves money *into* this wallet, so the float is not the
+/// limit -- the customer's balance is, and the server checks it. Showing it
+/// implied a ceiling that does not exist, so an agent with a thin float might
+/// turn away business they could have taken. And it printed the figure in full
+/// on the one screen guaranteed to be used with a customer standing at the
+/// counter looking at it, while every other screen now hides it by default.
+///
+/// What belongs here is the ID the customer verifies, so that leads instead.
 class _AgentBadge extends StatelessWidget {
-  const _AgentBadge({
-    required this.agentId,
-    required this.float,
-    required this.earned,
-  });
+  const _AgentBadge({required this.agentId, required this.earned});
 
   final String agentId;
-  final double float;
   final double earned;
 
   @override
@@ -326,9 +331,9 @@ class _AgentBadge extends StatelessWidget {
             children: [
               const Icon(Icons.badge_outlined, size: 17, color: Colors.white70),
               const SizedBox(width: 7),
-              Text(
-                'Agent ID $agentId',
-                style: const TextStyle(
+              const Text(
+                'Pull funds from a customer',
+                style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: Colors.white70,
@@ -338,17 +343,17 @@ class _AgentBadge extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            Fmt.money(float),
+            agentId,
             style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.6,
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.5,
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 3),
           Text(
-            'Float available · ${Fmt.money(earned)} earned',
+            'Your agent ID · ${Fmt.money(earned)} earned so far',
             style: const TextStyle(fontSize: 12.5, color: Colors.white70),
           ),
         ],

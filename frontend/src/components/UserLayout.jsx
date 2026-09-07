@@ -412,6 +412,18 @@ export default function UserLayout() {
               {user?.profileImage
                 ? <img src={user.profileImage} alt="" className="navbar-avatar" />
                 : <CircleUserRound size={28} />}
+              {/* An agent who has let admins skip approval finds out from the
+                  balance otherwise. A pulsing dot on the way in to the screen
+                  that turns it off, rather than a banner: it is a standing
+                  state, true every day, and should not take a paragraph of the
+                  page every day. */}
+              {user?.role === 'agent' && user?.autoAdminCashout && (
+                <span
+                  className="navbar-alert-dot"
+                  title="Admins can cash out without your approval"
+                  aria-label="Admins can cash out without your approval. Open your profile to change it."
+                />
+              )}
             </div>
           </div>
         </div>
