@@ -693,11 +693,9 @@
 .railCommission::before { background: #D97706; }  /* earned */
 .railPending::before { background: #087443; }     /* earned, not yet approved */
 
-/* A lone last tile takes the full width rather than sitting in the left column
-   with a hole beside it — two stats fill the row, three or five do not. */
-.statsGrid > .statItem:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
-}
+/* A lone last tile stays in the left column, the same width as every tile
+   above it. It used to span both, which made the odd one out the widest thing
+   in the grid and drew the eye to whichever figure happened to be last. */
 
 .statLabel {
   /* px for the same reason as the action tiles: 0.66rem came out at 7.9px. */

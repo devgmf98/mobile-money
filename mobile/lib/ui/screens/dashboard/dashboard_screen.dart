@@ -524,7 +524,17 @@ class _Stats extends StatelessWidget {
 
       rows.add(
         pair.length == 1
-            ? pair.first
+            // A lone last tile takes the left half and stops there. Dropped
+            // bare into the Column it centred itself at its own width, so the
+            // odd one out sat inset from every tile above it and lined up with
+            // nothing. The empty half holds the column.
+            ? Row(
+                children: [
+                  Expanded(child: pair.first),
+                  const SizedBox(width: 10),
+                  const Expanded(child: SizedBox.shrink()),
+                ],
+              )
             : IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
