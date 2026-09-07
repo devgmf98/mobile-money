@@ -30,6 +30,7 @@ const init = () => {
         credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
       }
       app = admin.initializeApp({ credential: admin.credential.cert(credentials) });
+      console.log(`[push] Firebase ready for project ${credentials.project_id}`);
     } else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
       app = admin.initializeApp({ credential: admin.credential.applicationDefault() });
     } else if (!warned) {
@@ -57,7 +58,16 @@ export const sendPushToUser = async (userId, { title, body, data = {} }) => {
   try {
     const rows = await DeviceToken.findAll({ where: { userId }, attributes: ['token'] });
     const tokens = rows.map((row) => row.token).filter(Boolean);
-    if (!tokens.length) return { sent: 0 };
+
+    /* Said out loud, because the two ways this goes wrong look identical from
+       the outside -- a phone that never registered and a push that was sent
+       and not shown both end in silence. This line separates them: no tokens
+       means the app never handed one over, which is a device problem; a send
+       count means the failure is after us. */
+    if (!tokens.length) {
+      console.warn(`[push] No device registered for user ${userId} - nothing sent`);
+      return { sent: 0 };
+    }
 
     const response = await admin.messaging().sendEachForMulticast({
       tokens,
@@ -85,6 +95,20 @@ export const sendPushToUser = async (userId, { title, body, data = {} }) => {
       }
     });
     if (dead.length) await DeviceToken.destroy({ where: { token: dead } });
+
+    console.log(
+      `[push] user ${userId}: ${response.successCount}/${tokens.length} delivered` +
+        (dead.length ? `, ${dead.length} stale token(s) dropped` : '')
+    );
+    if (response.failureCount) {
+      /* The per-token reason, which is the only thing that distinguishes a
+         misconfigured project from an uninstalled app. */
+      response.responses.forEach((result, index) => {
+        if (result.error) {
+          console.warn(`[push]   token ${index}: ${result.error.code} - ${result.error.message}`);
+        }
+      });
+    }
 
     return { sent: response.successCount };
   } catch (error) {

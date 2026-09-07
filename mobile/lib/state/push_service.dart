@@ -34,6 +34,7 @@ class PushService {
 
   static final PushService instance = PushService._();
 
+  bool _initialised = false;
   bool _started = false;
   StreamSubscription<RemoteMessage>? _foreground;
   StreamSubscription<String>? _refresh;
@@ -46,13 +47,31 @@ class PushService {
   /// [onToken] is called with the token now and again whenever Firebase
   /// rotates it — which it does on reinstall, restore and occasionally on its
   /// own, so registering once at sign-in is not enough.
+  /// Starts Firebase itself, from `main`, before the first frame.
+  ///
+  /// Separate from [start] and deliberately earlier. Firebase requires the
+  /// background handler to be registered as early as possible -- it runs in
+  /// its own isolate, spun up from a cold start with none of the app around
+  /// it, and registering it only after someone signed in left a phone that had
+  /// been closed with nothing listening. Initialising here also means a push
+  /// arriving seconds after launch has somewhere to land.
+  Future<void> initApp() async {
+    if (_initialised) return;
+    try {
+      await Firebase.initializeApp();
+      FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
+      _initialised = true;
+    } catch (error) {
+      if (kDebugMode) debugPrint('Firebase unavailable: $error');
+    }
+  }
+
   Future<void> start({required Future<void> Function(String token) onToken}) async {
     if (_started) return;
 
     try {
-      await Firebase.initializeApp();
-
-      FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
+      await initApp();
+      if (!_initialised) return;
 
       final messaging = FirebaseMessaging.instance;
 

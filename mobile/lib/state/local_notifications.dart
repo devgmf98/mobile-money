@@ -66,6 +66,32 @@ class LocalNotifications {
           ),
         ),
       );
+      /* The channel is created here rather than left to the first
+         notification.
+
+         flutter_local_notifications creates it lazily, when it first posts
+         something. A push arriving while the app is closed is drawn by
+         Android itself, from the channel named in the payload -- and on
+         Android 8 and up a notification addressed to a channel that does not
+         exist yet is dropped. So a phone that had never shown a foreground
+         notification silently received no background ones either, which is
+         exactly the shape of "it works while the app is open and not
+         otherwise". */
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'moneypay_activity',
+              'Account activity',
+              description:
+                  'Money sent and received, and requests waiting on your '
+                  'approval.',
+              importance: Importance.high,
+            ),
+          );
+
       _ready = true;
     } catch (error) {
       // A device that refuses to set the plugin up should not take the app

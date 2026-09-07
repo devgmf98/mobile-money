@@ -1306,23 +1306,42 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
     // Update request status
     await request.update({ status: 'approved', approvedAt: new Date() });
 
-    // Notify both sides. The agent knows they approved it; the admin, whose
-    // balance is what actually moved, was told nothing at all.
-    const notification = await Notification.create({
-      recipientId: agentId,
-      title: 'Withdrawal Approved',
-      message: `Your withdrawal of SSP ${request.amount} has been completed.`,
-      type: 'transaction',
-      relatedTransactionId: transaction.id
-    });
+    /* Notify both sides, and never let that fail the approval.
 
-    await Notification.create({
-      recipientId: request.userId,
-      title: 'Cash-out Approved',
-      message: `${agent.name || 'The agent'} approved your cash-out of SSP ${request.amount}.`,
-      type: 'transaction',
-      relatedTransactionId: transaction.id
-    });
+       By this point the agent has been debited, the admin credited, the
+       transaction written and the request marked approved -- the money has
+       moved and there is no undoing it here. A notification that cannot be
+       written is a notification nobody gets, which is a small thing; throwing
+       out of it told the agent their approval had failed when it had already
+       succeeded, which is a much larger one.
+
+       recipientId is checked rather than assumed. Requests created during the
+       period when this flow wrote the wrong column names can carry no userId
+       at all, and the row for the admin is the one that then cannot be
+       addressed. */
+    try {
+      await Notification.create({
+        recipientId: agentId,
+        title: 'Withdrawal Approved',
+        message: `Your withdrawal of SSP ${request.amount} has been completed.`,
+        type: 'transaction',
+        relatedTransactionId: transaction.id
+      });
+
+      if (request.userId) {
+        await Notification.create({
+          recipientId: request.userId,
+          title: 'Cash-out Approved',
+          message: `${agent.name || 'The agent'} approved your cash-out of SSP ${request.amount}.`,
+          type: 'transaction',
+          relatedTransactionId: transaction.id
+        });
+      } else {
+        console.warn(`[notify] request ${request.id} has no userId - admin not notified`);
+      }
+    } catch (error) {
+      console.error('Notification failed after a completed approval:', error.message);
+    }
 
     try {
       await sendSMS(agent.phone, `MoneyPay: Your withdrawal of SSP ${request.amount} has been completed.`);
@@ -1382,21 +1401,35 @@ export const rejectAdminWithdrawalRequest = async (req, res) => {
 
     await request.update({ status: 'rejected', rejectedAt: new Date(), reason });
 
-    // Notify
-    const notification = await Notification.create({
-      recipient: agentId,
-      title: 'Withdrawal Rejected',
-      message: `You rejected the admin withdrawal request of SSP ${request.amount}`,
-      type: 'system'
-    });
+    /* recipientId, not recipient. The Mongoose-era name is dropped by
+       Sequelize, leaving the column null and the insert failing its NOT NULL
+       constraint -- so declining a request rejected it, then threw, and told
+       the agent the decline had failed when it had already gone through.
 
-    // Emit socket event to notify admin their request was rejected
+       Wrapped for the same reason as the approval: the status is already
+       written by this point, and a notification nobody receives must not be
+       reported as a failure of the thing that did happen. */
     try {
-      const io = getIO();
-      if (io) {
+      await Notification.create({
+        recipientId: agentId,
+        title: 'Withdrawal Rejected',
+        message: `You rejected the admin withdrawal request of SSP ${request.amount}`,
+        type: 'system'
+      });
+
+      // The admin who asked is the one waiting on an answer.
+      if (request.userId) {
+        await Notification.create({
+          recipientId: request.userId,
+          title: 'Cash-out Declined',
+          message:
+            `Your cash-out request of SSP ${request.amount} was declined` +
+            (reason ? `: ${reason}` : '.'),
+          type: 'alert'
+        });
       }
-    } catch (err) {
-      console.error('Socket emit failed:', err);
+    } catch (error) {
+      console.error('Notification failed after a completed rejection:', error.message);
     }
 
     res.json({ message: 'Withdrawal request rejected' });
