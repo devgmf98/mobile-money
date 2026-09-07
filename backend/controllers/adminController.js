@@ -1417,13 +1417,34 @@ export const rejectAdminWithdrawalRequest = async (req, res) => {
 };
 
 // Get pending admin withdrawal requests for agent
+/* Admin cash-outs waiting on this agent to approve.
+
+   Restricted to requests an admin raised, and that restriction is load-bearing
+   rather than cosmetic. The two flows store the same two columns in opposite
+   orders: when an agent pulls from a customer, agentId is the agent and userId
+   the customer; when an admin cashes out from an agent, agentId is the agent
+   who approves and userId the admin who asked. A bare `where agentId` matched
+   both, so this list also carried the agent's own outgoing pulls -- and
+   approveAdminWithdrawalRequest debits agentId and credits userId, so
+   approving one of those from here would have taken the agent's money and paid
+   it to their customer for nothing.
+
+   The requester's role is the honest discriminator, so the join filters on it
+   and returns it: an inner join on role admin/sub-admin leaves only the rows
+   this screen may act on. */
 export const getAgentWithdrawalRequests = async (req, res) => {
   try {
     const agentId = req.userId;
 
     const requests = await WithdrawalRequest.findAll({
       where: { agentId: agentId, status: 'pending' },
-      include: [{ model: User, as: 'user', attributes: ['name', 'phone'] }],
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['name', 'phone', 'role'],
+        where: { role: { [Op.in]: ['admin', 'sub-admin'] } },
+        required: true,
+      }],
       order: [['createdAt', 'DESC']]
     });
 

@@ -182,6 +182,7 @@ class AuthController extends ChangeNotifier {
     String? name,
     String? profileImage,
     String? idNumber,
+    bool? autoAdminCashout,
   }) async {
     _setBusy(true);
     try {
@@ -189,6 +190,7 @@ class AuthController extends ChangeNotifier {
         name: name,
         profileImage: profileImage,
         idNumber: idNumber,
+        autoAdminCashout: autoAdminCashout,
       );
 
       _user = (_user ?? updated).mergeWith(updated);

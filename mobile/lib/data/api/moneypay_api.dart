@@ -111,6 +111,7 @@ class AuthApi {
     String? name,
     String? profileImage,
     String? idNumber,
+    bool? autoAdminCashout,
   }) {
     return _client.put<AppUser>(
       '/auth/profile',
@@ -118,6 +119,7 @@ class AuthApi {
         if (name != null) 'name': name.trim(),
         if (profileImage != null) 'profileImage': profileImage,
         if (idNumber != null) 'idNumber': idNumber.trim(),
+        if (autoAdminCashout != null) 'autoAdminCashout': autoAdminCashout,
       },
       parse: (data) => AppUser.fromJson(P.toMap(data) ?? const {}),
     );
@@ -234,6 +236,38 @@ class WalletApi {
   Future<void> rejectWithdrawal(int requestId, {String? reason}) {
     return _client.post<void>(
       '/withdrawals/reject',
+      body: {'requestId': requestId, if (reason != null) 'reason': reason},
+      parse: (_) {},
+    );
+  }
+
+  /// Agent side: admin cash-outs waiting on this agent.
+  ///
+  /// A different endpoint from `/withdrawals/pending`, and it has to be: that
+  /// one answers from the customer's side, filtering on the userId column,
+  /// and an admin request puts the agent in the agentId column instead. An
+  /// agent would never see these through the customer endpoint.
+  Future<List<AdminCashOutRequest>> adminCashOutRequests() {
+    return _client.get<List<AdminCashOutRequest>>(
+      '/admin/agent-withdrawal-requests',
+      parse: (data) => P
+          .toList(data, key: 'requests')
+          .map(AdminCashOutRequest.fromJson)
+          .toList(growable: false),
+    );
+  }
+
+  Future<void> approveAdminCashOut(int requestId) {
+    return _client.post<void>(
+      '/admin/approve-withdrawal-request',
+      body: {'requestId': requestId},
+      parse: (_) {},
+    );
+  }
+
+  Future<void> rejectAdminCashOut(int requestId, {String? reason}) {
+    return _client.post<void>(
+      '/admin/reject-withdrawal-request',
       body: {'requestId': requestId, if (reason != null) 'reason': reason},
       parse: (_) {},
     );

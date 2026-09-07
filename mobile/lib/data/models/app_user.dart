@@ -51,6 +51,7 @@ class AppUser {
     required this.isSuspended,
     this.agentId,
     this.adminId,
+    this.autoAdminCashout = false,
     this.profileImage,
     this.idNumber,
     this.state,
@@ -71,6 +72,11 @@ class AppUser {
   final String? agentId;
   final String? adminId;
 
+  /// Agents only: when on, an admin can collect cash from this account without
+  /// asking. When off — the default, and the safe one — every admin cash-out
+  /// arrives as a request the agent has to approve.
+  final bool autoAdminCashout;
+
   /// Stored server-side as a base64 data URL in a LONGTEXT column.
   final String? profileImage;
   final String? idNumber;
@@ -89,6 +95,7 @@ class AppUser {
       isSuspended: P.toBool(json['isSuspended']),
       agentId: P.toTextOrNull(json['agentId']),
       adminId: P.toTextOrNull(json['adminId']),
+      autoAdminCashout: P.toBool(json['autoAdminCashout']),
       profileImage: P.toTextOrNull(json['profileImage']),
       idNumber: P.toTextOrNull(json['idNumber']),
       state: P.toTextOrNull(json['state']),
@@ -112,6 +119,7 @@ class AppUser {
     'isSuspended': isSuspended,
     'agentId': agentId,
     'adminId': adminId,
+    'autoAdminCashout': autoAdminCashout,
     'profileImage': profileImage,
     'idNumber': idNumber,
     'state': state,
@@ -124,6 +132,7 @@ class AppUser {
     bool? isSuspended,
     String? profileImage,
     String? idNumber,
+    bool? autoAdminCashout,
   }) {
     return AppUser(
       id: id,
@@ -136,6 +145,7 @@ class AppUser {
       isSuspended: isSuspended ?? this.isSuspended,
       agentId: agentId,
       adminId: adminId,
+      autoAdminCashout: autoAdminCashout ?? this.autoAdminCashout,
       profileImage: profileImage ?? this.profileImage,
       idNumber: idNumber ?? this.idNumber,
       state: state,
@@ -157,6 +167,7 @@ class AppUser {
       isSuspended: fresher.isSuspended,
       agentId: fresher.agentId ?? agentId,
       adminId: fresher.adminId ?? adminId,
+      autoAdminCashout: fresher.autoAdminCashout,
       profileImage: fresher.profileImage ?? profileImage,
       idNumber: fresher.idNumber ?? idNumber,
       state: fresher.state ?? state,

@@ -7,6 +7,7 @@ import '../../../core/theme/motion.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/utils/phone.dart';
 import '../../../core/utils/profile_image.dart';
+import '../../../data/api/api_client.dart';
 import '../../../data/models/app_user.dart';
 import '../../../routing/routes.dart';
 import '../../../state/auth_controller.dart';
@@ -121,6 +122,17 @@ class ProfileScreen extends StatelessWidget {
                       context,
                     ).pushNamed(Routes.pendingApprovals),
                   ),
+                if (isAgent) ...[
+                  SettingsRow(
+                    icon: Icons.inbox_rounded,
+                    label: 'Requests',
+                    subtitle: 'Admin cash-outs waiting on you',
+                    onTap: () => Navigator.of(
+                      context,
+                    ).pushNamed(Routes.agentRequests),
+                  ),
+                  const _AutoAdminCashOutRow(),
+                ],
               ],
             ),
           ),
@@ -456,6 +468,63 @@ class _Badge extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// The switch that decides whether an admin has to ask.
+///
+/// Off by default and off is the safe side: every admin cash-out arrives as a
+/// request this agent approves. Turning it on lets an admin take cash from the
+/// float without asking, which is faster for a trusted branch and is exactly
+/// the thing an agent would want to be sure they meant.
+class _AutoAdminCashOutRow extends StatefulWidget {
+  const _AutoAdminCashOutRow();
+
+  @override
+  State<_AutoAdminCashOutRow> createState() => _AutoAdminCashOutRowState();
+}
+
+class _AutoAdminCashOutRowState extends State<_AutoAdminCashOutRow> {
+  bool _busy = false;
+
+  Future<void> _set(bool value) async {
+    final auth = context.read<AuthController>();
+    setState(() => _busy = true);
+    try {
+      await auth.updateProfile(autoAdminCashout: value);
+      if (!mounted) return;
+      AppSnack.success(
+        context,
+        value
+            ? 'Admins can now cash out without your approval.'
+            : 'Admin cash-outs will wait for your approval.',
+      );
+    } on ApiException catch (error) {
+      if (mounted) AppSnack.error(context, error.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final on = context.watch<AuthController>().user?.autoAdminCashout ?? false;
+
+    return SettingsRow(
+      icon: Icons.verified_user_outlined,
+      label: 'Admin Cash-Out Approval',
+      subtitle: on
+          ? 'Admins can cash out from your account without your approval'
+          : 'Every admin cash-out waits for you to approve it',
+      // The whole row is not tappable: this one is a switch, and a row that
+      // both navigates and toggles is a row that gets toggled by accident.
+      trailing: _busy
+          ? const SizedBox.square(
+              dimension: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Switch(value: on, onChanged: _set),
     );
   }
 }

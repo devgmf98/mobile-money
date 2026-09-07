@@ -48,6 +48,7 @@ class WalletController extends ChangeNotifier {
 
   List<WalletTransaction> _transactions = const [];
   List<WithdrawalRequestItem> _pending = const [];
+  List<AdminCashOutRequest> _adminRequests = const [];
   WalletStats _stats = const WalletStats.empty();
 
   bool _loading = false;
@@ -56,6 +57,10 @@ class WalletController extends ChangeNotifier {
 
   List<WalletTransaction> get transactions => _transactions;
   List<WithdrawalRequestItem> get pendingWithdrawals => _pending;
+
+  /// Admin cash-outs waiting on this agent. Always empty for a customer --
+  /// only an agent is ever asked to approve one.
+  List<AdminCashOutRequest> get adminCashOutRequests => _adminRequests;
   WalletStats get stats => _stats;
   bool get isLoading => _loading;
   bool get hasLoaded => _loadedOnce;
@@ -132,6 +137,13 @@ class WalletController extends ChangeNotifier {
         (value) => value,
         onError: (Object error) => error,
       ),
+      // Only an agent can be asked to approve an admin cash-out, so a customer
+      // is not made to pay for a request that can only ever come back empty.
+      if (viewer.role.isAgent)
+        _api.adminCashOutRequests().then<Object?>(
+          (value) => value,
+          onError: (Object error) => error,
+        ),
     ]);
 
     if (results[0] is List<WalletTransaction>) {
@@ -140,6 +152,9 @@ class WalletController extends ChangeNotifier {
     if (results[1] is WalletStats) _stats = results[1] as WalletStats;
     if (results[2] is List<WithdrawalRequestItem>) {
       _pending = results[2] as List<WithdrawalRequestItem>;
+    }
+    if (results.length > 3 && results[3] is List<AdminCashOutRequest>) {
+      _adminRequests = results[3] as List<AdminCashOutRequest>;
     }
 
     // Only report a failure when nothing at all came back — a partial refresh
@@ -190,6 +205,16 @@ class WalletController extends ChangeNotifier {
     final reference = await _api.withdraw(agentId: agentId, amount: amount);
     await _settle();
     return reference;
+  }
+
+  Future<void> approveAdminCashOut(int requestId) async {
+    await _api.approveAdminCashOut(requestId);
+    await refresh(silent: true);
+  }
+
+  Future<void> rejectAdminCashOut(int requestId, {String? reason}) async {
+    await _api.rejectAdminCashOut(requestId, reason: reason);
+    await refresh(silent: true);
   }
 
   Future<void> approveWithdrawal(int requestId) async {

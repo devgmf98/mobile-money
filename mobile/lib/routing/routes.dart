@@ -33,5 +33,6 @@ class Routes {
 
   // Agent role
   static const agentCashOut = '/agent/cash-out';
+  static const agentRequests = '/agent/requests';
   static const pendingApprovals = '/pending-approvals';
 }

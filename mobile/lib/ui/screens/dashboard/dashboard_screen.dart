@@ -194,9 +194,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // agent taps it to draw money in from a customer, so it says "Pull Funds":
     // the customer's word for that transaction is "Withdraw" and the receipt
     // calls it "Agent Cash Out", and either on the agent's own dashboard reads
-    // as money leaving when it is money arriving. The fourth is their ledger
-    // rather than approvals, since an agent has no cash-outs of their own
-    // waiting on them.
+    // as money leaving when it is money arriving. The fourth is admin cash-outs
+    // waiting on the agent to approve, which reach them through a different
+    // endpoint from a customer's approvals because an admin request puts the
+    // agent in the other column. Their ledger moved out of this row to make
+    // space: it is on the bottom bar as History and on the profile, and
+    // nothing about it needs acting on.
     return [
       WalletAction(
         icon: Icons.send_rounded,
@@ -221,9 +224,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       isAgent
           ? WalletAction(
-              icon: Icons.bar_chart_rounded,
-              label: 'Transactions',
-              onTap: () => navigator.pushNamed(Routes.history),
+              icon: Icons.inbox_rounded,
+              label: 'Requests',
+              onTap: () => navigator.pushNamed(Routes.agentRequests),
             )
           : WalletAction(
               icon: Icons.schedule_rounded,

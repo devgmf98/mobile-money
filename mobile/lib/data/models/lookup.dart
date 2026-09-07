@@ -64,6 +64,57 @@ class AgentInfo {
   }
 }
 
+/// An admin's cash-out, waiting on this agent to approve it.
+///
+/// The mirror image of [WithdrawalRequestItem]: there the viewer is the
+/// customer and an agent is asking, here the viewer is the agent and an
+/// administrator is asking. Approving debits the agent and credits the admin,
+/// so the amount is exactly what leaves the balance -- no commission is
+/// charged on this leg, which is why there is nothing to break down.
+class AdminCashOutRequest {
+  const AdminCashOutRequest({
+    required this.id,
+    required this.amount,
+    required this.createdAt,
+    this.adminName,
+    this.adminPhone,
+    this.adminRole,
+  });
+
+  factory AdminCashOutRequest.fromJson(Map<String, dynamic> json) {
+    final admin = P.toMap(json['user']);
+    return AdminCashOutRequest(
+      id: P.toInt(json['id']),
+      amount: P.toDouble(json['amount']),
+      createdAt: P.toDate(json['createdAt']),
+      adminName: P.toTextOrNull(admin?['name']),
+      adminPhone: P.toTextOrNull(admin?['phone']),
+      adminRole: P.toTextOrNull(admin?['role']),
+    );
+  }
+
+  final int id;
+  final double amount;
+  final DateTime createdAt;
+  final String? adminName;
+  final String? adminPhone;
+  final String? adminRole;
+
+  /// `Admin` or `Sub-admin` -- the endpoint returns nothing else, but an
+  /// unexpected role reads as Admin rather than as a blank.
+  String get roleLabel => adminRole == 'sub-admin' ? 'Sub-admin' : 'Admin';
+
+  /// The role as an aside beside the name, dropped when it only repeats it.
+  String? get roleAside {
+    final name = adminName?.trim();
+    if (name == null || name.isEmpty) return null;
+    return name.toLowerCase() == roleLabel.toLowerCase() ? null : roleLabel;
+  }
+
+  /// How to name them in a sentence.
+  String get who => adminName ?? 'the ${roleLabel.toLowerCase()}';
+}
+
 /// A cash-out an agent has asked a customer to approve.
 ///
 /// `/withdrawals/pending` answers from the customer's side only — these are the

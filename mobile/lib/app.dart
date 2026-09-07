@@ -13,6 +13,7 @@ import 'state/notification_controller.dart';
 import 'state/realtime_service.dart';
 import 'state/wallet_controller.dart';
 import 'ui/screens/agent/agent_cash_out_screen.dart';
+import 'ui/screens/agent/agent_requests_screen.dart';
 import 'ui/screens/auth/forgot_password_screen.dart';
 import 'ui/screens/auth/lock_screen.dart';
 import 'ui/screens/auth/login_screen.dart';
@@ -169,6 +170,8 @@ class MoneyPayApp extends StatelessWidget {
 
         case Routes.agentCashOut:
           return const AgentCashOutScreen();
+        case Routes.agentRequests:
+          return const AgentRequestsScreen();
         case Routes.pendingApprovals:
           return const PendingApprovalsScreen();
       }
