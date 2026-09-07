@@ -66,17 +66,37 @@ class LocalNotifications {
           ),
         ),
       );
-      /* The channel is created here rather than left to the first
-         notification.
+      /* Ready as soon as the plugin is, and before anything optional runs.
 
-         flutter_local_notifications creates it lazily, when it first posts
-         something. A push arriving while the app is closed is drawn by
-         Android itself, from the channel named in the payload -- and on
-         Android 8 and up a notification addressed to a channel that does not
-         exist yet is dropped. So a phone that had never shown a foreground
-         notification silently received no background ones either, which is
-         exactly the shape of "it works while the app is open and not
-         otherwise". */
+         The channel below used to be created inside this same block ahead of
+         this line, so a throw there left _ready false and show() returned
+         early for every notification -- foreground included. One optional step
+         failing switched the whole feature off. Nothing after this point may
+         decide whether notifications work. */
+      _ready = true;
+      await _createAndroidChannel();
+    } catch (error) {
+      // A device that refuses to set the plugin up should not take the app
+      // down with it — everything here is an extra on top of a screen that
+      // already updates itself.
+      if (kDebugMode) debugPrint('Notifications unavailable: $error');
+    }
+  }
+
+  /// Declares the Android channel up front.
+  ///
+  /// flutter_local_notifications creates it lazily, when it first posts
+  /// something. A push arriving with the app closed is drawn by Android itself
+  /// from the channel named in the payload, and on Android 8 and up one
+  /// addressed to a channel that does not exist yet is dropped -- so a phone
+  /// that had never shown a foreground notification received no background
+  /// ones either.
+  ///
+  /// Failing is survivable: without this the channel is still created the
+  /// first time something is posted in the foreground, which is where it was
+  /// before. It must never take the rest of the feature down with it.
+  Future<void> _createAndroidChannel() async {
+    try {
       await _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
@@ -91,13 +111,8 @@ class LocalNotifications {
               importance: Importance.high,
             ),
           );
-
-      _ready = true;
     } catch (error) {
-      // A device that refuses to set the plugin up should not take the app
-      // down with it — everything here is an extra on top of a screen that
-      // already updates itself.
-      if (kDebugMode) debugPrint('Notifications unavailable: $error');
+      if (kDebugMode) debugPrint('Notification channel not created: $error');
     }
   }
 

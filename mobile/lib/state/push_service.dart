@@ -35,6 +35,9 @@ class PushService {
   static final PushService instance = PushService._();
 
   bool _initialised = false;
+  /// Held so concurrent callers share one attempt: `main` starts this without
+  /// waiting and sign-in may ask for it again a moment later.
+  Future<void>? _initInFlight;
   bool _started = false;
   StreamSubscription<RemoteMessage>? _foreground;
   StreamSubscription<String>? _refresh;
@@ -55,14 +58,20 @@ class PushService {
   /// it, and registering it only after someone signed in left a phone that had
   /// been closed with nothing listening. Initialising here also means a push
   /// arriving seconds after launch has somewhere to land.
-  Future<void> initApp() async {
-    if (_initialised) return;
+  Future<void> initApp() {
+    if (_initialised) return Future.value();
+    return _initInFlight ??= _initApp();
+  }
+
+  Future<void> _initApp() async {
     try {
       await Firebase.initializeApp();
       FirebaseMessaging.onBackgroundMessage(_onBackgroundMessage);
       _initialised = true;
     } catch (error) {
       if (kDebugMode) debugPrint('Firebase unavailable: $error');
+    } finally {
+      _initInFlight = null;
     }
   }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -8,14 +10,17 @@ import 'state/push_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Set up before the first frame so a notification arriving seconds after
-  // launch has somewhere to land. Never throws: it swallows its own failures,
-  // because a device that will not post notifications should still run the app.
-  await LocalNotifications.instance.init();
+  /* Started here, not waited for.
 
-  // Firebase before the first frame, so the background handler is registered
-  // from a cold start rather than only once somebody signs in.
-  await PushService.instance.initApp();
+     Both swallow their own failures, but a failure is not the only way a
+     platform channel goes wrong -- one that never answers would have held the
+     first frame indefinitely, and a wallet that will not open is a worse
+     outcome than a notification that does not arrive. They finish within
+     milliseconds and long before anything needs them: the socket cannot
+     deliver until someone has signed in, and a background push is drawn by
+     Android itself. */
+  unawaited(LocalNotifications.instance.init());
+  unawaited(PushService.instance.initApp());
 
   // Portrait only. Every screen in the design is a single column sized to a
   // phone, and a rotated wallet is not a use anyone has.
