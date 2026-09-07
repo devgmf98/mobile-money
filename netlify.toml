@@ -1,3 +1,15 @@
+# Build settings live here rather than only in the Netlify UI. netlify.toml
+# takes precedence over the dashboard, so with these in the repo a deploy
+# cannot quietly build the wrong directory or publish a folder nobody rebuilt
+# -- which is what left the site serving an AgentDashboard chunk built from
+# older source than main while the deploy log still said "published".
+#
+# The repo is an npm workspace: the root build script delegates to the frontend
+# workspace, which writes to frontend/dist.
+[build]
+  command = "npm run build"
+  publish = "frontend/dist"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
