@@ -119,7 +119,11 @@ export default function UserLayout() {
       String(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '') ||
       window.location.origin;
 
-    const socket = io(socketUrl);
+    /* The server reads the identity from this token and ignores any id the
+       client claims, so a connection without one joins nothing. */
+    const socket = io(socketUrl, {
+      auth: { token: localStorage.getItem('token') },
+    });
 
     /* Joined on every connect, not once at setup. Events are addressed to a
        per-user room, and a socket that has not announced itself is in no room

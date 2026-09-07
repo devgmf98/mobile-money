@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import { setIO } from './utils/socket.js';
 
 // Load .env from project root
@@ -144,23 +145,55 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
 });
 
-// Socket.io Real-time notifications
+/* Socket.io real-time notifications.
+
+   Rooms are named for a user id and carry that person's balance and their
+   notifications -- amounts, counterparty numbers, the lot. The room was joined
+   from whatever id the client asked for, with no token checked, so anyone who
+   knew this URL could subscribe to any account by counting upwards. The
+   identity now comes from the JWT and the client's own claim is ignored.
+
+   The handshake reads `auth.token`, which every socket.io client can set, and
+   falls back to the query string for older ones. A connection with no valid
+   token is still accepted -- it simply joins nothing and receives nothing, so
+   an app that has not been updated degrades to pull-to-refresh rather than
+   failing to connect. */
+io.use((socket, next) => {
+  const raw =
+    socket.handshake.auth?.token ||
+    socket.handshake.query?.token ||
+    socket.handshake.headers?.authorization?.split(' ')[1];
+
+  if (raw) {
+    try {
+      const decoded = jwt.verify(raw, process.env.JWT_SECRET);
+      socket.userId = decoded.userId;
+      socket.userRole = decoded.role;
+    } catch {
+      /* An expired or forged token is treated as none at all. */
+    }
+  }
+  next();
+});
+
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  socket.on('join-user', (userId) => {
-    console.log(`User ${userId} joining room user-${userId}`);
-    socket.join(`user-${userId}`);
-    console.log(`User ${userId} successfully joined room user-${userId}`);
+  socket.on('join-user', () => {
+    /* The id the client sent is deliberately not read. Whoever the token says
+       they are is the only room they may listen to. */
+    if (!socket.userId) {
+      console.warn('Unauthenticated socket asked to join a room - refused');
+      return;
+    }
+    socket.join(`user-${socket.userId}`);
   });
 
-  socket.on('send-notification', (data) => {
-    io.to(`user-${data.userId}`).emit('new-notification', data);
-  });
+  /* `send-notification` used to relay any payload to any room, so an
+     unauthenticated client could push a convincing "Money Received" to
+     someone. Nothing legitimate used it -- every real notification is emitted
+     server-side from the controller that moved the money -- so it is gone
+     rather than secured. */
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
+  socket.on('disconnect', () => {});
 });
 
 // Middleware for flash messages

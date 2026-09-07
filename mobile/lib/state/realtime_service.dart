@@ -37,7 +37,7 @@ class RealtimeService {
 
   bool get isConnected => _socket?.connected ?? false;
 
-  void connect(int userId) {
+  void connect(int userId, {required String token}) {
     if (_joinedUserId == userId && isConnected) return;
 
     disconnect();
@@ -47,6 +47,11 @@ class RealtimeService {
       Env.socketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
+          // The server reads the identity from this and ignores whatever id
+          // the client claims. Without it the connection is accepted and joins
+          // nothing, so a stale build degrades to pull-to-refresh instead of
+          // silently listening to a room it should not be in.
+          .setAuth({'token': token})
           .enableReconnection()
           .setReconnectionDelay(2000)
           .enableAutoConnect()
@@ -56,6 +61,8 @@ class RealtimeService {
     // Re-joined on every connect, not just the first: a reconnection is a new
     // socket as far as the server is concerned, and it has no memory of which
     // room the old one was in.
+    // The argument is vestigial -- the server takes the id from the token --
+    // but the event is still what asks to be put in the room.
     socket.onConnect((_) => socket.emit('join-user', userId));
 
     socket.on('balance-updated', (data) {

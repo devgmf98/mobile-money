@@ -282,7 +282,9 @@ class AuthController extends ChangeNotifier {
   }
 
   void _startSession(AppUser user) {
-    _realtime.connect(user.id);
+    // The socket authenticates with the same token the API uses: the server
+    // takes the identity from it and ignores any id the client claims.
+    unawaited(_connectRealtime(user));
     // Asked for here rather than at launch: the prompt lands on someone who
     // has an account open and has seen what the app does, which is the
     // difference between "allow" and a permanent refusal.
@@ -308,6 +310,12 @@ class AuthController extends ChangeNotifier {
         },
       ),
     );
+  }
+
+  Future<void> _connectRealtime(AppUser user) async {
+    final token = await _session.readToken();
+    if (token == null || token.isEmpty) return;
+    _realtime.connect(user.id, token: token);
   }
 
   void _set(AuthStage stage) {
