@@ -6,9 +6,13 @@ import mpIcon from '../assets/mp-icon.png';
 import { Banknote, Bell, ChartColumn, CircleUserRound, ClipboardList, Hourglass, LogOut, Menu, PanelLeftClose, PanelLeftOpen, QrCode, RefreshCw, Upload, User, UserCog, X } from 'lucide-react';
 import { useAuthStore } from '../context/store';
 import { useNotificationStore } from '../context/store';
-import { notificationAPI } from '../utils/api';
+import { authAPI, notificationAPI } from '../utils/api';
 import io from 'socket.io-client';
 import { announceDataChanged } from '../hooks/useLiveData';
+import showSystemNotification, {
+  requestNotificationPermission,
+} from '../hooks/useSystemNotifications';
+import { startWebPush } from '../utils/firebase';
 import '../styles/layout.css';
 import './HamburgerMenu.css';
 
@@ -95,6 +99,16 @@ export default function UserLayout() {
     };
 
     fetchNotifications();
+    /* Asked for here, where a session already exists, rather than on first
+       paint: a prompt before anyone has seen the site is the one people
+       dismiss for good. */
+    requestNotificationPermission().then((permission) => {
+      /* Only once permission is actually granted: getToken rejects otherwise,
+         and registering a service worker for a browser that has said no is
+         work nobody asked for. */
+      if (permission !== 'granted') return;
+      startWebPush((token) => authAPI.registerDeviceToken(token));
+    });
 
     /* The socket lives on the same host as the API. The fallback used to name
        a different service outright, so an environment that forgot
@@ -120,6 +134,14 @@ export default function UserLayout() {
     socket.on('new-notification', (data) => {
       addNotification(data);
       announceDataChanged('notification');
+      // Into the browser's own notification centre as well as the bell, so it
+      // reaches someone whose tab is open behind something else. Skipped while
+      // the tab is focused -- the page already updates itself live.
+      showSystemNotification({
+        title: data?.title || 'MoneyPay',
+        body: data?.message || '',
+        tag: data?.id ?? data?._id,
+      });
     });
 
     // Balance updates go straight to the store — it is the number on screen.

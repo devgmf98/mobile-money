@@ -5,6 +5,7 @@ import { sendVerificationCode, sendSMS } from '../utils/sms.js';
 import Verification from '../models/Verification.js';
 import { Op } from 'sequelize';
 import { resolveDestination } from '../utils/destinations.js';
+import DeviceToken from '../models/DeviceToken.js';
 
 export const register = async (req, res) => {
   try {
@@ -487,6 +488,53 @@ export const resetPassword = async (req, res) => {
     await user.save();
 
     res.json({ message: 'Password updated. You can now sign in with your new password.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* Where to send this account's push notifications.
+
+   Upsert on the token, not on the user: a device holds one Firebase token for
+   the life of an install, so the same token arriving under a different account
+   means the phone changed hands. Reassigning the row is what stops the
+   previous person's money notifications landing on it, and is why the token
+   rather than the user is the unique key. */
+export const registerDeviceToken = async (req, res) => {
+  try {
+    const { token, platform } = req.body;
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ message: 'A device token is required' });
+    }
+
+    const [row, created] = await DeviceToken.findOrCreate({
+      where: { token },
+      defaults: {
+        token,
+        userId: req.userId,
+        platform: ['android', 'ios', 'web'].includes(platform) ? platform : 'android',
+      },
+    });
+
+    if (!created && row.userId !== req.userId) {
+      await row.update({ userId: req.userId });
+    }
+
+    res.json({ message: 'Device registered' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/* Called on sign-out. Scoped to this account as well as this token so one
+   person cannot unregister another's device by guessing a token. */
+export const removeDeviceToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ message: 'A device token is required' });
+
+    await DeviceToken.destroy({ where: { token, userId: req.userId } });
+    res.json({ message: 'Device removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

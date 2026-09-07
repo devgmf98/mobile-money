@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "68158580848",
+    "project_id": "otp-verify-d14e2",
+    "storage_bucket": "otp-verify-d14e2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68158580848:android:a9661e9d7c69c49eda6cb5",
+        "android_client_info": {
+          "package_name": "com.moneypay.moneypay"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsVgQ47Gq8NKRUpHp7DW3HqQgWv2PM5q0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68158580848:android:e0f9914dcfd5e7a7da6cb5",
+        "android_client_info": {
+          "package_name": "com.zain.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBsVgQ47Gq8NKRUpHp7DW3HqQgWv2PM5q0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

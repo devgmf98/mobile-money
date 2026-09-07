@@ -7,6 +7,11 @@
          on a device with no camera - every screen except the scanner works
          without one, and the scanner itself explains the problem. -->
     <uses-permission android:name="android.permission.CAMERA"/>
+
+    <!-- Android 13 and up. Older versions grant notifications at install; from
+         13 the app has to ask, and without this declared the request is a
+         no-op and nothing is ever posted. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 

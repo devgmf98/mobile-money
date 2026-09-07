@@ -109,6 +109,7 @@ app.use(express.urlencoded({
 import User from './models/User.js';
 import Transaction from './models/Transaction.js';
 import Notification from './models/Notification.js';
+import DeviceToken from './models/DeviceToken.js';
 import WithdrawalRequest from './models/WithdrawalRequest.js';
 import StateSetting from './models/StateSetting.js';
 import Currency from './models/Currency.js';
@@ -122,7 +123,7 @@ import { migrateStateToName, ensureColumns } from './migrations/stateToName.js';
 import { widenColumns } from './migrations/widenColumns.js';
 
 // Set up associations
-const models = { User, Transaction, Notification, WithdrawalRequest, StateSetting, Currency, ExchangeRate, SendMoneyCommissionTier, WithdrawalCommissionTier, Verification, ContactMessage, HelpArticle };
+const models = { User, Transaction, Notification, DeviceToken, WithdrawalRequest, StateSetting, Currency, ExchangeRate, SendMoneyCommissionTier, WithdrawalCommissionTier, Verification, ContactMessage, HelpArticle };
 Object.keys(models).forEach(modelName => {
   if (models[modelName].associate) {
     models[modelName].associate(models);

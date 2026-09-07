@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../data/api/api_client.dart';
 import '../data/api/moneypay_api.dart';
 import '../data/models/app_notification.dart';
+import 'local_notifications.dart';
 import 'realtime_service.dart';
 
 /// The notification bell and its list.
@@ -13,7 +14,13 @@ class NotificationController extends ChangeNotifier {
     required NotificationApi api,
     required RealtimeService realtime,
   }) : _api = api {
-    _subscription = realtime.notifications.listen(_prepend);
+    _subscription = realtime.notifications.listen((notification) {
+      _prepend(notification);
+      // Into the phone's tray as well as the app's own list, so it reaches
+      // someone who is not looking at the screen. Fire and forget: the list
+      // above is the source of truth and must not wait on the platform.
+      unawaited(LocalNotifications.instance.show(notification));
+    });
   }
 
   final NotificationApi _api;

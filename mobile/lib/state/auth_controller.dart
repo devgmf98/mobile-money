@@ -6,6 +6,8 @@ import '../data/api/api_client.dart';
 import '../data/api/moneypay_api.dart';
 import '../data/models/app_user.dart';
 import '../data/storage/session_store.dart';
+import 'local_notifications.dart';
+import 'push_service.dart';
 import 'realtime_service.dart';
 
 /// Where the app should be, given what it knows about the session.
@@ -259,6 +261,12 @@ class AuthController extends ChangeNotifier {
 
   Future<void> signOut({bool expired = false}) async {
     _realtime.disconnect();
+    // A shared phone should not leave one person's money in another person's
+    // notification tray.
+    unawaited(LocalNotifications.instance.clearAll());
+    // Drops the Firebase token as well, so the next person to sign in on this
+    // phone does not receive the last person's money.
+    unawaited(PushService.instance.stop());
     await _session.clear();
     _user = null;
     _expiryNotice = expired
@@ -273,7 +281,34 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _startSession(AppUser user) => _realtime.connect(user.id);
+  void _startSession(AppUser user) {
+    _realtime.connect(user.id);
+    // Asked for here rather than at launch: the prompt lands on someone who
+    // has an account open and has seen what the app does, which is the
+    // difference between "allow" and a permanent refusal.
+    unawaited(LocalNotifications.instance.requestPermission());
+
+    // Push covers what the socket cannot: the app closed, nothing listening.
+    // The callback runs again on every token rotation, so a reinstall or a
+    // restore re-registers itself rather than going quiet.
+    unawaited(
+      PushService.instance.start(
+        onToken: (token) async {
+          try {
+            await _authApi.registerDeviceToken(
+              token,
+              platform: defaultTargetPlatform == TargetPlatform.iOS
+                  ? 'ios'
+                  : 'android',
+            );
+          } catch (_) {
+            // Registering is best-effort. Losing it costs a notification, not
+            // the session, and the next launch tries again.
+          }
+        },
+      ),
+    );
+  }
 
   void _set(AuthStage stage) {
     _stage = stage;

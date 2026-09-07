@@ -1,0 +1,134 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import '../data/models/app_notification.dart';
+
+/// System notifications, shown by the app itself.
+///
+/// The socket already tells the app when money moves; what was missing was the
+/// entry in the tray, so someone who has the app in the background finds out
+/// when they next glance at their phone rather than when they next open it.
+///
+/// Local rather than push, deliberately. A push notification would arrive with
+/// the app closed, but it needs Firebase and APNs credentials and a server that
+/// sends them — none of which exist here. This covers the app running,
+/// foreground or backgrounded, which is the case that was silently broken.
+class LocalNotifications {
+  LocalNotifications._();
+
+  static final LocalNotifications instance = LocalNotifications._();
+
+  final _plugin = FlutterLocalNotificationsPlugin();
+  bool _ready = false;
+
+  /// Android needs a channel declared before anything can be posted to it, and
+  /// the importance set here is what decides whether a notification appears as
+  /// a heads-up banner or only in the shade. Money arriving is worth a banner.
+  static const _channel = AndroidNotificationDetails(
+    'moneypay_activity',
+    'Account activity',
+    channelDescription:
+        'Money sent and received, and requests waiting on your approval.',
+    importance: Importance.high,
+    priority: Priority.high,
+    icon: '@mipmap/ic_launcher',
+  );
+
+  static const _details = NotificationDetails(
+    android: _channel,
+    iOS: DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    ),
+  );
+
+  /// Sets the plugin up and asks for permission.
+  ///
+  /// Safe to call more than once — it does nothing after the first success, so
+  /// a sign-out and sign-in does not re-prompt.
+  Future<void> init() async {
+    if (_ready) return;
+
+    try {
+      await _plugin.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+          // Permission is requested separately below rather than at
+          // initialize: asking the moment the app opens, before anyone has
+          // seen what it does, is how you get a permanent refusal.
+          iOS: DarwinInitializationSettings(
+            requestAlertPermission: false,
+            requestBadgePermission: false,
+            requestSoundPermission: false,
+          ),
+        ),
+      );
+      _ready = true;
+    } catch (error) {
+      // A device that refuses to set the plugin up should not take the app
+      // down with it — everything here is an extra on top of a screen that
+      // already updates itself.
+      if (kDebugMode) debugPrint('Notifications unavailable: $error');
+    }
+  }
+
+  /// Asks for permission, on the platforms that have one to ask for.
+  ///
+  /// Android has required this since 13; older versions grant it at install.
+  /// Called once the account is open, so the prompt lands on someone who has
+  /// seen what the app is for.
+  Future<void> requestPermission() async {
+    if (!_ready) await init();
+    if (!_ready) return;
+
+    try {
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.requestNotificationsPermission();
+
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >()
+          ?.requestPermissions(alert: true, badge: true, sound: true);
+    } catch (error) {
+      if (kDebugMode) debugPrint('Notification permission failed: $error');
+    }
+  }
+
+  /// Posts one notification for an event that just arrived.
+  Future<void> show(AppNotification notification) async {
+    if (!_ready) await init();
+    if (!_ready) return;
+
+    try {
+      await _plugin.show(
+        // The server's own id, so the same event arriving twice — a reconnect
+        // replaying it, say — replaces its entry rather than stacking a
+        // duplicate underneath.
+        notification.id,
+        notification.title,
+        notification.message,
+        _details,
+      );
+    } catch (error) {
+      if (kDebugMode) debugPrint('Could not post notification: $error');
+    }
+  }
+
+  /// Clears everything this app has posted. Used on sign-out, so a shared
+  /// phone does not leave one person's money in another person's tray.
+  Future<void> clearAll() async {
+    if (!_ready) return;
+    try {
+      await _plugin.cancelAll();
+    } catch (_) {
+      /* nothing worth reporting */
+    }
+  }
+}

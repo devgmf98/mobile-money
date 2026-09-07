@@ -7,6 +7,7 @@ import 'package:moneypay/data/models/fee_quote.dart';
 import 'package:moneypay/data/models/wallet_transaction.dart';
 import 'package:moneypay/ui/widgets/brand.dart';
 import 'package:moneypay/ui/widgets/code_input.dart';
+import 'package:moneypay/ui/widgets/confirm_dialog.dart';
 import 'package:moneypay/ui/widgets/controls.dart';
 import 'package:moneypay/ui/widgets/wallet_widgets.dart';
 
@@ -399,6 +400,69 @@ void main() {
 
     expect(assets, contains('assets/images/mp-logo.png'));
     expect(assets, contains('assets/images/mp-icon.png'));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Confirm dialog keeps its button labels on one line', (
+    tester,
+  ) async {
+    // 360dp, the narrow end of what this app runs on. The buttons are equal
+    // halves of the dialog, so "Sign out" plus the button's own padding landed
+    // right at the edge and wrapped to two lines on a real phone while fitting
+    // in a wider preview.
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => showConfirmDialog(
+                  context,
+                  icon: Icons.logout_rounded,
+                  title: 'Sign out?',
+                  message:
+                      'You will need your email and password to sign back in.',
+                  confirmLabel: 'Sign out',
+                  destructive: true,
+                ),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Sign out?'), findsOneWidget);
+
+    // Measured on the FittedBox, not the Text. Inside a FittedBox the Text is
+    // laid out unbounded and then scaled, so its own size reports a single
+    // line whether or not it would have fitted -- measuring it would pass with
+    // the fix removed.
+    for (final label in const ['Sign out', 'Cancel']) {
+      final box = find.ancestor(
+        of: find.text(label),
+        matching: find.byType(FittedBox),
+      );
+      expect(box, findsOneWidget, reason: '"$label" is not shrink-to-fit');
+
+      final size = tester.getSize(box);
+      expect(
+        size.height,
+        lessThan(26),
+        reason: '"$label" wrapped onto a second line',
+      );
+      // And it is not shrunk to illegibility to achieve that.
+      expect(size.height, greaterThan(10));
+    }
     expect(tester.takeException(), isNull);
   });
 

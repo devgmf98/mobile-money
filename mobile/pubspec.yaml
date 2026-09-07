@@ -26,6 +26,14 @@ dependencies:
   image_picker: ^1.1.2
   url_launcher: ^6.3.1
   share_plus: ^10.1.2
+  # System notifications on Android and iOS. Local rather than push: the app
+  # already learns about events over its socket, so what was missing was the
+  # tray entry, not the delivery.
+  flutter_local_notifications: ^18.0.1
+  # Push, for the case a local notification cannot reach: the app closed, no
+  # socket, nothing running. The server sends to a device token instead.
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.5
 
   # Formatting
   intl: ^0.19.0

@@ -107,6 +107,16 @@ class AuthApi {
     );
   }
 
+  /// Where to push this account's notifications. Sent after sign-in and on
+  /// every token rotation, since Firebase reissues on reinstall and restore.
+  Future<void> registerDeviceToken(String token, {String platform = 'android'}) {
+    return _client.post<void>(
+      '/auth/device-token',
+      body: {'token': token, 'platform': platform},
+      parse: (_) {},
+    );
+  }
+
   Future<AppUser> updateProfile({
     String? name,
     String? profileImage,

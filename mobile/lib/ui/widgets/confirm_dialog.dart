@@ -103,6 +103,7 @@ Future<bool?> showConfirmDialog(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                           // An outline rather than a wash: on a white dialog
@@ -111,7 +112,10 @@ Future<bool?> showConfirmDialog(
                           side: const BorderSide(color: AppColors.border),
                         ),
                       ),
-                      child: Text(cancelLabel),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(cancelLabel, maxLines: 1),
+                      ),
                     ),
                   ),
                 ),
@@ -131,11 +135,18 @@ Future<bool?> showConfirmDialog(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
                         ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: Text(confirmLabel),
+                      // scaleDown, so an ordinary label is untouched and only
+                      // one that would not otherwise fit gives up any size --
+                      // a single line either way.
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(confirmLabel, maxLines: 1),
+                      ),
                     ),
                   ),
                 ),
