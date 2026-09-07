@@ -396,7 +396,7 @@ export default function AgentDashboard() {
             </a>
             <a href="/agent/pull-from-user" className="action-card">
               <div className="action-icon tone-info"><RefreshCw size={28} /></div>
-              <h4>Pull from User</h4>
+              <h4>Pull Funds</h4>
               <p>Request money</p>
             </a>
             <a href="/agent/transactions" className="action-card">

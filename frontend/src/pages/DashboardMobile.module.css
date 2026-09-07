@@ -547,8 +547,13 @@
   line-height: 1.2;
   letter-spacing: 0;
   text-align: center;
-  /* two-word labels wrap rather than overflow the narrower tile */
-  overflow-wrap: anywhere;
+  /* Two-word labels wrap at the space rather than overflowing the narrower
+     tile. Not `anywhere`, which also lets a break fall inside a word and, worse,
+     makes the browser compute min-content as if every character were a break
+     opportunity -- so the tile shrank and "Transactions" came out as
+     "Transaction" over "s". `break-word` keeps the word whole when it fits. */
+  overflow-wrap: break-word;
+  hyphens: none;
 }
 
 .actionBtnPrimary:active,
