@@ -235,12 +235,27 @@ async function startServer() {
        it, which sync() cannot do — it fails and takes the process down with
        it, so a deployment would answer 502 until someone ran a script by
        hand. Doing it here means a deploy repairs itself. */
+    /* Each step on its own, because they are independent and one failing must
+       not skip the rest. They shared a try, so ensureColumns throwing on every
+       boot -- it looked for `transactions` where MySQL on Linux has
+       `Transactions` -- meant widenColumns never ran at all, and the profile
+       image column was never widened on production. A migration that quietly
+       prevents another migration is worse than one that simply fails. */
     try {
       const result = await migrateStateToName(sequelize);
       if (result.changed) console.log('Migration (destination column): ' + result.changed.join('; '));
+    } catch (err) {
+      console.error('Migration (destination column) failed:', err.message);
+    }
 
+    try {
       const added = await ensureColumns(sequelize);
       if (added.length) console.log('Migration (columns added): ' + added.join(', '));
+    } catch (err) {
+      console.error('Migration (columns added) failed:', err.message);
+    }
+
+    try {
 
       /* Types that are too narrow for what the app stores. Ahead of sync()
          for the same reason as the rest: sync() cannot reliably change a
@@ -248,9 +263,9 @@ async function startServer() {
       const widened = await widenColumns(sequelize);
       if (widened.length) console.log('Migration (columns widened): ' + widened.join('; '));
     } catch (err) {
-      /* Reported, not swallowed: sync() is about to fail for the same reason,
-         and this line is what explains why. */
-      console.error('Migration (destination column) failed:', err.message);
+      // Named for what it is. It reported the previous step's name, so a
+      // widening failure read as a destination-column failure.
+      console.error('Migration (columns widened) failed:', err.message);
     }
 
     // Create missing tables and add missing model columns on every startup.

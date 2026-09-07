@@ -49,16 +49,32 @@ export async function ensureColumns(sequelize) {
   ];
   const added = [];
   for (const w of wanted) {
+    /* The real spelling, read back from the schema.
+
+       MySQL on Linux is case-sensitive about table names and Sequelize creates
+       `Transactions`, so an exact match on `transactions` found nothing --
+       and the code then read that as "the column is missing" and tried to
+       ALTER a table by a name that does not exist. On Railway that surfaced as
+       "Table 'railway.transactions' doesn't exist" on every boot, which reads
+       like a lost database and is nothing of the kind. widenColumns beside
+       this already resolved the name properly; this did not. */
+    const table = await actualTableName(sequelize, db, w.table);
+
+    // Absent entirely: sync() is about to create it from the model, which
+    // already declares these columns. Nothing to add.
+    if (!table) continue;
+
     const [[found]] = await sequelize.query(
       `SELECT COUNT(*) n FROM information_schema.COLUMNS
-        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
-      { replacements: [db, w.table, w.column] }
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND LOWER(COLUMN_NAME) = LOWER(?)`,
+      { replacements: [db, table, w.column] }
     );
     if (found && Number(found.n) > 0) continue;
+
     await sequelize.query(
-      'ALTER TABLE `' + w.table + '` ADD COLUMN `' + w.column + '` ' + w.ddl
+      'ALTER TABLE `' + table + '` ADD COLUMN `' + w.column + '` ' + w.ddl
     );
-    added.push(w.table + '.' + w.column);
+    added.push(table + '.' + w.column);
   }
   return added;
 }
