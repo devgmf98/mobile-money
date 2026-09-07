@@ -1,6 +1,7 @@
 import React from 'react';
 import { placeLabel } from '../utils/location';
 import { generateTransactionDocument } from '../utils/pdf';
+import { useAuthStore } from '../context/store';
 import mpLogo from '../assets/mp-logo.png';
 import '../styles/print-receipt.css';
 import { Download, FileText, Printer, X } from 'lucide-react';
@@ -47,6 +48,10 @@ export default function PrintReceipt({ transaction, onClose }) {
     : mpLogo;
   const toCode = transaction?.toCurrencyCode || transaction?.currencySymbol || '';
   const totalCommission = n2(transaction?.agentCommission) + n2(transaction?.companyCommission);
+  /* A receipt a customer keeps states what they paid; only an admin needs it
+     broken into whose commission was whose. The total row stays either way. */
+  const viewer = useAuthStore((state) => state.user);
+  const showCommission = viewer?.role === 'admin' || viewer?.role === 'sub-admin';
   const hasCommission = totalCommission > 0;
   if (!transaction) return null;
 
@@ -72,10 +77,10 @@ export default function PrintReceipt({ transaction, onClose }) {
     const senderLocationHtml = senderPlace ? `<div class="receipt-row"><span class="label">From Location:</span><span class="value">${senderPlace}</span></div>` : '';
     const receiverLocationHtml = receiverPlace ? `<div class="receipt-row"><span class="label">To Location:</span><span class="value">${receiverPlace}</span></div>` : '';
     // Only show commission rows that carry a value; an exchange has none.
-    const agentCommissionHtml = n2(transaction.agentCommission) > 0
+    const agentCommissionHtml = showCommission && n2(transaction.agentCommission) > 0
       ? `<tr><td>Agent Commission (${n2(transaction.agentCommissionPercent)}%)</td><td class="amount-cell">${money(transaction.agentCommission, curCode)}</td></tr>`
       : '';
-    const companyCommissionHtml = n2(transaction.companyCommission) > 0
+    const companyCommissionHtml = showCommission && n2(transaction.companyCommission) > 0
       ? `<tr><td>Company Commission (${n2(transaction.companyCommissionPercent)}%)</td><td class="amount-cell">${money(transaction.companyCommission, curCode)}</td></tr>`
       : '';
     const descriptionHtml = transaction.description ? `<div class="receipt-row"><span class="label">Description:</span><span class="value">${transaction.description}</span></div>` : '';
@@ -205,7 +210,7 @@ export default function PrintReceipt({ transaction, onClose }) {
                 <tr><th>Description</th><th class="amount-cell">Amount</th></tr>
               </thead>
               <tbody>
-                <tr><td>${isExchange ? 'Amount Converted' : 'Transaction Amount'}</td><td class="amount-cell">${money(transaction.amount, curCode)}</td></tr>
+                ${isExchange || showCommission || !hasCommission ? `<tr><td>${isExchange ? 'Amount Converted' : 'Transaction Amount'}</td><td class="amount-cell">${money(transaction.amount, curCode)}</td></tr>` : ''}
                 ${isExchange ? `
                   ${transaction.exchangeRate ? `<tr><td>Rate Applied</td><td class="amount-cell">1 ${curCode} = ${n2(transaction.exchangeRate)} ${toCode}</td></tr>` : ''}
                   ${transaction.exchangeMode ? `<tr><td>Exchange Mode</td><td class="amount-cell">${transaction.exchangeMode === 'buying' ? 'Buying' : 'Selling'}</td></tr>` : ''}
@@ -213,7 +218,7 @@ export default function PrintReceipt({ transaction, onClose }) {
                 ` : `
                   ${agentCommissionHtml}
                   ${companyCommissionHtml}
-                  ${hasCommission ? `<tr><td><strong>Total Commission Fee</strong></td><td class="amount-cell"><strong>${money(totalCommission, curCode)}</strong></td></tr>` : ''}
+                  ${showCommission && hasCommission ? `<tr><td><strong>Total Commission Fee</strong></td><td class="amount-cell"><strong>${money(totalCommission, curCode)}</strong></td></tr>` : ''}
                   <tr class="total-row"><td><strong>TOTAL PAYMENT</strong></td><td class="amount-cell"><strong>${money(n2(transaction.amount) + totalCommission, curCode)}</strong></td></tr>
                 `}
               </tbody>
@@ -394,10 +399,12 @@ export default function PrintReceipt({ transaction, onClose }) {
                 <tr><th>Description</th><th className="amount-cell">Amount</th></tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>{isExchange ? 'Amount Converted' : 'Transaction Amount'}</td>
-                  <td className="amount-cell">{money(transaction.amount, curCode)}</td>
-                </tr>
+                {(isExchange || showCommission || !hasCommission) && (
+                  <tr>
+                    <td>{isExchange ? 'Amount Converted' : 'Transaction Amount'}</td>
+                    <td className="amount-cell">{money(transaction.amount, curCode)}</td>
+                  </tr>
+                )}
 
                 {isExchange ? (
                   <>
@@ -420,19 +427,19 @@ export default function PrintReceipt({ transaction, onClose }) {
                   </>
                 ) : (
                   <>
-                    {n2(transaction.agentCommission) > 0 && (
+                    {showCommission && n2(transaction.agentCommission) > 0 && (
                       <tr>
                         <td>Agent Commission ({n2(transaction.agentCommissionPercent)}%)</td>
                         <td className="amount-cell">{money(transaction.agentCommission, curCode)}</td>
                       </tr>
                     )}
-                    {n2(transaction.companyCommission) > 0 && (
+                    {showCommission && n2(transaction.companyCommission) > 0 && (
                       <tr>
                         <td>Company Commission ({n2(transaction.companyCommissionPercent)}%)</td>
                         <td className="amount-cell">{money(transaction.companyCommission, curCode)}</td>
                       </tr>
                     )}
-                    {hasCommission && (
+                    {showCommission && hasCommission && (
                       <tr>
                         <td><strong>Total Commission Fee</strong></td>
                         <td className="amount-cell">{money(totalCommission, curCode)}</td>
@@ -474,7 +481,7 @@ export default function PrintReceipt({ transaction, onClose }) {
           <button className="btn btn-primary" onClick={handlePrint} title="Print just this receipt">
             <Printer size={14} /> Print receipt
           </button>
-          <button className="btn btn-secondary" onClick={() => generateTransactionDocument(transaction)} title="Save as PDF">
+          <button className="btn btn-secondary" onClick={() => generateTransactionDocument(transaction, { showCommission })} title="Save as PDF">
             <Download size={14} /> Download PDF
           </button>
           <button className="btn btn-outline" onClick={onClose}>Close</button>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The ground the launch window paints before Flutter's first frame, and
+         the ground behind the adaptive launcher icon. White, matching the app,
+         so there is no flash of another colour on the way in. -->
+    <color name="launch_background">#FFFFFFFF</color>
+    <color name="ic_launcher_background">#FFFFFFFF</color>
+</resources>

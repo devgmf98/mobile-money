@@ -204,17 +204,10 @@ export default function PendingWithdrawals() {
                       <strong>{money(request.amount)}</strong>
                     </div>
 
-                    {/* The amount is the headline above, so the breakdown starts
-                        at the fees rather than repeating it. */}
+                    {/* The cash is the headline above; this is what it costs.
+                        The commissions are folded into that total rather than
+                        itemised. */}
                     <dl className="pw-breakdown">
-                      <div>
-                        <dt>Agent commission ({n2(request.agentCommissionPercent)}%)</dt>
-                        <dd>{money(agentFee)}</dd>
-                      </div>
-                      <div>
-                        <dt>Company commission ({n2(request.companyCommissionPercent)}%)</dt>
-                        <dd>{money(companyFee)}</dd>
-                      </div>
                       <div className="pw-total">
                         <dt>Total user pays</dt>
                         <dd>{money(n2(request.amount) + fees)}</dd>

@@ -5,7 +5,7 @@ import Toast from '../components/Toast';
 import Footer from '../components/Footer';
 import '../styles/withdraw.css';
 import '../styles/withdraw-flow.css';
-import { ArrowRight, Banknote, CircleCheck, ClipboardList, Clock, Phone, TriangleAlert, User, Wallet } from 'lucide-react';
+import { ArrowRight, Banknote, CircleCheck, ClipboardList, Clock, Eye, EyeOff, Phone, TriangleAlert, User, Wallet } from 'lucide-react';
 
 const n2 = (v) => {
   const n = parseFloat(v);
@@ -21,6 +21,11 @@ export default function Withdraw() {
   const user = useAuthStore((state) => state.user);
   const suspended = !!user?.isSuspended;
   const updateUser = useAuthStore((state) => state.updateUser);
+  /* Hidden until asked for. This page gets used with an agent standing beside
+     you, which is exactly when a balance should not be on display. Declared up
+     here with the other state -- the agent view returns early further down, so
+     a hook below that point would not run on every render. */
+  const [balanceHidden, setBalanceHidden] = useState(true);
   const [agentId, setAgentId] = useState('');
   /* Resolved from the ID the moment it is 6 digits long, so the customer can
      check the name against the person in front of them before committing. */
@@ -380,7 +385,18 @@ export default function Withdraw() {
           </div>
           <div className="wd-balance">
             <span><Wallet size={14} /> Available</span>
-            <strong>{money(balance)}</strong>
+            <div className="wd-balance-value">
+            <strong>{balanceHidden ? '••••••' : money(balance)}</strong>
+            <button
+              type="button"
+              className="wd-balance-toggle"
+              onClick={() => setBalanceHidden((v) => !v)}
+              aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
+              title={balanceHidden ? 'Show balance' : 'Hide balance'}
+            >
+              {balanceHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+            </button>
+            </div>
           </div>
         </div>
 
@@ -480,14 +496,10 @@ export default function Withdraw() {
 
                 {entered > 0 && quote && quote.amount === entered && totalFee > 0 && (
                   <div className="wd-fees">
+                    {/* Amount and total only -- the commission is folded into
+                        the total rather than itemised. */}
                     <div className="wd-fee-row">
                       <span>Withdrawal amount</span><span>{money(entered)}</span>
-                    </div>
-                    <div className="wd-fee-row">
-                      <span>Agent fee ({quote.agentPercent}%)</span><span>{money(quote.agentCommission)}</span>
-                    </div>
-                    <div className="wd-fee-row">
-                      <span>Service fee ({quote.companyPercent}%)</span><span>{money(quote.companyCommission)}</span>
                     </div>
                     <div className="wd-fee-row is-total">
                       <span>Total deducted</span><span>{money(totalCost)}</span>
@@ -497,9 +509,14 @@ export default function Withdraw() {
 
                 {overBalance
                   ? <small className="wd-error">
-                      {money(totalCost)} including fees is more than your balance of {money(balance)}.
+                      {/* Naming the balance here would undo the masking above. */}
+                      {money(totalCost)} including fees is more than your {balanceHidden
+                        ? 'available balance'
+                        : `balance of ${money(balance)}`}.
                     </small>
-                  : <small className="wd-hint">Balance after this withdrawal: {money(balance - totalCost)}</small>}
+                  : balanceHidden
+                    ? null
+                    : <small className="wd-hint">Balance after this withdrawal: {money(balance - totalCost)}</small>}
               </div>
 
               <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={!canWithdraw}>

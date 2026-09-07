@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Both the day and night copies of this file are Light on purpose. The
+         app is light-only; inheriting Theme.Black under night mode gave a black
+         launch window and a black flash behind the UI on a device set to dark. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+
+    <!-- Applied once the process is up. It is what shows behind the Flutter UI,
+         so it is the app's own background rather than the platform default. -->
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/launch_background</item>
+    </style>
+</resources>

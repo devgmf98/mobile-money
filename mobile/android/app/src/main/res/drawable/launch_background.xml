@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The window Android paints while the Flutter engine starts.
+
+     This used to be `?android:colorBackground`, which resolves against the
+     theme - and the night-mode theme inherited Theme.Black, so a phone in dark
+     mode showed a black rectangle for the whole of startup. The app has no dark
+     mode, so the colour is stated outright here instead of being inherited. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/launch_background" />
+
+    <item>
+        <bitmap
+            android:gravity="center"
+            android:src="@drawable/splash_logo" />
+    </item>
+</layer-list>

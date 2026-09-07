@@ -215,7 +215,7 @@ export default function AdminExchangeTransactions() {
                           </button>
                           <button
                             className="icon-btn"
-                            onClick={() => generateTransactionDocument(t)}
+                            onClick={() => generateTransactionDocument(t, { showCommission: true })}
                             title="Download receipt"
                             aria-label={`Download ${t.transactionId}`}
                           >

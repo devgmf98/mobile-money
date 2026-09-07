@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { ArrowDown, Check, Copy, MapPin, X } from 'lucide-react';
 import { typeLabel } from '../data/transactionTypes';
 import { placeLabel } from '../utils/location';
+import { useAuthStore } from '../context/store';
 import '../styles/transaction-details.css';
 
 const n2 = (v) => {
@@ -88,6 +89,8 @@ export default function TransactionDetails({ transaction: tx, onClose }) {
 
   if (!tx) return null;
 
+  const viewer = useAuthStore((state) => state.user);
+  const showCommission = viewer?.role === 'admin' || viewer?.role === 'sub-admin';
   const agentFee = n2(tx.agentCommission ?? tx.commission);
   const companyFee = n2(tx.companyCommission);
   const totalFee = agentFee + companyFee;
@@ -160,12 +163,22 @@ export default function TransactionDetails({ transaction: tx, onClose }) {
           <Section
             title="Breakdown"
             items={[
-              ['Amount', money(tx.amount, symbol)],
+              /* Amount and commission as one figure, matching the row this
+                 was opened from. An admin still gets the split below, so they
+                 keep the plain amount to split from. */
+              [showCommission || !totalFee ? 'Amount' : 'Total charged',
+                money(showCommission || !totalFee
+                  ? tx.amount
+                  : n2(tx.amount) + totalFee, symbol)],
+              /* Customers and agents see what they paid, not how it was split.
+                 This drawer is also the admin transaction view, and an admin
+                 does need the split, so the rows are gated rather than gone. */
               ['Agent commission' + rate(tx.agentCommissionPercent ?? tx.commissionPercent),
-                agentFee ? money(agentFee, symbol) : null],
+                showCommission && agentFee ? money(agentFee, symbol) : null],
               ['Service fee' + rate(tx.companyCommissionPercent),
-                companyFee ? money(companyFee, symbol) : null],
-              ['Sender paid', totalFee ? money(n2(tx.amount) + totalFee, symbol) : null, true],
+                showCommission && companyFee ? money(companyFee, symbol) : null],
+              ['Sender paid',
+                showCommission && totalFee ? money(n2(tx.amount) + totalFee, symbol) : null, true],
               ['Recipient received', tx.receiverCredit != null
                 ? money(tx.receiverCredit, isExchange ? toSymbol : symbol) : null, true],
             ]}

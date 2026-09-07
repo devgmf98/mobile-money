@@ -86,7 +86,10 @@ const MUTED = [100, 116, 139];
 const RULE = [226, 232, 240];
 const TINT = [248, 250, 252];
 
-export const generateTransactionDocument = async (tx) => {
+/* `showCommission` is off by default: the receipt a customer downloads states
+   what they paid, and only an admin needs it split by whose commission it was.
+   The total is unaffected either way. */
+export const generateTransactionDocument = async (tx, { showCommission = false } = {}) => {
   try {
     if (!tx) throw new Error('No transaction supplied');
     const logo = await loadLogo();
@@ -185,9 +188,9 @@ export const generateTransactionDocument = async (tx) => {
       }
     } else {
       tableRows.push(['Transaction amount', money(tx.amount, code)]);
-      if (agent > 0) tableRows.push([`Agent commission (${num(tx.agentCommissionPercent)}%)`, money(agent, code)]);
-      if (company > 0) tableRows.push([`Company commission (${num(tx.companyCommissionPercent)}%)`, money(company, code)]);
-      if (totalCommission > 0) tableRows.push(['Total commission fee', money(totalCommission, code)]);
+      if (showCommission && agent > 0) tableRows.push([`Agent commission (${num(tx.agentCommissionPercent)}%)`, money(agent, code)]);
+      if (showCommission && company > 0) tableRows.push([`Company commission (${num(tx.companyCommissionPercent)}%)`, money(company, code)]);
+      if (showCommission && totalCommission > 0) tableRows.push(['Total commission fee', money(totalCommission, code)]);
     }
 
     // table head

@@ -85,6 +85,14 @@ export default function Transactions() {
 
   const isOutgoing = (tx) => tx.senderId === user?.id;
 
+  /* What the row cost or paid, as one figure. A sender is debited the amount
+     plus both commissions; a recipient always receives the amount whole. The
+     fee used to sit beside the amount as a second number, which left the
+     reader to add them up to find what actually left their balance. */
+  const chargedTotal = (tx) => isOutgoing(tx)
+    ? n2(tx.amount) + n2(tx.agentCommission ?? tx.commission) + n2(tx.companyCommission)
+    : n2(tx.amount);
+
   const titleOf = (tx) => {
     const out = isOutgoing(tx);
     const other = out ? tx.receiver : tx.sender;
@@ -128,7 +136,7 @@ export default function Transactions() {
   }, [transactions, transactionIdParam, filter, typeFilter, searchId]);
 
   const totals = useMemo(() => filtered.reduce((acc, t) => {
-    if (isOutgoing(t)) acc.out += n2(t.amount);
+    if (isOutgoing(t)) acc.out += chargedTotal(t);
     else acc.in += n2(t.amount);
     return acc;
   }, { in: 0, out: 0 }), [filtered, user?.id]);
@@ -274,7 +282,7 @@ export default function Transactions() {
                       <div className="tx-right">
                         {/* direction is carried by the sign and the icon, not colour alone */}
                         <strong className={'tx-amount ' + (out ? 'is-out' : 'is-in')}>
-                          {out ? '−' : '+'} {money(tx.amount)}
+                          {out ? '−' : '+'} {money(chargedTotal(tx))}
                         </strong>
                         <span className={'tx-status is-' + tone}>
                           {tx.status === 'completed' && <CircleCheck size={12} />}

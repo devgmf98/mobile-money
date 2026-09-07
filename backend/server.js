@@ -119,6 +119,7 @@ import Verification from './models/Verification.js';
 import ContactMessage from './models/ContactMessage.js';
 import HelpArticle from './models/HelpArticle.js';
 import { migrateStateToName, ensureColumns } from './migrations/stateToName.js';
+import { widenColumns } from './migrations/widenColumns.js';
 
 // Set up associations
 const models = { User, Transaction, Notification, WithdrawalRequest, StateSetting, Currency, ExchangeRate, SendMoneyCommissionTier, WithdrawalCommissionTier, Verification, ContactMessage, HelpArticle };
@@ -195,6 +196,12 @@ async function startServer() {
 
       const added = await ensureColumns(sequelize);
       if (added.length) console.log('Migration (columns added): ' + added.join(', '));
+
+      /* Types that are too narrow for what the app stores. Ahead of sync()
+         for the same reason as the rest: sync() cannot reliably change a
+         column type, and when it cannot, it says nothing. */
+      const widened = await widenColumns(sequelize);
+      if (widened.length) console.log('Migration (columns widened): ' + widened.join('; '));
     } catch (err) {
       /* Reported, not swallowed: sync() is about to fail for the same reason,
          and this line is what explains why. */

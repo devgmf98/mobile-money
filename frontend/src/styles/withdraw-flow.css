@@ -380,3 +380,25 @@
   border-top-color: rgba(255, 255, 255, 0.10);
   color: #E6F2EC;
 }
+
+/* The balance is masked until asked for, so the figure and its reveal button
+   share a row inside the chip -- the chip itself stacks label over value. */
+.wd-balance-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wd-balance-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.wd-balance-toggle:hover { color: var(--text); }

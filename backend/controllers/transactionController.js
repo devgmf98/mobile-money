@@ -372,9 +372,18 @@ export const getTransactionStats = async (req, res) => {
       }
     });
 
-    const totalSent = await Transaction.sum('amount', {
-      where: { senderId: userId }
-    }) || 0;
+    /* What sending actually cost, not what the recipient got. The sender is
+       debited the amount plus both commissions -- the agent's share on a
+       cash-out and the company's on everything -- so a "Money Sent" figure
+       built from amount alone never matched what left the balance. Summed as
+       three model attributes rather than one SQL expression so Sequelize keeps
+       doing the column-name mapping. */
+    const sentWhere = { where: { senderId: userId } };
+    const sentAmount = await Transaction.sum('amount', sentWhere) || 0;
+    const sentAgentFee = await Transaction.sum('agentCommission', sentWhere) || 0;
+    const sentCompanyFee = await Transaction.sum('companyCommission', sentWhere) || 0;
+    const totalSent =
+      parseFloat(sentAmount) + parseFloat(sentAgentFee) + parseFloat(sentCompanyFee);
 
     const totalReceived = await Transaction.sum('amount', {
       where: { receiverId: userId }
@@ -391,7 +400,7 @@ export const getTransactionStats = async (req, res) => {
 
     res.json({
       totalTransactions,
-      totalSent: parseFloat(totalSent),
+      totalSent: parseFloat(totalSent.toFixed(2)),
       totalReceived: parseFloat(totalReceived),
       withdrawalsCompletedCount: 0,
       withdrawalsCompletedAmount: 0,

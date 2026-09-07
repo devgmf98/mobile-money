@@ -162,7 +162,7 @@ export default function AdminTransactions() {
   };
 
   const handleDownload = (tx) => {
-    generateTransactionDocument(tx);
+    generateTransactionDocument(tx, { showCommission: true });
   };
 
   return (

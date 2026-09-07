@@ -1184,8 +1184,16 @@ export const requestAgentWithdrawal = async (req, res) => {
 
     // For admin cash-out requests from agent, do NOT charge commission — create a pending request
     const request = await WithdrawalRequest.create({
-      agent: agentId,
-      user: adminId,
+      /* agentId / userId, not agent / user. The columns are named for the
+         foreign keys and both are NOT NULL, so the old spelling was dropped by
+         Sequelize and every admin cash-out request failed on the constraint
+         rather than reaching the agent.
+
+         agentId is the account the money leaves and the one that approves --
+         see approveAdminWithdrawalRequest, which checks request.agentId
+         against the caller. userId is whoever asked, here the admin. */
+      agentId: agentId,
+      userId: adminId,
       amount: parsedAmount,
       commission: 0,
       commissionPercent: 0,

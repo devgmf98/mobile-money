@@ -310,10 +310,6 @@ export default function AgentWithdraw() {
                           <span>Your commission ({priced.agentPercent}%)</span>
                           <span>+{money(priced.agentCommission)}</span>
                         </div>
-                        <div className="pm-fee-row">
-                          <span>Service fee ({priced.companyPercent}%)</span>
-                          <span>{money(priced.companyCommission)}</span>
-                        </div>
                       </div>
                       <div className="pm-fee-total">
                         <span>Customer pays</span><span>{money(totalCost)}</span>

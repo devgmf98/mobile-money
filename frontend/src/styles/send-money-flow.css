@@ -536,3 +536,25 @@
   color: var(--text-light, #5B6B66);
 }
 [data-theme="dark"] .send-money-page .sm-fee-note { color: #9FB3AB; }
+
+/* The balance is masked until asked for, so the figure and its reveal button
+   share a row inside the chip -- the chip itself stacks label over value. */
+.sm-balance-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sm-balance-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.sm-balance-toggle:hover { color: var(--text); }

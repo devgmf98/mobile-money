@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowRight, Camera, Check, CircleCheck, Info, QrCode,
+  ArrowRight, Camera, Check, CircleCheck, Eye, EyeOff, Info, QrCode,
   Smartphone, TriangleAlert, Wallet, X,
 } from 'lucide-react';
 import { useAuthStore } from '../context/store';
@@ -27,6 +27,9 @@ export default function SendMoney() {
   const updateUser = useAuthStore((state) => state.updateUser);
   const suspended = !!user?.isSuspended;
 
+  /* Hidden until asked for. These pages get used with someone standing beside
+     you, which is exactly when a balance should not be on display. */
+  const [balanceHidden, setBalanceHidden] = useState(true);
   const [recipientPhone, setRecipientPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -192,7 +195,18 @@ export default function SendMoney() {
           </div>
           <div className="sm-balance">
             <span><Wallet size={14} /> Available</span>
-            <strong>{money(balance)}</strong>
+            <div className="sm-balance-value">
+            <strong>{balanceHidden ? '••••••' : money(balance)}</strong>
+            <button
+              type="button"
+              className="sm-balance-toggle"
+              onClick={() => setBalanceHidden((v) => !v)}
+              aria-label={balanceHidden ? 'Show balance' : 'Hide balance'}
+              title={balanceHidden ? 'Show balance' : 'Hide balance'}
+            >
+              {balanceHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+            </button>
+            </div>
           </div>
         </div>
 
@@ -305,15 +319,12 @@ export default function SendMoney() {
 
                 {!blocked && entered > 0 && quote && quote.amount === entered && totalFee > 0 && (
                   <div className="sm-fees">
+                    {/* Amount and total only. The commission is priced by the
+                        server and folded into the total rather than itemised:
+                        what the sender decides on is what leaves their balance,
+                        and the difference between these two rows is the whole
+                        fee. */}
                     <div className="sm-fee-row"><span>Transfer amount</span><span>{money(entered)}</span></div>
-                    {quote.tier === 'withdrawal' && quote.agentCommission > 0 && (
-                      <div className="sm-fee-row">
-                        <span>Agent fee ({quote.agentPercent}%)</span><span>{money(quote.agentCommission)}</span>
-                      </div>
-                    )}
-                    <div className="sm-fee-row">
-                      <span>Service fee ({quote.companyPercent}%)</span><span>{money(quote.companyCommission)}</span>
-                    </div>
                     <div className="sm-fee-row is-total"><span>Total deducted</span><span>{money(totalCost)}</span></div>
                     {quote.tier === 'withdrawal' && (
                       <p className="sm-fee-note">
@@ -331,9 +342,14 @@ export default function SendMoney() {
                     </small>
                   : overBalance
                   ? <small className="sm-error">
-                      {money(totalCost)} including fees is more than your balance of {money(balance)}.
+                      {/* Naming the balance here would undo the masking above. */}
+                      {money(totalCost)} including fees is more than your {balanceHidden
+                        ? 'available balance'
+                        : `balance of ${money(balance)}`}.
                     </small>
-                  : <small className="sm-hint">Balance after this transfer: {money(balance - totalCost)}</small>}
+                  : balanceHidden
+                    ? null
+                    : <small className="sm-hint">Balance after this transfer: {money(balance - totalCost)}</small>}
               </div>
 
               <div className="form-group">
@@ -373,15 +389,11 @@ export default function SendMoney() {
                 <dt>Sending</dt>
                 <dd className="is-amount">{money(entered)}</dd>
               </div>
-              {totalFee > 0 && (
-                <div>
-                  <dt>Service fee</dt>
-                  <dd>{money(totalFee)}</dd>
-                </div>
-              )}
               <div>
                 <dt>Balance after</dt>
-                <dd>{money(overBalance ? balance : balance - totalCost)}</dd>
+                <dd>{balanceHidden
+                  ? '••••••'
+                  : money(overBalance ? balance : balance - totalCost)}</dd>
               </div>
             </dl>
 

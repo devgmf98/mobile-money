@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 8+ masks the launcher icon to whatever shape the launcher uses, so
+     it wants the icon as a background plus a foreground rather than one flat
+     bitmap. The legacy mipmap-*/ic_launcher.png files remain for older devices. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

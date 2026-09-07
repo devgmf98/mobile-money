@@ -324,7 +324,14 @@ export const getPendingWithdrawalRequests = async (req, res) => {
         status: 'pending'
       },
       include: [
-        { model: User, as: 'agent', attributes: ['name', 'phone', 'agentId'] }
+        /* role travels with the rest: a request can come from an agent or,
+           through the admin flow, from an admin or sub-admin, and the app has
+           to name whoever it is rather than calling everyone an agent. */
+        {
+          model: User,
+          as: 'agent',
+          attributes: ['name', 'phone', 'agentId', 'role'],
+        }
       ],
       order: [['createdAt', 'DESC']]
     });
