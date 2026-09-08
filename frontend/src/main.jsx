@@ -349,7 +349,14 @@ const router = createBrowserRouter(
             { path: 'dashboard', element: <AdminOnly path="/admin/dashboard"><AdminDashboard /></AdminOnly> },
             { path: 'users', element: <AdminOnly path="/admin/users"><AdminUsers /></AdminOnly> },
             { path: 'transactions', element: <AdminOnly path="/admin/transactions"><AdminTransactions /></AdminOnly> },
-            { path: 'notifications', element: <AdminOnly path="/admin/notifications"><AdminNotifications /></AdminOnly> },
+            /* The inbox, and the same page every other role reads. This route
+               used to be the composer, so the bell led an admin to a form for
+               writing notifications rather than to the ones they had been
+               sent -- which is why they appeared not to arrive at all. The
+               composer moved to its own route below; sub-admins keep it,
+               since the path they already had was the composer. */
+            { path: 'notifications', element: <Notifications /> },
+            { path: 'send-notification', element: <AdminOnly path="/admin/send-notification"><AdminNotifications /></AdminOnly> },
             /* The sidebar has linked here since before the page existed — the
                route was simply missing, so the link went nowhere. */
             { path: 'reports', element: <AdminOnly path="/admin/reports"><AdminReports /></AdminOnly> },

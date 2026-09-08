@@ -25,6 +25,7 @@ const PAGE_META = {
   '/admin/transactions': { title: 'Transactions', Icon: CreditCard },
   '/admin/users': { title: 'All Users', Icon: Users },
   '/admin/notifications': { title: 'Notifications', Icon: Bell },
+  '/admin/send-notification': { title: 'Send Notification', Icon: SendHorizontal },
   '/admin/reports': { title: 'Billing Reports', Icon: TrendingUp },
   '/admin/messages': { title: 'Messages', Icon: Inbox },
   '/admin/tiered-commission': { title: 'Tiered Commission', Icon: Wallet },
@@ -406,6 +407,9 @@ export default function AdminLayout() {
                   <span className="sidebar-badge">{unreadNotifications}</span>
                 )}
               </NavLink>
+            )}
+          {allow('/admin/send-notification') && (
+              <NavLink data-label="Send Notification" to="/admin/send-notification" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><SendHorizontal size={18} /><span className="sidebar-label">Send Notification</span></NavLink>
             )}
           {allow('/admin/reports') && (
               <NavLink data-label="Billing Reports" to="/admin/reports" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><TrendingUp size={18} /><span className="sidebar-label">Billing Reports</span></NavLink>

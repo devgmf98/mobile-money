@@ -62,7 +62,14 @@ export const sendNotificationToAll = async (req, res) => {
       type: type || 'system'
     }));
 
-    await Notification.bulkCreate(notifications);
+    /* individualHooks, or nobody hears about it.
+
+       The afterCreate hook on Notification is what emits the row over the
+       socket and sends it as a push. bulkCreate skips per-row hooks by
+       default, so a broadcast wrote a row for every user and delivered it to
+       none of them -- it appeared only when someone happened to reload a page
+       that refetched the list. */
+    await Notification.bulkCreate(notifications, { individualHooks: true });
 
     // Send SMS to all users
     try {
