@@ -1,3 +1,4 @@
+import 'package:moneypay/core/theme/motion.dart';
 import 'package:moneypay/data/api/api_client.dart';
 import 'package:moneypay/ui/screens/profile/profile_screen.dart';
 import 'dart:async';
@@ -24,6 +25,7 @@ import 'package:moneypay/ui/widgets/wallet_widgets.dart';
 void _noop() {}
 
 void main() {
+  _afterRouteSettlesTests();
   _cashOutSwitchTests();
   _scrollTests();
   _filterBarTests();
@@ -726,4 +728,108 @@ void _cashOutSwitchTests() {
       await tester.pumpAndSettle();
     });
   });
+}
+
+/* Work held back until a push has finished, so the busiest moment of a
+   navigation is not also when the screen fetches and rebuilds. */
+void _afterRouteSettlesTests() {
+  group('AfterRouteSettles', () {
+    testWidgets('waits for the push, then runs once', (tester) async {
+      var ran = 0;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => _Probe(onSettled: () => ran++),
+                    ),
+                  ),
+                  child: const Text('go'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('go'));
+      await tester.pump(); // route created
+      await tester.pump(const Duration(milliseconds: 60));
+
+      expect(ran, 0, reason: 'must not fire while the page is still arriving');
+
+      await tester.pumpAndSettle();
+      expect(ran, 1, reason: 'and exactly once when it has');
+    });
+
+    testWidgets('runs immediately when there is no push to wait for', (
+      tester,
+    ) async {
+      var ran = 0;
+      await tester.pumpWidget(
+        MaterialApp(theme: AppTheme.light, home: _Probe(onSettled: () => ran++)),
+      );
+      await tester.pumpAndSettle();
+      expect(ran, 1);
+    });
+
+    testWidgets('a screen popped mid-push leaves nothing behind', (
+      tester,
+    ) async {
+      var ran = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.light,
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => _Probe(onSettled: () => ran++),
+                    ),
+                  ),
+                  child: const Text('go'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('go'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 40));
+      // Straight back out again before it ever settled.
+      tester.state<NavigatorState>(find.byType(Navigator)).pop();
+      await tester.pumpAndSettle();
+
+      expect(ran, 0);
+      expect(tester.takeException(), isNull);
+    });
+  });
+}
+
+class _Probe extends StatefulWidget {
+  const _Probe({required this.onSettled});
+  final VoidCallback onSettled;
+
+  @override
+  State<_Probe> createState() => _ProbeState();
+}
+
+class _ProbeState extends State<_Probe> with AfterRouteSettles {
+  @override
+  void initState() {
+    super.initState();
+    afterRouteSettles(widget.onSettled);
+  }
+
+  @override
+  Widget build(BuildContext context) => const Scaffold(body: Text('probe'));
 }

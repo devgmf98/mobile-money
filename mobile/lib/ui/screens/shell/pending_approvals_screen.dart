@@ -10,6 +10,7 @@ import '../../../data/models/lookup.dart';
 import '../../../state/wallet_controller.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
+import '../../../core/theme/motion.dart';
 
 /// Withdrawals an agent or an admin has asked you to approve.
 ///
@@ -28,14 +29,15 @@ class PendingApprovalsScreen extends StatefulWidget {
   State<PendingApprovalsScreen> createState() => _PendingApprovalsScreenState();
 }
 
-class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
+class _PendingApprovalsScreenState extends State<PendingApprovalsScreen>
+    with AfterRouteSettles {
   int? _working;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<WalletController>().refresh(silent: true);
+    afterRouteSettles(() {
+      context.read<WalletController>().refresh(silent: true);
     });
   }
 

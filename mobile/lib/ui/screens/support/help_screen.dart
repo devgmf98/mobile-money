@@ -8,6 +8,7 @@ import '../../../data/api/moneypay_api.dart';
 import '../../../data/models/lookup.dart';
 import '../../../routing/routes.dart';
 import '../../widgets/controls.dart';
+import '../../../core/theme/motion.dart';
 
 /// The help centre.
 ///
@@ -20,7 +21,7 @@ class HelpScreen extends StatefulWidget {
   State<HelpScreen> createState() => _HelpScreenState();
 }
 
-class _HelpScreenState extends State<HelpScreen> {
+class _HelpScreenState extends State<HelpScreen> with AfterRouteSettles {
   final _search = TextEditingController();
 
   List<HelpArticle> _articles = const [];
@@ -30,7 +31,7 @@ class _HelpScreenState extends State<HelpScreen> {
   @override
   void initState() {
     super.initState();
-    _load();
+    afterRouteSettles(_load);
   }
 
   @override

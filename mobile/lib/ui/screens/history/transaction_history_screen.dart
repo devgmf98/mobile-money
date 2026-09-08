@@ -10,6 +10,7 @@ import '../../widgets/controls.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/wallet_widgets.dart';
 import 'transaction_details_sheet.dart';
+import '../../../core/theme/motion.dart';
 
 /// Everything that has moved, newest first, grouped by day.
 ///
@@ -28,7 +29,8 @@ class TransactionHistoryScreen extends StatefulWidget {
       _TransactionHistoryScreenState();
 }
 
-class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
+class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
+    with AfterRouteSettles {
   final _search = TextEditingController();
   TxFilter _filter = TxFilter.all;
   bool _searching = false;
@@ -37,8 +39,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   void initState() {
     super.initState();
     if (!widget.embedded) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) context.read<WalletController>().refresh(silent: true);
+      afterRouteSettles(() {
+        context.read<WalletController>().refresh(silent: true);
       });
     }
   }

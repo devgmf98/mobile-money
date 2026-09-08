@@ -96,6 +96,64 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
   }
 }
 
+/// Hold work back until the screen has finished arriving.
+///
+/// [FadeSlideIn] below already does this for its own animation, and the reason
+/// given there applies just as much to loading data: the heaviest moment of a
+/// navigation is the push itself, and a screen that fetches on init spends it
+/// building a response as well. The request is cheap -- it is the setState and
+/// the rebuild of a full list landing mid-transition that shows, as a hitch
+/// partway through the slide.
+///
+/// Screens here nearly always have something to draw already, because the
+/// controllers hold the last known state, so waiting costs a refresh a few
+/// hundred milliseconds and no visible emptiness.
+///
+/// Safe to call in initState: the route is read on the first frame, not now.
+mixin AfterRouteSettles<T extends StatefulWidget> on State<T> {
+  Animation<double>? _routeArrival;
+  VoidCallback? _queued;
+
+  /// Run [action] once this screen's push animation has finished -- or right
+  /// away when there is no animation to wait for, as on the first screen of
+  /// the app or a tab swap inside the shell.
+  void afterRouteSettles(VoidCallback action) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      final arrival = ModalRoute.of(context)?.animation;
+      if (arrival == null || arrival.isCompleted) {
+        action();
+        return;
+      }
+
+      _queued = action;
+      _routeArrival = arrival;
+      arrival.addStatusListener(_onArrival);
+    });
+  }
+
+  void _onArrival(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    _detach();
+    if (mounted) _queued?.call();
+    _queued = null;
+  }
+
+  void _detach() {
+    _routeArrival?.removeStatusListener(_onArrival);
+    _routeArrival = null;
+  }
+
+  @override
+  void dispose() {
+    // A screen dismissed mid-push would otherwise leave a listener on an
+    // animation that outlives it.
+    _detach();
+    super.dispose();
+  }
+}
+
 /// Content that fades and lifts into place when it first appears.
 ///
 /// Used for the pieces of a screen that arrive together — a card, a section —

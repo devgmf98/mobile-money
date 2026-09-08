@@ -10,6 +10,7 @@ import '../../../data/models/lookup.dart';
 import '../../../state/wallet_controller.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
+import '../../../core/theme/motion.dart';
 
 /// Admin cash-outs waiting on this agent.
 ///
@@ -28,14 +29,15 @@ class AgentRequestsScreen extends StatefulWidget {
   State<AgentRequestsScreen> createState() => _AgentRequestsScreenState();
 }
 
-class _AgentRequestsScreenState extends State<AgentRequestsScreen> {
+class _AgentRequestsScreenState extends State<AgentRequestsScreen>
+    with AfterRouteSettles {
   int? _working;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<WalletController>().refresh(silent: true);
+    afterRouteSettles(() {
+      context.read<WalletController>().refresh(silent: true);
     });
   }
 

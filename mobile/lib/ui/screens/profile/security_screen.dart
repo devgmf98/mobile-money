@@ -8,6 +8,7 @@ import '../../../state/auth_controller.dart';
 import '../../widgets/code_input.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
+import '../../../core/theme/motion.dart';
 
 /// App lock and password.
 ///
@@ -22,14 +23,15 @@ class SecurityScreen extends StatefulWidget {
   State<SecurityScreen> createState() => _SecurityScreenState();
 }
 
-class _SecurityScreenState extends State<SecurityScreen> {
+class _SecurityScreenState extends State<SecurityScreen>
+    with AfterRouteSettles {
   bool _lockOn = false;
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    afterRouteSettles(_load);
   }
 
   Future<void> _load() async {

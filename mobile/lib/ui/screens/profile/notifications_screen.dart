@@ -12,6 +12,7 @@ import '../../../routing/routes.dart';
 import '../../../state/notification_controller.dart';
 import '../../widgets/controls.dart';
 import 'notification_details_sheet.dart';
+import '../../../core/theme/motion.dart';
 
 /// The notification list.
 ///
@@ -25,12 +26,13 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class _NotificationsScreenState extends State<NotificationsScreen>
+    with AfterRouteSettles {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.read<NotificationController>().refresh();
+    afterRouteSettles(() {
+      context.read<NotificationController>().refresh();
     });
   }
 
