@@ -4,7 +4,7 @@ import { canAccess, isStaff, isSubAdmin } from '../utils/roles';
 import { ArrowRight, ArrowRightLeft, Banknote, Bell, ChartColumn, CirclePlus, CircleUserRound, CreditCard, Handshake, Hourglass, Inbox, Landmark, LayoutDashboard, LogOut, Map, Menu, PanelLeftClose, PanelLeftOpen, Percent, Repeat, SendHorizontal, Settings, TrendingUp, User, Users, Wallet, X } from 'lucide-react';
 import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
-import { useAuthStore } from '../context/store';
+import { useAuthStore, useNotificationStore } from '../context/store';
 import { adminAPI, contactAPI } from '../utils/api';
 import { useRealtimeSession } from '../hooks/useRealtimeSession';
 import '../styles/layout.css';
@@ -95,6 +95,10 @@ export default function AdminLayout() {
       return next;
     });
   };
+
+  /* Kept live by useRealtimeSession above: it loads the list on sign-in and
+     the socket keeps it current. */
+  const unreadNotifications = useNotificationStore((state) => state.unreadCount);
 
   const [pendingCount, setPendingCount] = useState(0);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -389,7 +393,19 @@ export default function AdminLayout() {
               <NavLink data-label="All Users" to="/admin/users" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Users size={18} /><span className="sidebar-label">All Users</span></NavLink>
             )}
           {allow('/admin/notifications') && (
-              <NavLink data-label="Notifications" to="/admin/notifications" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><Bell size={18} /><span className="sidebar-label">Notifications</span></NavLink>
+              <NavLink data-label="Notifications" to="/admin/notifications" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}>
+                <Bell size={18} />
+                <span className="sidebar-label">Notifications</span>
+                {/* Badged like pending transfers and unanswered messages.
+                    Without it an admin had no visible sign anything had
+                    arrived: the socket now delivers and the list now loads,
+                    but the only place either showed was a page they had to
+                    think to open. An agent approving or declining a cash-out
+                    is exactly the thing they are waiting on. */}
+                {unreadNotifications > 0 && (
+                  <span className="sidebar-badge">{unreadNotifications}</span>
+                )}
+              </NavLink>
             )}
           {allow('/admin/reports') && (
               <NavLink data-label="Billing Reports" to="/admin/reports" className={({ isActive }) => (isActive ? 'sidebar-item active' : 'sidebar-item')}><TrendingUp size={18} /><span className="sidebar-label">Billing Reports</span></NavLink>
