@@ -4082,3 +4082,59 @@ select.form-input:focus {
 @media (prefers-reduced-motion: reduce) {
   .navbar-alert-dot { animation: none; opacity: 1; }
 }
+
+/* The notification bell in the admin navbar.
+
+   Shaped like .admin-profile-icon beside it so the two read as a pair, and a
+   real button rather than a clickable div, because it is one -- keyboard and
+   screen readers get it for free. */
+.admin-navbar-bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.3s ease;
+}
+
+.admin-navbar-bell svg { color: #34C88E; }
+
+.admin-navbar-bell:hover {
+  background: linear-gradient(135deg, #E8F7F0 0%, #E8F7F0 100%);
+}
+
+[data-theme="dark"] .admin-navbar-bell:hover {
+  background: rgba(0, 168, 107, 0.1);
+}
+
+/* Sits on the bell's corner rather than beside it, so the count never widens
+   the navbar as it grows. */
+.admin-navbar-bell-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #DC2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  /* A ring in the bar's own colour, so the badge reads as sitting on the bell
+     rather than floating behind it. */
+  box-shadow: 0 0 0 2px var(--surface, #fff);
+}
+
+[data-theme="dark"] .admin-navbar-bell-badge {
+  box-shadow: 0 0 0 2px var(--surface, #0F172A);
+}

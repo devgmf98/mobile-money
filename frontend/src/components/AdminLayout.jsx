@@ -546,6 +546,34 @@ export default function AdminLayout() {
           </div>
 
           <div style={{ flex: 1 }}></div>
+
+          {/* The bell, beside the profile, where every other product in this
+              app puts it. The sidebar count is only visible with the sidebar
+              open, and an admin working on a page with the rail collapsed had
+              no sign at all that anything had arrived. */}
+          <button
+            type="button"
+            className="admin-navbar-bell"
+            onClick={() => navigate('/admin/notifications')}
+            title={
+              unreadNotifications > 0
+                ? `${unreadNotifications} unread notification${unreadNotifications === 1 ? '' : 's'}`
+                : 'Notifications'
+            }
+            aria-label={
+              unreadNotifications > 0
+                ? `Notifications, ${unreadNotifications} unread`
+                : 'Notifications'
+            }
+          >
+            <Bell size={20} />
+            {unreadNotifications > 0 && (
+              <span className="admin-navbar-bell-badge">
+                {unreadNotifications > 99 ? '99+' : unreadNotifications}
+              </span>
+            )}
+          </button>
+
           <div className="admin-user-info">
             <div className="admin-user-details">
               <span className="admin-user-name">{user?.name}</span>

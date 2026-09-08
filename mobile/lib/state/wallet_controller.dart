@@ -9,6 +9,7 @@ import '../data/models/lookup.dart';
 import '../core/utils/phone.dart';
 import '../data/models/wallet_transaction.dart';
 import 'auth_controller.dart';
+import '../data/models/app_notification.dart';
 import 'realtime_service.dart';
 
 /// The money side of the session: history, totals, and the cash-outs waiting on
@@ -36,6 +37,18 @@ class WalletController extends ChangeNotifier {
     _transactionSubscription = realtime.transactionUpdates.listen(
       (_) => _scheduleRefresh(),
     );
+
+    /* A notification means something changed, and for a request it is the only
+       thing that says so.
+
+       Raising a cash-out request moves no money and writes no transaction, so
+       neither of the streams above fires -- the lists here, including the
+       requests waiting on this agent, sat unchanged until someone pulled to
+       refresh. The notification is the event; this is what it should have been
+       driving all along. */
+    _notificationSubscription = realtime.notifications.listen(
+      (_) => _scheduleRefresh(),
+    );
   }
 
   void _scheduleRefresh() {
@@ -54,6 +67,7 @@ class WalletController extends ChangeNotifier {
   final AuthController _auth;
   late final StreamSubscription<double> _balanceSubscription;
   late final StreamSubscription<void> _transactionSubscription;
+  late final StreamSubscription<AppNotification> _notificationSubscription;
   Timer? _refreshDebounce;
 
   List<WalletTransaction> _transactions = const [];
@@ -271,6 +285,7 @@ class WalletController extends ChangeNotifier {
     _refreshDebounce?.cancel();
     _balanceSubscription.cancel();
     _transactionSubscription.cancel();
+    _notificationSubscription.cancel();
     super.dispose();
   }
 }
