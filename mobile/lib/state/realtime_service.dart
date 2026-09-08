@@ -45,7 +45,16 @@ class RealtimeService extends ChangeNotifier {
   String? lastSocketError;
 
   void connect(int userId, {required String token}) {
-    if (_joinedUserId == userId && isConnected) return;
+    /* A socket already exists for this account -- connected, or still opening.
+       Leave it alone.
+       
+       The guard used to be `isConnected`, which is false for the second or so
+       a socket takes to open. _startSession is called from four places --
+       bootstrap, sign-in, unlock, and the retry on the profile -- so a second
+       call landing inside that window tore down the socket that was about to
+       succeed and asked for another. Reconnection after a genuine drop is
+       socket.io's own job, not this method's. */
+    if (_joinedUserId == userId && _socket != null) return;
 
     disconnect();
     _joinedUserId = userId;
@@ -75,6 +84,15 @@ class RealtimeService extends ChangeNotifier {
           // nothing, so a stale build degrades to pull-to-refresh instead of
           // silently listening to a room it should not be in.
           .setAuth({'token': token})
+          /* A fresh connection every time, rather than whatever this URL was
+             given last.
+
+             io.io() caches by URL, and disconnect() disposes the socket it
+             hands back -- so the call above could return a socket that had
+             already been thrown away, which reports no error and never
+             connects. That is the shape of a live badge that never updates
+             while every HTTP call on the same phone works. */
+          .enableForceNew()
           .enableReconnection()
           .setReconnectionDelay(2000)
           // Retry rather than wait forever on a network that accepted the
