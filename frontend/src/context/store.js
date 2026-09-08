@@ -109,10 +109,23 @@ export const useNotificationStore = create((set) => ({
   },
 
   addNotification: (notification) => {
-    set((state) => ({
-      notifications: [notification, ...state.notifications],
-      unreadCount: notification.isRead ? state.unreadCount : state.unreadCount + 1
-    }));
+    set((state) => {
+      /* The same notification can reach here more than once -- a reconnect
+         replaying it, or two handlers on one socket -- and prepending twice
+         showed one payment as two and counted the bell up by two. Matched on
+         the server's row id, which every delivery route carries; without an id
+         there is nothing to compare, so it is let through rather than guessed
+         at. The app matches the same way. */
+      const id = notification?.id;
+      if (id != null && state.notifications.some((n) => n.id === id)) {
+        return state;
+      }
+
+      return {
+        notifications: [notification, ...state.notifications],
+        unreadCount: notification.isRead ? state.unreadCount : state.unreadCount + 1
+      };
+    });
   },
 
   markAsRead: (id) => {

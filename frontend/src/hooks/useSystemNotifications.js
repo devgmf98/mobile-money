@@ -33,9 +33,18 @@ export async function requestNotificationPermission() {
    a banner about something visible on screen is noise. */
 export function showSystemNotification({ title, body, tag }) {
   if (!supported() || Notification.permission !== 'granted') return false;
-  if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-    return false;
-  }
+
+  /* Suppressed only when the page is genuinely in front of the person.
+
+     visibilityState alone was not that: a tab stays "visible" while its window
+     sits behind another application entirely, so someone working in another
+     window got nothing at all -- which is the case a notification exists for.
+     hasFocus is what distinguishes the two. */
+  const looking =
+    typeof document !== 'undefined' &&
+    document.visibilityState === 'visible' &&
+    (typeof document.hasFocus !== 'function' || document.hasFocus());
+  if (looking) return false;
 
   try {
     const notification = new Notification(title || 'MoneyPay', {

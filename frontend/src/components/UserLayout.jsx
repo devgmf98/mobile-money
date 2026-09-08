@@ -169,7 +169,16 @@ export default function UserLayout() {
     socket.on('transaction-updated', () => announceDataChanged('transaction'));
 
     return () => {
-      socket.off('connect', join);
+      /* Every listener, not just the one added by name.
+
+         io() caches by URL and hands the same socket back on the next call, so
+         handlers left attached here are still attached on the run after this
+         one -- and one arriving notification is then handled twice, shown
+         twice and counted twice. The Flutter client had to force a new socket
+         because a reused one never reconnects; the JavaScript client
+         reconnects a reused socket perfectly well, which was measured rather
+         than assumed, so the only thing to clean up is the listeners. */
+      socket.removeAllListeners();
       socket.disconnect();
     };
   }, [user?.id]);
