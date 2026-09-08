@@ -335,7 +335,15 @@
     top: 0;
     left: -100%;
     width: 280px;
+    /* Fallback for browsers without dvh. */
     height: 100vh;
+    /* On mobile Chrome `100vh` is the viewport with the URL bar retracted, so
+       while that bar is showing the drawer is taller than the screen by its
+       height. The content fit inside that taller box, leaving nothing to
+       scroll -- and the last thing in the drawer, Logout, sat underneath the
+       browser chrome with no way to reach it. It reappeared only once the bar
+       slid away. `dvh` tracks the viewport that is actually visible. */
+    height: 100dvh;
     z-index: 1000;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 0 16px 16px 0;
@@ -354,6 +362,23 @@
   .sidebar-brand {
     padding: 24px 20px;
     border-bottom: 2px solid var(--border);
+  }
+
+  /* Pinned to the foot of the drawer. The menu above it is long enough to
+     scroll on a phone -- nav, then the exchange-rate card -- so Logout was
+     off the bottom of the list even when the box itself was the right
+     height. It needs an opaque background of its own to sit over the items
+     sliding past underneath. */
+  .sidebar-footer {
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    /* Clear of the iOS home indicator. */
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  }
+
+  [data-theme="dark"] .sidebar-footer {
+    background: #0F172A;
   }
 
   .sidebar-brand h2 {

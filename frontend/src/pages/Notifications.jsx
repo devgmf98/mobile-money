@@ -278,8 +278,13 @@ export default function Notifications() {
                       {/* Inside an openable row, so this stops its own clicks
                           from also opening the detail panel. */}
                       <div className="nt-actions" onClick={(e) => e.stopPropagation()}>
+                        {/* Hidden on a phone, where tapping the row does
+                            exactly this -- see the row's own onClick. A
+                            duplicate of the primary gesture is not worth the
+                            width it costs there. */}
                         <button
                           type="button"
+                          className="nt-view"
                           onClick={() => setDetailId(notif.id)}
                           title="View details"
                           aria-label={`View details of "${notif.title}"`}

@@ -233,6 +233,33 @@
 @media (max-width: 520px) {
   .nt-row { padding: 13px 14px; gap: 11px; }
   .nt-type { display: none; }
+
+  /* On a 360px screen this row gave 126px to the notification and 126px to
+     its chrome: a 36px icon and a 90px stack of buttons. Barely a third of the
+     width went to the thing being read, so titles broke across two lines and a
+     one-sentence message ran to four.
+
+     Two causes, both fixed here rather than by moving anything out of the row.
+
+     The eye opened the detail panel -- which is what tapping the row already
+     does, so on a touch screen it was the same gesture twice, charging 46px
+     for the privilege. It is hidden below. */
+  .nt-actions button.nt-view { display: none; }
+
+  /* And the blanket mobile rule in globals.css -- button { padding: 12px 20px;
+     min-height: 48px } -- inflated these 30px icon buttons to 42x48. That
+     padding is meant for buttons with words in them, not a single glyph.
+     Square again, and still a 40px touch target. */
+  .nt-actions button {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    padding: 0;
+    border-radius: 10px;
+  }
+
+  /* Actions stay a column, so the row keeps its height. */
+  .nt-row { grid-template-columns: auto minmax(0, 1fr) auto; }
 }
 
 /* ---------- dark mode ----------------------------------------------------- */
