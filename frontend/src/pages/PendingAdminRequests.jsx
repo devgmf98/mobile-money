@@ -3,6 +3,8 @@ import { withdrawalAPI } from '../utils/api';
 import Footer from '../components/Footer';
 import '../styles/admin-requests.css';
 import { Check, ClipboardCheck, Inbox, TriangleAlert, X } from 'lucide-react';
+import Toast from '../components/Toast';
+import useResultToast from '../hooks/useResultToast';
 
 /* DECIMAL columns arrive from Sequelize as strings; coerce before formatting. */
 const money = (v) => 'SSP ' + (Number(v) || 0).toLocaleString('en-US', {
@@ -34,6 +36,11 @@ export default function PendingAdminRequests() {
   const [rejectingId, setRejectingId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  /* Approving or declining removed the row and said nothing else, so the only
+     evidence it worked was the row's absence -- indistinguishable from a
+     refresh. */
+  const [notice, setNotice] = useState('');
+  const [toast, clearToast] = useResultToast(notice, error);
 
   useEffect(() => {
     const fetchWithdrawalRequests = async () => {
@@ -58,6 +65,7 @@ export default function PendingAdminRequests() {
     try {
       await withdrawalAPI.approveAdminWithdrawalRequest({ requestId });
       setWithdrawalRequests(withdrawalRequests.filter((r) => r.id !== requestId));
+      setNotice('Cash-out approved. The amount has left your balance.');
 
       // Dispatch event to refresh agent dashboard stats
       window.dispatchEvent(new CustomEvent('mpay:withdrawal-approved'));
@@ -80,6 +88,7 @@ export default function PendingAdminRequests() {
       // Dispatch event to refresh agent dashboard stats
       window.dispatchEvent(new CustomEvent('mpay:withdrawal-rejected'));
       setWithdrawalRequests(withdrawalRequests.filter((r) => r.id !== requestId));
+      setNotice('Cash-out declined. Nothing has left your balance.');
     } catch (err) {
       console.error('Failed to reject withdrawal:', err);
       setError(err.response?.data?.message || 'Failed to reject withdrawal');
@@ -160,6 +169,7 @@ export default function PendingAdminRequests() {
           </div>
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
       <Footer />
     </>
   );

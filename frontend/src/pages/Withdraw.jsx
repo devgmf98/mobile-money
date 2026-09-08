@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import '../styles/withdraw.css';
 import '../styles/withdraw-flow.css';
 import { ArrowRight, Banknote, CircleCheck, ClipboardList, Clock, Eye, EyeOff, Phone, TriangleAlert, User, Wallet } from 'lucide-react';
+import { amountValue, onAmountInput } from '../utils/amount';
 
 const n2 = (v) => {
   const n = parseFloat(v);
@@ -314,14 +315,13 @@ export default function Withdraw() {
                       <input
                         id="agent-withdraw-amount"
                         name="amount"
-                        type="number"
+                        type="text"
+                    inputMode="decimal"
                         autoComplete="off"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        value={amountValue(amount)}
+                        onChange={onAmountInput(setAmount)}
                         required
                         placeholder="0.00"
-                        step="0.01"
-                        min="0"
                         max={userInfo.balance || 0}
                       />
                       <small className="text-muted">Max: SSP {(parseFloat(userInfo.balance) || 0).toFixed(2)}</small>
@@ -486,15 +486,14 @@ export default function Withdraw() {
                   <input
                     id="withdraw-amount"
                     name="amount"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     inputMode="decimal"
                     autoComplete="off"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    value={amountValue(amount)}
+                    onChange={onAmountInput(setAmount)}
                     required
                     placeholder="0.00"
-                    step="0.01"
-                    min="0"
                     disabled={suspended}
                   />
                 </div>

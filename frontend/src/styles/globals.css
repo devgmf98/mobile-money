@@ -1852,3 +1852,106 @@ textarea:focus-visible {
     border-radius: 11px;
   }
 }
+
+/* ==========================================================================
+   Toast — the result of an action, top right
+
+   It used to be inline styles pinned to the bottom-right. On a phone that is
+   where the keyboard and the browser's own bar sit, so a toast raised by
+   submitting a form appeared underneath one or both. The top-right corner is
+   clear on every screen this runs on, and clear of the admin navbar's own
+   controls at the width where that navbar exists.
+   ========================================================================== */
+.app-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10000;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  background: var(--surface, #FFFFFF);
+  box-shadow: 0 10px 30px rgba(8, 116, 67, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+  animation: app-toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Clear of the notch and of the iOS status bar on a standalone install. */
+@supports (top: env(safe-area-inset-top)) {
+  .app-toast { top: calc(16px + env(safe-area-inset-top, 0px)); }
+}
+
+@keyframes app-toast-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-toast { animation: none; }
+}
+
+.app-toast.is-success { border-left-color: #16A34A; }
+.app-toast.is-error { border-left-color: #DC2626; }
+.app-toast.is-info { border-left-color: var(--primary); }
+
+.app-toast-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.app-toast.is-success .app-toast-icon { color: #16A34A; }
+.app-toast.is-error .app-toast-icon { color: #DC2626; }
+.app-toast.is-info .app-toast-icon { color: var(--primary); }
+
+.app-toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.app-toast-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.app-toast-message {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-light);
+  overflow-wrap: anywhere;
+}
+
+.app-toast-close {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.app-toast-close:hover { background: var(--light); color: var(--text); }
+
+[data-theme="dark"] .app-toast {
+  background: #1E293B;
+  border-color: #14532D;
+}
+
+[data-theme="dark"] .app-toast-title { color: #E2E8F0; }
+[data-theme="dark"] .app-toast-message { color: #94A3B8; }
+[data-theme="dark"] .app-toast-close:hover { background: #0F172A; color: #E2E8F0; }

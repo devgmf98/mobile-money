@@ -97,7 +97,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     super.dispose();
   }
 
-  double get _amountValue => double.tryParse(_amount.text.trim()) ?? 0;
+  double get _amountValue => Fmt.parseAmount(_amount.text);
 
   // ------------------------------------------------------------- lookups
 
@@ -430,7 +430,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
                   controller: _amount,
                   onChanged: _onAmountChanged,
                   validator: (value) {
-                    final amount = double.tryParse((value ?? '').trim()) ?? 0;
+                    final amount = Fmt.parseAmount(value);
                     if (amount <= 0) return 'Enter an amount to send';
                     if (_quote.totalDebit > balance) {
                       return 'That is more than your balance can cover '

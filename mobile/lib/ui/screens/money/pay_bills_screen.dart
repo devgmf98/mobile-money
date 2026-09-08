@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../data/api/api_client.dart';
 import '../../../data/api/services_api.dart';
 import '../../widgets/controls.dart';
+import '../../../core/utils/formatters.dart';
 
 /// Pay a bill.
 ///
@@ -48,7 +49,7 @@ class _PayBillsScreenState extends State<PayBillsScreen> {
       await context.read<ServicesApi>().payBill(
         biller: _biller!.id,
         account: _account.text.trim(),
-        amount: double.tryParse(_amount.text.trim()) ?? 0,
+        amount: Fmt.parseAmount(_amount.text),
       );
       if (mounted) AppSnack.success(context, 'Bill paid.');
     } on ApiException catch (error) {
@@ -179,7 +180,7 @@ class _PayBillsScreenState extends State<PayBillsScreen> {
             child: AmountField(
               controller: _amount,
               validator: (value) {
-                final amount = double.tryParse((value ?? '').trim()) ?? 0;
+                final amount = Fmt.parseAmount(value);
                 return amount <= 0 ? 'Enter an amount to pay' : null;
               },
             ),

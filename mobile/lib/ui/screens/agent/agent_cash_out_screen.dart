@@ -63,7 +63,7 @@ class _AgentCashOutScreenState extends State<AgentCashOutScreen> {
     super.dispose();
   }
 
-  double get _amountValue => double.tryParse(_amount.text.trim()) ?? 0;
+  double get _amountValue => Fmt.parseAmount(_amount.text);
 
   void _onPhoneChanged(String _) {
     setState(() {
@@ -271,7 +271,7 @@ class _AgentCashOutScreenState extends State<AgentCashOutScreen> {
                   controller: _amount,
                   onChanged: _onAmountChanged,
                   validator: (value) {
-                    final amount = double.tryParse((value ?? '').trim()) ?? 0;
+                    final amount = Fmt.parseAmount(value);
                     return amount <= 0 ? 'Enter the amount of cash' : null;
                   },
                 ),

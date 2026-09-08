@@ -13,6 +13,9 @@ import {
 import { adminAPI, transactionAPI } from '../utils/api';
 import Footer from '../components/Footer';
 import '../styles/admin-push-money.css';
+import { amountValue, onAmountInput } from '../utils/amount';
+import Toast from '../components/Toast';
+import useResultToast from '../hooks/useResultToast';
 
 const n2 = (v) => {
   const n = parseFloat(v);
@@ -30,6 +33,12 @@ export default function AdminPushMoney() {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  /* This page keeps one result object rather than a success and an error
+     string, so the two halves are split back out for the toast. */
+  const [toast, clearToast] = useResultToast(
+    message?.type === 'success' ? message.text : '',
+    message?.type === 'error' ? message.text : '',
+  );
 
   /* Resolve the sender so the admin can see whose wallet they are about to
      debit, and how much is in it, before committing. A push is applied
@@ -212,13 +221,12 @@ export default function AdminPushMoney() {
                   <span className="pm-currency">SSP</span>
                   <input
                     id="pm-amount"
-                    type="number"
+                    type="text"
                     inputMode="decimal"
-                    step="0.01"
-                    min="0"
+                    inputMode="decimal"
                     autoComplete="off"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    value={amountValue(amount)}
+                    onChange={onAmountInput(setAmount)}
                     placeholder="0.00"
                   />
                 </div>
@@ -257,6 +265,7 @@ export default function AdminPushMoney() {
           </div>
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
       <Footer />
     </>
   );

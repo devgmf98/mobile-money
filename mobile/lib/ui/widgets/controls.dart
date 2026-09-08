@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/formatters.dart';
 
 /// The primary action at the foot of a form.
 ///
@@ -243,8 +244,11 @@ class AmountField extends StatelessWidget {
         letterSpacing: -0.5,
       ),
       inputFormatters: [
-        // One optional decimal point, at most two places after it.
-        FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+        /* Digits, one point and the separators this adds. The decimal rule
+           moved into ThousandsFormatter: a filter that stripped commas would
+           have undone the grouping on the very next keystroke. */
+        FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+        const ThousandsFormatter(),
       ],
       decoration: InputDecoration(
         hintText: hint,

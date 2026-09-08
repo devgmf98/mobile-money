@@ -70,7 +70,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     super.dispose();
   }
 
-  double get _amountValue => double.tryParse(_amount.text.trim()) ?? 0;
+  double get _amountValue => Fmt.parseAmount(_amount.text);
 
   void _onAgentIdChanged(String value) {
     setState(() {
@@ -374,7 +374,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   controller: _amount,
                   onChanged: _onAmountChanged,
                   validator: (value) {
-                    final amount = double.tryParse((value ?? '').trim()) ?? 0;
+                    final amount = Fmt.parseAmount(value);
                     if (amount <= 0) return 'Enter an amount to withdraw';
                     if (_quote.totalDebit > balance) {
                       return 'That is more than your balance can cover '

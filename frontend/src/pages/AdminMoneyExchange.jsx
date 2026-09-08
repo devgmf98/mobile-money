@@ -7,6 +7,7 @@ import {
   ArrowRight, ArrowRightLeft, ArrowUpDown, ChartColumn, CircleCheck, CircleX,
   Coins, Link2, RefreshCw, Save, Settings2, Wallet
 } from 'lucide-react';
+import { amountValue, onAmountInput } from '../utils/amount';
 
 export default function AdminMoneyExchange() {
   const [pairRates, setPairRates] = useState([]);
@@ -172,12 +173,11 @@ export default function AdminMoneyExchange() {
                 />
                 <div className="conv-amount">
                   <input
-                    type="number"
-                    min="0"
-                    step="any"
+                    type="text"
                     inputMode="decimal"
-                    value={amount}
-                    onChange={e => setAmount(e.target.value)}
+                    inputMode="decimal"
+                    value={amountValue(amount)}
+                    onChange={onAmountInput(setAmount)}
                     placeholder="0.00"
                     aria-label="Amount to convert"
                   />

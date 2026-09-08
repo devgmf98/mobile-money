@@ -16,6 +16,9 @@ import {
 import Footer from '../components/Footer';
 import '../styles/admin-topup.css';
 import { adminAPI, transactionAPI } from '../utils/api';
+import { amountValue, onAmountInput } from '../utils/amount';
+import Toast from '../components/Toast';
+import useResultToast from '../hooks/useResultToast';
 
 // Sequelize returns DECIMAL columns as strings, so coerce before arithmetic.
 const n2 = (v) => {
@@ -44,6 +47,8 @@ export default function AdminTopup() {
   const [userInfo, setUserInfo] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // Same result, said where the eye already is.
+  const [toast, clearToast] = useResultToast(success, error);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
 
@@ -235,14 +240,13 @@ export default function AdminTopup() {
                       <input
                         id="topup-amount"
                         name="amount"
-                        type="number"
+                        type="text"
+                    inputMode="decimal"
                         autoComplete="off"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        value={amountValue(amount)}
+                        onChange={onAmountInput(setAmount)}
                         required
                         placeholder="0.00"
-                        step="0.01"
-                        min="0"
                         inputMode="decimal"
                       />
                     </div>
@@ -326,6 +330,7 @@ export default function AdminTopup() {
           </div>
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
       <Footer />
     </>
   );

@@ -66,7 +66,7 @@ class _BuyAirtimeScreenState extends State<BuyAirtimeScreen> {
       await context.read<ServicesApi>().buyAirtime(
         network: _network.id,
         phone: Phone.normalise(_phone.text),
-        amount: double.tryParse(_amount.text.trim()) ?? 0,
+        amount: Fmt.parseAmount(_amount.text),
       );
       if (mounted) AppSnack.success(context, 'Airtime sent.');
     } on ApiException catch (error) {
@@ -167,12 +167,12 @@ class _BuyAirtimeScreenState extends State<BuyAirtimeScreen> {
                 // Typing an amount that happens to match a chip re-selects it,
                 // so the chips and the field never contradict each other.
                 onChanged: (value) {
-                  final amount = double.tryParse(value.trim());
+                  final amount = Fmt.parseAmount(value);
                   final preset = _presets.contains(amount) ? amount : null;
                   if (preset != _preset) setState(() => _preset = preset);
                 },
                 validator: (value) {
-                  final amount = double.tryParse((value ?? '').trim()) ?? 0;
+                  final amount = Fmt.parseAmount(value);
                   return amount <= 0 ? 'Enter an amount' : null;
                 },
               ),
@@ -187,7 +187,7 @@ class _BuyAirtimeScreenState extends State<BuyAirtimeScreen> {
               const SizedBox(height: 12),
               Center(
                 child: Text(
-                  'You are buying ${Fmt.money(double.tryParse(_amount.text) ?? 0)} '
+                  'You are buying ${Fmt.money(Fmt.parseAmount(_amount.text))} '
                   'of ${_network.name} airtime.',
                   textAlign: TextAlign.center,
                   style: const TextStyle(

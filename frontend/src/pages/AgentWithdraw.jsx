@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import { transactionAPI, withdrawalAPI } from '../utils/api';
 import '../styles/pull-money.css';
 import { Banknote, ClipboardList, Search, TriangleAlert, User, Wallet } from 'lucide-react';
+import { amountValue, onAmountInput } from '../utils/amount';
 
 /* DECIMAL columns arrive from Sequelize as strings; coerce before formatting. */
 const money = (v) => 'SSP ' + (Number(v) || 0).toLocaleString('en-US', {
@@ -303,13 +304,12 @@ export default function AgentWithdraw() {
                       <span className="pm-currency">SSP</span>
                       <input
                         id="amount"
-                        type="number"
+                        type="text"
+                    inputMode="decimal"
                         inputMode="decimal"
                         placeholder="0.00"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        step="0.01"
-                        min="0"
+                        value={amountValue(amount)}
+                        onChange={onAmountInput(setAmount)}
                         disabled={loading}
                       />
                     </div>

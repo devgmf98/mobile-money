@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../config/env.dart';
@@ -14,6 +15,14 @@ class Fmt {
 
   /// `SSP 125,750.00` — the headline form used on the balance card and in
   /// transaction rows.
+  /// A typed amount, commas and all, as a number.
+  ///
+  /// Money fields group their digits, so their text is "1,000,000.50" and
+  /// `double.tryParse` gives null for it. Everything that reads an amount
+  /// field uses this instead.
+  static double parseAmount(String? text) =>
+      double.tryParse((text ?? '').replaceAll(',', '').trim()) ?? 0;
+
   static String money(num? amount) =>
       '${Env.currency} ${_money.format(amount ?? 0)}';
 
@@ -88,5 +97,55 @@ class Fmt {
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
     return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
         .toUpperCase();
+  }
+}
+
+
+/// Groups the digits in a money field as they are typed: 1000000 -> 1,000,000.
+///
+/// The separators are part of the field's text, not decoration, so anything
+/// reading the field back has to strip them -- [Fmt.parseAmount] is what does
+/// that, and every amount in the app goes through it rather than
+/// `double.tryParse`, which returns null on a grouped string and would have
+/// quietly turned a typed million into zero.
+class ThousandsFormatter extends TextInputFormatter {
+  const ThousandsFormatter();
+
+  static final NumberFormat _group = NumberFormat('#,##0', 'en_US');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final raw = newValue.text.replaceAll(',', '');
+    if (raw.isEmpty) return newValue.copyWith(text: '');
+
+    // One decimal point, at most two places after it. Enforced here rather
+    // than by a second formatter so the two cannot disagree about commas.
+    final parts = raw.split('.');
+    final whole = parts.first.replaceAll(RegExp(r'[^0-9]'), '');
+    final formatted = StringBuffer(whole.isEmpty ? '' : _group.format(int.parse(whole)));
+    if (parts.length > 1) {
+      final fraction = parts.sublist(1).join().replaceAll(RegExp(r'[^0-9]'), '');
+      formatted
+        ..write('.')
+        ..write(fraction.length > 2 ? fraction.substring(0, 2) : fraction);
+    }
+
+    final text = formatted.toString();
+
+    /* The caret is held the same distance from the end rather than at a fixed
+       offset: inserting a separator shifts everything left of it, and pinning
+       the raw offset would drop the caret a place backwards every third
+       digit. */
+    final fromEnd = newValue.text.length - newValue.selection.end;
+    final offset = (text.length - fromEnd).clamp(0, text.length);
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: offset),
+      composing: TextRange.empty,
+    );
   }
 }

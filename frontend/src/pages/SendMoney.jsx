@@ -10,6 +10,9 @@ import QRScanner from '../components/QRScanner';
 import Footer from '../components/Footer';
 import '../styles/send-money.css';
 import '../styles/send-money-flow.css';
+import { amountValue, onAmountInput } from '../utils/amount';
+import Toast from '../components/Toast';
+import useResultToast from '../hooks/useResultToast';
 
 const n2 = (v) => {
   const n = parseFloat(v);
@@ -36,6 +39,8 @@ export default function SendMoney() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [success, setSuccess] = useState('');
+  // Same result, said where the eye already is.
+  const [toast, clearToast] = useResultToast(success, error);
   const [loading, setLoading] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
   const [scannedData, setScannedData] = useState(null);
@@ -289,15 +294,14 @@ export default function SendMoney() {
                   <input
                     id="send-amount"
                     name="amount"
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     inputMode="decimal"
                     autoComplete="off"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    value={amountValue(amount)}
+                    onChange={onAmountInput(setAmount)}
                     required
                     placeholder="0.00"
-                    step="0.01"
-                    min="0"
                     disabled={suspended}
                   />
                 </div>
@@ -422,6 +426,7 @@ export default function SendMoney() {
       {showScanner && (
         <QRScanner onScan={handleQRScan} onClose={() => setShowScanner(false)} />
       )}
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
       <Footer />
     </>
   );

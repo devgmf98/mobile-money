@@ -14,6 +14,9 @@ import {
 import Footer from '../components/Footer';
 import '../styles/admin-agent-withdraw.css';
 import api from '../utils/api';
+import { amountValue, onAmountInput } from '../utils/amount';
+import Toast from '../components/Toast';
+import useResultToast from '../hooks/useResultToast';
 
 const n2 = (v) => {
   const n = parseFloat(v);
@@ -39,6 +42,8 @@ export default function AdminWithdraw() {
   const [agentInfo, setAgentInfo] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  // Same result, said where the eye already is.
+  const [toast, clearToast] = useResultToast(success, error);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
 
@@ -260,14 +265,13 @@ export default function AdminWithdraw() {
                       <input
                         id="withdraw-amount"
                         name="amount"
-                        type="number"
+                        type="text"
+                    inputMode="decimal"
                         autoComplete="off"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        value={amountValue(amount)}
+                        onChange={onAmountInput(setAmount)}
                         required
                         placeholder="0.00"
-                        step="0.01"
-                        min="0"
                         inputMode="decimal"
                       />
                     </div>
@@ -369,6 +373,7 @@ export default function AdminWithdraw() {
           </div>
         </div>
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={clearToast} />}
       <Footer />
     </>
   );

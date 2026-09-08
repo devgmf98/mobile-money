@@ -6,6 +6,7 @@ import Toast from '../components/Toast';
 import { ArrowRight, Banknote, Coins, Map, Send, User } from 'lucide-react';
 import Select from '../components/Select';
 import '../styles/admin-state-send.css';
+import { amountValue, onAmountInput } from '../utils/amount';
 
 export default function AdminStateSend() {
   const [states, setStates] = useState([]);
@@ -190,12 +191,11 @@ export default function AdminStateSend() {
                 <span className="amount-prefix">{symbol}</span>
                 <input
                   id="ss-amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  type="text"
+                    inputMode="decimal"
                   inputMode="decimal"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  value={amountValue(amount)}
+                  onChange={onAmountInput(setAmount)}
                   placeholder="0.00"
                 />
               </div>
