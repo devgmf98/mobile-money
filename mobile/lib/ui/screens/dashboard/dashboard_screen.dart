@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/motion.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/utils/profile_image.dart';
 import '../../../data/models/app_user.dart';
 import '../../../routing/routes.dart';
 import '../../../state/auth_controller.dart';
@@ -14,6 +13,7 @@ import '../../widgets/controls.dart';
 import '../../widgets/skeleton.dart';
 import '../../widgets/wallet_widgets.dart';
 import 'pending_approvals_card.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// The home tab, laid out like the web app's mobile dashboard: a green header,
 /// a balance card lifted over it, four actions, the history figures, then the
@@ -54,133 +54,139 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final isAgent = user.role.isAgent;
 
-    return RefreshIndicator(
-      onRefresh: _refresh,
-      color: AppColors.primaryDark,
-      child: ListView(
-        padding: const EdgeInsets.only(bottom: 20),
-        children: [
-          // The card is pulled up into the header, as on the web. The green is
-          // split in two rather than overlapped in a Stack sized by the header:
-          // the card is taller than the header, so anchoring it to the header's
-          // bottom edge made it cover the greeting entirely. This way the
-          // header ends 36px below the name, and the last 26px of green sits
-          // behind the top of the card - the same result, from layout that
-          // cannot depend on which of the two happens to be taller.
-          _Header(user: user),
-          FadeSlideIn(
-            offset: 6,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: 26,
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.headerGradient,
-                      borderRadius: BorderRadius.vertical(
-                        bottom: Radius.circular(24),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: const BrandAppBar(),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: AppColors.primaryDark,
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: 20),
+          children: [
+            // The card is pulled up into the header, as on the web. The green is
+            // split in two rather than overlapped in a Stack sized by the header:
+            // the card is taller than the header, so anchoring it to the header's
+            // bottom edge made it cover the greeting entirely. This way the
+            // header ends 36px below the name, and the last 26px of green sits
+            // behind the top of the card - the same result, from layout that
+            // cannot depend on which of the two happens to be taller.
+            _Header(user: user),
+            FadeSlideIn(
+              offset: 6,
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 26,
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.headerGradient,
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(24),
+                        ),
                       ),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  child: RepaintBoundary(
-                    child: BalanceCard(
-                      balance: user.balance,
-                      hidden: _balanceHidden,
-                      onToggleHidden: () =>
-                          setState(() => _balanceHidden = !_balanceHidden),
-                      // "My Balance" for both, as on the web. What changes is
-                      // the identifier beneath it: the web app puts the agent
-                      // ID in the same slot the customer's account code
-                      // occupies, on the grounds that it is the one a customer
-                      // will read back to them at the counter.
-                      label: 'My Balance',
-                      accountLabel: isAgent && user.agentId != null
-                          ? 'Agent ID'
-                          : 'Account',
-                      accountValue: isAgent && user.agentId != null
-                          ? user.agentId
-                          : Fmt.accountCode(user.phone),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: RepaintBoundary(
+                      child: BalanceCard(
+                        balance: user.balance,
+                        hidden: _balanceHidden,
+                        onToggleHidden: () =>
+                            setState(() => _balanceHidden = !_balanceHidden),
+                        // "My Balance" for both, as on the web. What changes is
+                        // the identifier beneath it: the web app puts the agent
+                        // ID in the same slot the customer's account code
+                        // occupies, on the grounds that it is the one a customer
+                        // will read back to them at the counter.
+                        label: 'My Balance',
+                        accountLabel: isAgent && user.agentId != null
+                            ? 'Agent ID'
+                            : 'Account',
+                        accountValue: isAgent && user.agentId != null
+                            ? user.agentId
+                            : Fmt.accountCode(user.phone),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          if (user.isSuspended)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Notice.warning(
-                message: isAgent
-                    ? 'Your agent account is suspended, so cash-outs are '
-                          'paused. Contact customer care to restore access.'
-                    : 'Your account is suspended, so payments are paused. '
-                          'Contact customer care to restore access.',
+                ],
               ),
-            ),
-
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 60),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: ActionRow(actions: _actions(context, user)),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Cash-outs an agent has asked this customer to approve. Above the
-          // figures because someone is at a counter waiting on it.
-          if (wallet.pendingWithdrawals.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: PendingApprovalsCard(requests: wallet.pendingWithdrawals),
             ),
             const SizedBox(height: 12),
-          ],
 
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 120),
-            child: _Section(
-              title: 'History',
-              child: _Stats(wallet: wallet, isAgent: isAgent),
-            ),
-          ),
-
-          if (wallet.recentPayees.isNotEmpty)
-            FadeSlideIn(
-              delay: const Duration(milliseconds: 150),
-              child: _Section(
-                title: 'Send again',
-                child: RecentPayeesRow(
-                  payees: wallet.recentPayees,
-                  // Straight into the send form with the number filled in, which
-                  // is the whole point of the row.
-                  onTap: (payee) => Navigator.of(
-                    context,
-                  ).pushNamed(Routes.sendMoney, arguments: payee.phone),
+            if (user.isSuspended)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                child: Notice.warning(
+                  message: isAgent
+                      ? 'Your agent account is suspended, so cash-outs are '
+                            'paused. Contact customer care to restore access.'
+                      : 'Your account is suspended, so payments are paused. '
+                            'Contact customer care to restore access.',
                 ),
+              ),
+
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 60),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: ActionRow(actions: _actions(context, user)),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Cash-outs an agent has asked this customer to approve. Above the
+            // figures because someone is at a counter waiting on it.
+            if (wallet.pendingWithdrawals.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: PendingApprovalsCard(
+                  requests: wallet.pendingWithdrawals,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 120),
+              child: _Section(
+                title: 'History',
+                child: _Stats(wallet: wallet, isAgent: isAgent),
               ),
             ),
 
-          FadeSlideIn(
-            delay: const Duration(milliseconds: 210),
-            child: _Section(
-              title: 'Recent Transactions',
-              actionLabel: 'See All',
-              onAction:
-                  widget.onSeeAllTransactions ??
-                  () => Navigator.of(context).pushNamed(Routes.history),
-              child: _RecentList(wallet: wallet),
+            if (wallet.recentPayees.isNotEmpty)
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 150),
+                child: _Section(
+                  title: 'Send again',
+                  child: RecentPayeesRow(
+                    payees: wallet.recentPayees,
+                    // Straight into the send form with the number filled in, which
+                    // is the whole point of the row.
+                    onTap: (payee) => Navigator.of(
+                      context,
+                    ).pushNamed(Routes.sendMoney, arguments: payee.phone),
+                  ),
+                ),
+              ),
+
+            FadeSlideIn(
+              delay: const Duration(milliseconds: 210),
+              child: _Section(
+                title: 'Recent Transactions',
+                actionLabel: 'See All',
+                onAction:
+                    widget.onSeeAllTransactions ??
+                    () => Navigator.of(context).pushNamed(Routes.history),
+                child: _RecentList(wallet: wallet),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -244,19 +250,15 @@ class _Header extends StatelessWidget {
 
   final AppUser user;
 
-  ImageProvider? get _picture => ProfileImage.decode(user.profileImage);
-
   @override
   Widget build(BuildContext context) {
-    final unread = context.select<NotificationController, int>(
-      (controller) => controller.unreadCount,
-    );
-
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
         16,
-        MediaQuery.paddingOf(context).top + 22,
+        // Less top padding than before: the status bar inset is the app bar's
+        // job now, and this sits underneath it.
+        14,
         16,
         46,
       ),
@@ -267,15 +269,11 @@ class _Header extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Welcome back',
-                  style: TextStyle(
-                    fontSize: 12,
-                    letterSpacing: 0.24,
-                    color: Color(0xE6FFFFFF),
-                  ),
-                ),
-                const SizedBox(height: 3),
+                /* "Welcome back" is gone and the logo is in the bar above.
+                   The two buttons that used to sit on the right of this row
+                   went with it -- they were the ones scrolling out of reach,
+                   which was the whole complaint. The name stays: it is the
+                   one thing here the bar cannot carry. */
                 Text(
                   user.name,
                   maxLines: 1,
@@ -287,39 +285,6 @@ class _Header extends StatelessWidget {
                     color: Colors.white,
                   ),
                 ),
-              ],
-            ),
-          ),
-          _HeaderButton(
-            icon: Icons.notifications_none_rounded,
-            badge: unread,
-            onTap: () => Navigator.of(context).pushNamed(Routes.notifications),
-            tooltip: 'Notifications',
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () => Navigator.of(context).pushNamed(Routes.profile),
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                UserAvatar(
-                  initials: Fmt.initials(user.name),
-                  imageProvider: _picture,
-                  size: 40,
-                  background: const Color(0x2EFFFFFF),
-                  foreground: Colors.white,
-                ),
-                // While admins can take cash without asking, a dot pulses on
-                // the way in to the screen that turns it off. It replaced a
-                // full-width banner: this is a standing state rather than news,
-                // and something that is true every day should not take a
-                // paragraph of the dashboard every day.
-                if (user.autoAdminCashout)
-                  const Positioned(
-                    right: -1,
-                    top: -1,
-                    child: _PulsingDot(),
-                  ),
               ],
             ),
           ),
@@ -383,73 +348,6 @@ class _PulsingDotState extends State<_PulsingDot>
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _HeaderButton extends StatelessWidget {
-  const _HeaderButton({
-    required this.icon,
-    required this.onTap,
-    required this.tooltip,
-    this.badge = 0,
-  });
-
-  final IconData icon;
-  final VoidCallback onTap;
-  final String tooltip;
-  final int badge;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: const BoxDecoration(
-                color: Color(0x2EFFFFFF),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 20, color: Colors.white),
-            ),
-            if (badge > 0)
-              Positioned(
-                right: -2,
-                top: -2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1,
-                  ),
-                  constraints: const BoxConstraints(minWidth: 18),
-                  decoration: BoxDecoration(
-                    color: AppColors.danger,
-                    borderRadius: BorderRadius.circular(9),
-                    border: Border.all(
-                      color: AppColors.primaryDark,
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Text(
-                    badge > 9 ? '9+' : '$badge',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
-          ],
         ),
       ),
     );

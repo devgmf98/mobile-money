@@ -1,3 +1,8 @@
+import 'package:moneypay/data/models/app_user.dart';
+import 'package:moneypay/state/notification_controller.dart';
+import 'package:moneypay/state/auth_controller.dart';
+import 'package:moneypay/ui/widgets/brand_app_bar.dart';
+import 'package:provider/provider.dart';
 import 'package:moneypay/core/theme/motion.dart';
 import 'package:moneypay/data/api/api_client.dart';
 import 'package:moneypay/ui/screens/profile/profile_screen.dart';
@@ -25,6 +30,7 @@ import 'package:moneypay/ui/widgets/wallet_widgets.dart';
 void _noop() {}
 
 void main() {
+  _brandAppBarTests();
   _afterRouteSettlesTests();
   _cashOutSwitchTests();
   _scrollTests();
@@ -620,6 +626,52 @@ void _scrollTests() {
       expect(find.byType(GlowingOverscrollIndicator), findsNothing);
     });
 
+    testWidgets('overscroll is short, and still enough to pull to refresh', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          scrollBehavior: const AppScrollBehavior(),
+          home: Scaffold(
+            body: ListView.builder(
+              itemCount: 60,
+              itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
+            ),
+          ),
+        ),
+      );
+
+      final pos = tester.state<ScrollableState>(find.byType(Scrollable)).position;
+
+      /* Dragged in small steps, as a finger does. A single tester.drag would
+         prove nothing here: BouncingScrollPhysics applies no friction until
+         the list is already out of range, so one 260px jump lands unfrictioned
+         and every physics looks identical. */
+      final finger = await tester.startGesture(
+        tester.getCenter(find.byType(ListView)),
+      );
+      for (var i = 0; i < 26; i++) {
+        await finger.moveBy(const Offset(0, 10));
+        await tester.pump();
+      }
+      final stretch = -pos.pixels;
+      await finger.up();
+
+      // Enough to read as give, and to reach a RefreshIndicator, which fires
+      // at 40 logical pixels of displacement.
+      expect(stretch, greaterThan(40));
+      // iOS-tuned bouncing returns roughly 130 for this drag: over half the
+      // finger travel, which is the page coming away from the top.
+      expect(
+        stretch,
+        lessThan(80),
+        reason: 'stretched $stretch px on a 260 px pull',
+      );
+
+      await tester.pumpAndSettle();
+      expect(pos.pixels, 0);
+    });
+
     testWidgets('a list can be dragged past its end and settles back', (
       tester,
     ) async {
@@ -832,4 +884,92 @@ class _ProbeState extends State<_Probe> with AfterRouteSettles {
 
   @override
   Widget build(BuildContext context) => const Scaffold(body: Text('probe'));
+}
+
+/* The bar on every signed-in screen. It replaced a header that scrolled away
+   with the content, taking the unread count and the way into the profile with
+   it. */
+void _brandAppBarTests() {
+  Widget host({required Widget body, int unread = 0}) => MultiProvider(
+    providers: [
+      ChangeNotifierProvider<NotificationController>.value(
+        value: _FakeNotifications(unread),
+      ),
+      ChangeNotifierProvider<AuthController>.value(value: _FakeAuth()),
+    ],
+    child: MaterialApp(
+      theme: AppTheme.light,
+      scrollBehavior: const AppScrollBehavior(),
+      home: Scaffold(appBar: const BrandAppBar(), body: body),
+    ),
+  );
+
+  group('BrandAppBar', () {
+    testWidgets('shows the logo and both buttons', (tester) async {
+      await tester.pumpWidget(host(body: const SizedBox()));
+      await tester.pump();
+
+      expect(find.byType(BrandLockup), findsOneWidget);
+      expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
+      expect(find.byType(UserAvatar), findsOneWidget);
+    });
+
+    testWidgets('stays put while the page scrolls', (tester) async {
+      await tester.pumpWidget(
+        host(
+          body: ListView.builder(
+            itemCount: 60,
+            itemBuilder: (_, i) => SizedBox(height: 60, child: Text('row $i')),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      final before = tester.getRect(find.byType(BrandLockup));
+      await tester.fling(find.byType(ListView), const Offset(0, -600), 1200);
+      await tester.pumpAndSettle();
+
+      expect(
+        tester.getRect(find.byType(BrandLockup)),
+        before,
+        reason: 'the logo moved when the list did',
+      );
+      expect(find.byIcon(Icons.notifications_none_rounded), findsOneWidget);
+      expect(find.byType(UserAvatar), findsOneWidget);
+    });
+
+    testWidgets('carries the unread count', (tester) async {
+      await tester.pumpWidget(host(body: const SizedBox(), unread: 3));
+      await tester.pump();
+      expect(find.text('3'), findsOneWidget);
+
+      await tester.pumpWidget(host(body: const SizedBox(), unread: 42));
+      await tester.pump();
+      expect(find.text('9+'), findsOneWidget);
+    });
+  });
+}
+
+/* noSuchMethod fakes: BrandAppBar reads one getter from each controller, and
+   building the real ones would mean an ApiClient, a SessionStore and a socket
+   for a widget that draws a bell and an avatar. */
+class _FakeNotifications extends ChangeNotifier
+    implements NotificationController {
+  _FakeNotifications(this.unreadCount);
+
+  @override
+  final int unreadCount;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _FakeAuth extends ChangeNotifier implements AuthController {
+  /// Null is a real state here -- the bar renders during sign-out -- and it
+  /// exercises the empty-name fallbacks rather than dodging them.
+  @override
+  AppUser? get user => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

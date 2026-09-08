@@ -13,6 +13,7 @@ import '../../../state/notification_controller.dart';
 import '../../widgets/controls.dart';
 import 'notification_details_sheet.dart';
 import '../../../core/theme/motion.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// The notification list.
 ///
@@ -72,9 +73,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
     final controller = context.watch<NotificationController>();
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Notifications'),
+      appBar: BrandAppBar(
         actions: [
           if (controller.hasUnread)
             TextButton(

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -267,7 +269,7 @@ class AppScrollBehavior extends MaterialScrollBehavior {
 
   @override
   ScrollPhysics getScrollPhysics(BuildContext context) =>
-      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+      const TautBouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
 
   /// No glow: it exists to announce the end of a list, which the bounce above
   /// now does with the content itself.
@@ -285,4 +287,30 @@ class AppScrollBehavior extends MaterialScrollBehavior {
     PointerDeviceKind.trackpad,
     PointerDeviceKind.stylus,
   };
+}
+
+/// Bouncing, but on a shorter leash.
+///
+/// Plain [BouncingScrollPhysics] is tuned for iOS, where a long elastic pull is
+/// the house style. On a list of transactions it reads as the page coming away
+/// from the top of the screen -- the stretch was the complaint, not the bounce.
+///
+/// [frictionFactor] is what decides how much of a drag past the edge becomes
+/// movement. The default starts at 0.52 and falls off as you pull; this starts
+/// at less than half that, so the list gives enough to show it has reached the
+/// end and to reach a RefreshIndicator, and no further.
+///
+/// The deceleration rate is Android's faster one as well, so a fling settles
+/// rather than gliding on the way an iOS list does.
+class TautBouncingScrollPhysics extends BouncingScrollPhysics {
+  const TautBouncingScrollPhysics({super.parent})
+    : super(decelerationRate: ScrollDecelerationRate.fast);
+
+  @override
+  TautBouncingScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      TautBouncingScrollPhysics(parent: buildParent(ancestor));
+
+  @override
+  double frictionFactor(double overscrollFraction) =>
+      0.22 * math.pow(1 - overscrollFraction, 2);
 }

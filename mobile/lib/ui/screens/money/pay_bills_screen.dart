@@ -7,6 +7,7 @@ import '../../../data/api/api_client.dart';
 import '../../../data/api/services_api.dart';
 import '../../widgets/controls.dart';
 import '../../../core/utils/formatters.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Pay a bill.
 ///
@@ -62,14 +63,15 @@ class _PayBillsScreenState extends State<PayBillsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: BrandAppBar(
+        /* Back steps out of the chosen biller before it leaves the screen,
+           which is why this one is not the default arrow. */
         leading: _biller == null
             ? const BackButton()
             : IconButton(
                 onPressed: () => setState(() => _biller = null),
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
-        title: Text(_biller?.name ?? 'Pay Bills'),
       ),
       body: SafeArea(child: _biller == null ? _pickBiller() : _payForm()),
     );

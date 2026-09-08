@@ -17,6 +17,7 @@ import '../../widgets/controls.dart';
 import '../../widgets/wallet_widgets.dart';
 import 'confirm_sheet.dart';
 import 'receipt_screen.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Send money to another MoneyPay account.
 ///
@@ -292,10 +293,7 @@ class _SendMoneyScreenState extends State<SendMoneyScreen> {
     final balance = user?.balance ?? 0;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Send Money'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: Form(
           key: _formKey,

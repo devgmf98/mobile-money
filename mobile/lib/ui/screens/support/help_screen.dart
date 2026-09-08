@@ -9,6 +9,7 @@ import '../../../data/models/lookup.dart';
 import '../../../routing/routes.dart';
 import '../../widgets/controls.dart';
 import '../../../core/theme/motion.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// The help centre.
 ///
@@ -62,10 +63,7 @@ class _HelpScreenState extends State<HelpScreen> with AfterRouteSettles {
         .toList(growable: false);
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Help & Support'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _load,

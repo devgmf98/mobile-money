@@ -18,6 +18,7 @@ import '../../../state/local_notifications.dart';
 import '../../../state/wallet_controller.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// The account, and everything that hangs off it.
 ///
@@ -58,6 +59,7 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
+      appBar: const BrandAppBar(),
       body: ListView(
         padding: const EdgeInsets.only(bottom: 32),
         children: [

@@ -11,6 +11,7 @@ import '../../../state/wallet_controller.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
 import '../../../core/theme/motion.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Withdrawals an agent or an admin has asked you to approve.
 ///
@@ -87,10 +88,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen>
     final requests = wallet.pendingWithdrawals;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Approvals'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => wallet.refresh(silent: true),

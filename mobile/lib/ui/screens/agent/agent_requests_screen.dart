@@ -11,6 +11,7 @@ import '../../../state/wallet_controller.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
 import '../../../core/theme/motion.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Admin cash-outs waiting on this agent.
 ///
@@ -87,10 +88,7 @@ class _AgentRequestsScreenState extends State<AgentRequestsScreen>
     final requests = wallet.adminCashOutRequests;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Requests'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () => wallet.refresh(silent: true),

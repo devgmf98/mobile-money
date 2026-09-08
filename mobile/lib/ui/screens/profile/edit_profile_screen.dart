@@ -10,6 +10,7 @@ import '../../../core/utils/phone.dart';
 import '../../../data/api/api_client.dart';
 import '../../../state/auth_controller.dart';
 import '../../widgets/controls.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Edit the parts of an account that can be edited.
 ///
@@ -179,10 +180,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('My Profile'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: Form(
           key: _formKey,

@@ -18,6 +18,7 @@ import '../../widgets/controls.dart';
 import '../../widgets/wallet_widgets.dart';
 import 'confirm_sheet.dart';
 import 'receipt_screen.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Take cash out through an agent.
 ///
@@ -237,10 +238,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     final balance = user?.balance ?? 0;
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Withdraw Cash'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: Form(
           key: _formKey,

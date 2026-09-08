@@ -11,6 +11,7 @@ import '../../widgets/skeleton.dart';
 import '../../widgets/wallet_widgets.dart';
 import 'transaction_details_sheet.dart';
 import '../../../core/theme/motion.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Everything that has moved, newest first, grouped by day.
 ///
@@ -143,10 +144,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen>
     );
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: !widget.embedded,
-        leading: widget.embedded ? null : const BackButton(),
-        title: const Text('Transaction History'),
+      appBar: BrandAppBar(
+        showBack: !widget.embedded,
+        // Search keeps its place ahead of the two standard buttons.
         actions: [
           IconButton(
             onPressed: () => setState(() {

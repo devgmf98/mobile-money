@@ -11,6 +11,7 @@ import '../../../data/models/lookup.dart';
 import '../../../routing/routes.dart';
 import '../../../state/wallet_controller.dart';
 import '../../widgets/controls.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Find an agent.
 ///
@@ -78,11 +79,7 @@ class _AgentsScreenState extends State<AgentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: !widget.embedded,
-        leading: widget.embedded ? null : const BackButton(),
-        title: const Text('Agents'),
-      ),
+      appBar: BrandAppBar(showBack: !widget.embedded),
       body: SafeArea(
         bottom: false,
         child: ListView(

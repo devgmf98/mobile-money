@@ -7,6 +7,7 @@ import '../../../data/api/api_client.dart';
 import '../../../data/api/moneypay_api.dart';
 import '../../../state/auth_controller.dart';
 import '../../widgets/controls.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Contact customer care.
 ///
@@ -87,10 +88,7 @@ class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Contact Us'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(child: _sent ? _sentPanel() : _form()),
     );
   }

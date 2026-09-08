@@ -11,6 +11,7 @@ import '../../../core/utils/phone.dart';
 import '../../../state/auth_controller.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/controls.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Your QR code, for someone else to scan and pay.
 ///
@@ -38,10 +39,7 @@ class ReceiveQrScreen extends StatelessWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Receive Money'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(

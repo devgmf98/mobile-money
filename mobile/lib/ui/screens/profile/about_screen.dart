@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../routing/routes.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/controls.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// About MoneyPay.
 class AboutScreen extends StatelessWidget {
@@ -14,7 +15,7 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(leading: const BackButton(), title: const Text('About')),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.only(bottom: 28),

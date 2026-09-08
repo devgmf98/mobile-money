@@ -9,6 +9,7 @@ import '../../../data/api/api_client.dart';
 import '../../../data/api/services_api.dart';
 import '../../../state/auth_controller.dart';
 import '../../widgets/controls.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Buy airtime for a mobile number.
 ///
@@ -79,10 +80,7 @@ class _BuyAirtimeScreenState extends State<BuyAirtimeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Buy Airtime'),
-      ),
+      appBar: const BrandAppBar(),
       body: SafeArea(
         child: Form(
           key: _formKey,

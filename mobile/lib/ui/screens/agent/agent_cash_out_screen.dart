@@ -14,6 +14,7 @@ import '../../../state/auth_controller.dart';
 import '../../../state/wallet_controller.dart';
 import '../../widgets/controls.dart';
 import '../../widgets/wallet_widgets.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// Agent side: pay a customer cash and take it from their wallet.
 ///
@@ -191,11 +192,7 @@ class _AgentCashOutScreenState extends State<AgentCashOutScreen> {
     final wallet = context.watch<WalletController>();
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: !widget.embedded,
-        leading: widget.embedded ? null : const BackButton(),
-        title: const Text('Pull Funds'),
-      ),
+      appBar: BrandAppBar(showBack: !widget.embedded),
       body: SafeArea(
         bottom: false,
         child: Form(

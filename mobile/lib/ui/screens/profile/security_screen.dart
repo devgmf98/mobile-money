@@ -9,6 +9,7 @@ import '../../widgets/code_input.dart';
 import '../../widgets/confirm_dialog.dart';
 import '../../widgets/controls.dart';
 import '../../../core/theme/motion.dart';
+import '../../widgets/brand_app_bar.dart';
 
 /// App lock and password.
 ///
@@ -119,10 +120,7 @@ class _SecurityScreenState extends State<SecurityScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        leading: const BackButton(),
-        title: const Text('Security'),
-      ),
+      appBar: const BrandAppBar(),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : SafeArea(
