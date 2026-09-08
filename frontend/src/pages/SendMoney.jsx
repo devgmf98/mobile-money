@@ -321,22 +321,11 @@ export default function SendMoney() {
                   <button type="button" onClick={sendAll} disabled={suspended || balance <= 0}>All</button>
                 </div>
 
-                {!blocked && entered > 0 && quote && quote.amount === entered && totalFee > 0 && (
-                  <div className="sm-fees">
-                    {/* Amount and total only. The commission is priced by the
-                        server and folded into the total rather than itemised:
-                        what the sender decides on is what leaves their balance,
-                        and the difference between these two rows is the whole
-                        fee. */}
-                    <div className="sm-fee-row"><span>Transfer amount</span><span>{money(entered)}</span></div>
-                    <div className="sm-fee-row is-total"><span>Total deducted</span><span>{money(totalCost)}</span></div>
-                    {quote.tier === 'withdrawal' && (
-                      <p className="sm-fee-note">
-                        Paying an agent is a withdrawal, charged at withdrawal rates.
-                      </p>
-                    )}
-                  </div>
-                )}
+                {/* No fee breakdown. Two rows, an amount and a total, state
+                    the commission as plainly as a line naming it would -- the
+                    difference between them is the whole fee. The commission is
+                    priced by the server and folded into the one figure this
+                    page shows, which is what leaves the balance. */}
 
                 {blocked
                   ? <small className="sm-error">
@@ -390,8 +379,11 @@ export default function SendMoney() {
 
             <dl className="sm-review-figures">
               <div>
+                {/* The figure that leaves the balance, commission included --
+                    not the amount typed above, which is only the part the
+                    recipient ends up with. */}
                 <dt>Sending</dt>
-                <dd className="is-amount">{money(entered)}</dd>
+                <dd className="is-amount">{money(totalCost)}</dd>
               </div>
               <div>
                 <dt>Balance after</dt>
@@ -406,7 +398,7 @@ export default function SendMoney() {
                 ? 'Sending…'
                 : suspended
                   ? 'Account suspended'
-                  : <>Send {entered > 0 ? money(entered) : 'money'} <ArrowRight size={16} /></>}
+                  : <>Send {entered > 0 ? money(totalCost) : 'money'} <ArrowRight size={16} /></>}
             </button>
           </div>
         </form>

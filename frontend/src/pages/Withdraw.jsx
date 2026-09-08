@@ -504,18 +504,10 @@ export default function Withdraw() {
                   <button type="button" onClick={() => setPortion(1)} disabled={suspended}>All</button>
                 </div>
 
-                {entered > 0 && quote && quote.amount === entered && totalFee > 0 && (
-                  <div className="wd-fees">
-                    {/* Amount and total only -- the commission is folded into
-                        the total rather than itemised. */}
-                    <div className="wd-fee-row">
-                      <span>Withdrawal amount</span><span>{money(entered)}</span>
-                    </div>
-                    <div className="wd-fee-row is-total">
-                      <span>Total deducted</span><span>{money(totalCost)}</span>
-                    </div>
-                  </div>
-                )}
+                {/* No fee breakdown: an amount row beside a total row states
+                    the commission as clearly as naming it would. It is folded
+                    into the single figure below, which is what leaves the
+                    balance. */}
 
                 {overBalance
                   ? <small className="wd-error">
@@ -534,7 +526,7 @@ export default function Withdraw() {
                   ? 'Requesting…'
                   : suspended
                     ? 'Account suspended'
-                    : <>Request {entered > 0 ? money(entered) : 'withdrawal'} <ArrowRight size={16} /></>}
+                    : <>Request {entered > 0 ? money(totalCost) : 'withdrawal'} <ArrowRight size={16} /></>}
               </button>
             </div>
           </div>
