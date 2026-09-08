@@ -200,16 +200,11 @@ export const approveWithdrawalRequest = async (req, res) => {
     request.approvedAt = new Date();
     await request.save();
 
-    // Create notifications
-    const userNotif = await Notification.create({
-      recipientId: userId,
-      title: 'Withdrawal Approved',
-      message: `Your withdrawal of SSP ${request.amount} to ${agent.name} has been approved`,
-      type: 'transaction',
-      relatedTransactionId: transaction.id
-    });
-
-    const agentNotif = await Notification.create({
+    /* The agent only. The customer is the one who just tapped Approve, so a
+       push telling them they approved it lands while they are still looking
+       at the screen they approved it on. The agent is the one waiting to hear,
+       usually with the cash already counted out. */
+    await Notification.create({
       recipientId: request.agentId,
       title: 'Withdrawal Approved',
       message: `${user.name} approved your withdrawal request of SSP ${request.amount}`,
@@ -276,15 +271,9 @@ export const rejectWithdrawalRequest = async (req, res) => {
     const user = await User.findByPk(userId);
     const agent = await User.findByPk(request.agentId);
 
-    // Create notifications
-    const userNotif = await Notification.create({
-      recipientId: userId,
-      title: 'Withdrawal Rejected',
-      message: `Your withdrawal request has been rejected`,
-      type: 'system'
-    });
-
-    const agentNotif = await Notification.create({
+    // Same on the other branch: the agent is told, the customer who declined
+    // it is not told what they just declined.
+    await Notification.create({
       recipientId: request.agentId,
       title: 'Withdrawal Rejected',
       message: `${user.name} rejected your withdrawal request of SSP ${request.amount}`,

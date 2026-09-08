@@ -481,13 +481,9 @@ export const sendMoneyBetweenAdminsByState = async (req, res) => {
       type: 'system',
       relatedTransactionId: transaction.id
     });
-    await Notification.create({
-      recipientId: senderId,
-      title: 'Admin Transfer Created',
-      message: `You created a pending transfer of SSP ${amount.toFixed(2)} to admin ${receiver.name}`,
-      type: 'system',
-      relatedTransactionId: transaction.id
-    });
+    /* The receiving admin only. "You created a pending transfer" told the
+       admin who had just created it exactly that, on the screen where they
+       created it. Their SMS receipt below is untouched. */
 
     try { await sendSMS(receiver.phone, `MoneyPay: You have a pending transfer of SSP ${receiverCredit.toFixed(2)} from admin ${sender.name}`); } catch (e) {}
     try { await sendSMS(sender.phone, `MoneyPay: You created a pending transfer of SSP ${amount.toFixed(2)} to admin ${receiver.name}`); } catch (e) {}
@@ -1355,14 +1351,13 @@ export const approveAdminWithdrawalRequest = async (req, res) => {
        at all, and the row for the admin is the one that then cannot be
        addressed. */
     try {
-      await Notification.create({
-        recipientId: agentId,
-        title: 'Withdrawal Approved',
-        message: `Your withdrawal of SSP ${request.amount} has been completed.`,
-        type: 'transaction',
-        relatedTransactionId: transaction.id
-      });
+      /* The admin only. The agent is the one who just tapped Approve -- they
+         do not need their own phone to tell them they did. This also matches
+         rejectAdminWithdrawalRequest, which has only ever notified the admin;
+         the two branches disagreed until now.
 
+         The SMS below still goes to the agent: that is a receipt of money
+         leaving their float, which is worth keeping as a record. */
       if (request.userId) {
         await Notification.create({
           recipientId: request.userId,
