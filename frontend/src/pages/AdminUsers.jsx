@@ -4,6 +4,7 @@ import { adminAPI } from '../utils/api';
 import Footer from '../components/Footer';
 import '../styles/admin-users.css';
 import { Ban, Banknote, CircleCheck } from 'lucide-react';
+import { formatAmount } from '../utils/amount';
 
 export default function AdminUsers() {
   const navigate = useNavigate();
@@ -120,7 +121,7 @@ export default function AdminUsers() {
                       <td>{user.email}</td>
                       <td>{user.phone}</td>
                       <td><span className="badge badge-primary">{user.role}</span></td>
-                      <td>SSP {(parseFloat(user?.balance) || 0).toFixed(2)}</td>
+                      <td>SSP {formatAmount(user?.balance)}</td>
                       <td>
                         {user.isSuspended ? (
                           <span className="badge badge-danger">Suspended</span>

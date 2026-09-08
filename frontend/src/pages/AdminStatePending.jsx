@@ -5,6 +5,7 @@ import { isStaff } from '../utils/roles';
 import Toast from '../components/Toast';
 import Select from '../components/Select';
 import '../styles/admin-state-pending.css';
+import { formatAmount } from '../utils/amount';
 import {
   Ban, Check, CircleCheck, Clock, Inbox, RefreshCw, Search, X
 } from 'lucide-react';
@@ -278,12 +279,12 @@ export default function AdminStatePending() {
                       <td>{tx.fromStateName || party(tx.sender)}</td>
                       <td>{tx.toStateName || party(tx.receiver)}</td>
                       <td className="num">
-                        <span className="cur">{tx.currencyCode || 'SSP'}</span> {Number(tx.amount).toFixed(2)}
+                        <span className="cur">{tx.currencyCode || 'SSP'}</span> {formatAmount(tx.amount)}
                       </td>
                       <td className="num strong">
-                        <span className="cur">{tx.currencyCode || 'SSP'}</span> {Number(tx.receiverCredit || tx.amount).toFixed(2)}
+                        <span className="cur">{tx.currencyCode || 'SSP'}</span> {formatAmount(tx.receiverCredit || tx.amount)}
                       </td>
-                      <td className="num credit">{Number(tx.commission || tx.receiverCommission || 0).toFixed(2)}</td>
+                      <td className="num credit">{formatAmount(tx.commission || tx.receiverCommission)}</td>
                       <td>{statusBadge(tx.status)}</td>
                       {/* When it closed and who closed it. Blank while still
                           pending, because there is nothing to report yet. */}

@@ -47,3 +47,20 @@ export const amountValue = (raw) => groupAmount(stripGroups(raw));
 
 /* Handler body for a grouped money input: hands the caller the bare string. */
 export const onAmountInput = (setter) => (event) => setter(stripGroups(event.target.value));
+
+/* A figure with its thousands separated, for display.
+
+   The app formatted money two ways: some places grouped with toLocaleString,
+   most called toFixed(2), which has no separators at all -- so a wallet read
+   "SSP 984690.00" and had to be counted a digit at a time to know whether it
+   said nine hundred thousand or ninety. This is the one used everywhere a
+   figure is shown.
+
+   Fixed to en-US rather than the browser's locale: the app writes SSP amounts
+   with a dot decimal throughout, and a visitor whose locale groups the other
+   way round would otherwise see "984.690,00" beside hard-coded "0.00"s. */
+export const formatAmount = (value) =>
+  (Number(value) || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });

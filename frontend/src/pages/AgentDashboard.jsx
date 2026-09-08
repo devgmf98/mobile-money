@@ -7,6 +7,7 @@ import { ArrowDown, ArrowDownLeft, ArrowUp, ArrowUpRight, ChartColumn, Clock, Cr
 import styles from './DashboardMobile.module.css';
 import { txLabel } from '../data/transactionTypes';
 import useLiveData from '../hooks/useLiveData';
+import { formatAmount } from '../utils/amount';
 
 /* Digits only, in groups of four — the same shaping the user dashboard gives
    an account number, so the two cards read alike. */
@@ -281,7 +282,7 @@ export default function AgentDashboard() {
                     </span>
                   </div>
                   <span className={styles.txAmount}>
-                    {isOutgoing(tx) ? '-' : '+'}SSP {chargedTotal(tx).toFixed(2)}
+                    {isOutgoing(tx) ? '-' : '+'}SSP {formatAmount(chargedTotal(tx))}
                   </span>
                 </div>
               ))
@@ -310,7 +311,7 @@ export default function AgentDashboard() {
             <p className="stat-label">My Wallet</p>
             <h3 className="stat-value">
               {user && user.balance !== undefined && user.balance !== null
-                ? `SSP ${(parseFloat(user.balance) || 0).toFixed(2)}`
+                ? `SSP ${formatAmount(user.balance)}`
                 : 'SSP 0.00'}
             </h3>
             <p className="balance-sub">Available Balance</p>

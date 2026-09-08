@@ -6,7 +6,7 @@ import Footer from '../components/Footer';
 import '../styles/withdraw.css';
 import '../styles/withdraw-flow.css';
 import { ArrowRight, Banknote, CircleCheck, ClipboardList, Clock, Eye, EyeOff, Phone, TriangleAlert, User, Wallet } from 'lucide-react';
-import { amountValue, onAmountInput } from '../utils/amount';
+import { amountValue, onAmountInput, formatAmount } from '../utils/amount';
 
 const n2 = (v) => {
   const n = parseFloat(v);
@@ -213,7 +213,7 @@ export default function Withdraw() {
       const customerBalance = parseFloat(userInfo.balance) || 0;
       const pendingDebit = parseFloat(userInfo.pendingDebit) || 0;
       const spendable = Math.max(0, customerBalance - pendingDebit);
-      const ssp = (v) => `SSP ${(Number(v) || 0).toFixed(2)}`;
+      const ssp = (v) => `SSP ${formatAmount(v)}`;
 
       if (withdrawAmount > spendable) {
         const errorMsg = pendingDebit > 0
@@ -294,7 +294,7 @@ export default function Withdraw() {
                   <div className="mb-2">
                     <span className="text-muted">Available Balance: </span>
                     <span className="text-success font-weight-bold" style={{ fontSize: '16px' }}>
-                      SSP {(parseFloat(userInfo.balance) || 0).toFixed(2)}
+                      SSP {formatAmount(userInfo.balance)}
                     </span>
                   </div>
                 </div>
@@ -324,7 +324,7 @@ export default function Withdraw() {
                         placeholder="0.00"
                         max={userInfo.balance || 0}
                       />
-                      <small className="text-muted">Max: SSP {(parseFloat(userInfo.balance) || 0).toFixed(2)}</small>
+                      <small className="text-muted">Max: SSP {formatAmount(userInfo.balance)}</small>
                     </div>
 
                     <button type="submit" className="btn btn-success btn-block btn-lg" disabled={loading || suspended}>

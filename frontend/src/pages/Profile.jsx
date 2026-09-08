@@ -8,6 +8,7 @@ import { authAPI } from '../utils/api';
 import '../styles/profile.css';
 import '../styles/profile-flow.css';
 import { Camera, Check, Folder, Hourglass, Moon, Settings, Sun, Upload, User, X } from 'lucide-react';
+import { formatAmount } from '../utils/amount';
 
 /* Avatar encoding. At module scope so both the file-upload and selfie paths
    read the same values regardless of declaration order inside the component. */
@@ -687,7 +688,7 @@ export default function Profile() {
 
             <div className="detail-item">
               <span className="detail-label">Current Balance</span>
-              <span className="detail-value text-success font-weight-bold">SSP {(parseFloat(user?.balance) || 0).toFixed(2)}</span>
+              <span className="detail-value text-success font-weight-bold">SSP {formatAmount(user?.balance)}</span>
             </div>
 
             {user?.role === 'agent' && user?.agentId && (

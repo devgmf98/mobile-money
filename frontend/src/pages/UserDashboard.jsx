@@ -9,6 +9,7 @@ import Footer from '../components/Footer';
 import { useNavigate } from 'react-router-dom';
 import useLiveData from '../hooks/useLiveData';
 import { txLabel } from '../data/transactionTypes';
+import { formatAmount } from '../utils/amount';
 
 /* Sets the account number the way a bank prints one: digits only, in groups of
    four. "+211912399537" reads as "2119 1239 9537". The country-code plus is
@@ -184,11 +185,11 @@ export default function UserDashboard() {
         <div className={styles.statsGrid}>
           <div className={styles.statItem + ' ' + styles.railSent}>
             <span className={styles.statLabel}>Money Sent</span>
-            <span className={styles.statValue}>SSP {(parseFloat(stats?.totalSent) || 0).toFixed(2)}</span>
+            <span className={styles.statValue}>SSP {formatAmount(stats?.totalSent)}</span>
           </div>
           <div className={styles.statItem + ' ' + styles.railReceived}>
             <span className={styles.statLabel}>Money Received</span>
-            <span className={styles.statValue}>SSP {(parseFloat(stats?.totalReceived) || 0).toFixed(2)}</span>
+            <span className={styles.statValue}>SSP {formatAmount(stats?.totalReceived)}</span>
           </div>
         </div>
       </div>
@@ -245,7 +246,7 @@ export default function UserDashboard() {
                   </span>
                 </div>
                 <span className={styles.txAmount}>
-                  {tx.type === 'sent' || tx.senderId === user?.id ? '-' : '+'}SSP {parseFloat(tx.amount || 0).toFixed(2)}
+                  {tx.type === 'sent' || tx.senderId === user?.id ? '-' : '+'}SSP {formatAmount(tx.amount)}
                 </span>
               </div>
             ))
@@ -280,7 +281,7 @@ export default function UserDashboard() {
               <p className="stat-label">My Wallet</p>
               <h3 className="stat-value">
                 {user && user.balance !== undefined && user.balance !== null
-                  ? `SSP ${(parseFloat(user.balance) || 0).toFixed(2)}`
+                  ? `SSP ${formatAmount(user.balance)}`
                   : 'SSP 0.00'}
               </h3>
               <p className="balance-sub">Available Balance</p>
@@ -291,7 +292,7 @@ export default function UserDashboard() {
             <div className="stat-icon sent tone-error"><Upload size={28} /></div>
             <div className="stat-content">
               <p className="stat-label">Money Sent</p>
-              <h3 className="stat-value" title={`SSP ${(parseFloat(stats?.totalSent) || 0).toFixed(2)}`}>SSP {(parseFloat(stats?.totalSent) || 0).toFixed(2)}</h3>
+              <h3 className="stat-value" title={`SSP ${formatAmount(stats?.totalSent)}`}>SSP {formatAmount(stats?.totalSent)}</h3>
             </div>
           </div>
 
@@ -299,7 +300,7 @@ export default function UserDashboard() {
             <div className="stat-icon received tone-success"><Inbox size={28} /></div>
             <div className="stat-content">
               <p className="stat-label">Total Received</p>
-              <h3 className="stat-value" title={`SSP ${(parseFloat(stats?.totalReceived) || 0).toFixed(2)}`}>SSP {(parseFloat(stats?.totalReceived) || 0).toFixed(2)}</h3>
+              <h3 className="stat-value" title={`SSP ${formatAmount(stats?.totalReceived)}`}>SSP {formatAmount(stats?.totalReceived)}</h3>
             </div>
           </div>
 

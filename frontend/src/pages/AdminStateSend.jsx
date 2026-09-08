@@ -6,7 +6,7 @@ import Toast from '../components/Toast';
 import { ArrowRight, Banknote, Coins, Map, Send, User } from 'lucide-react';
 import Select from '../components/Select';
 import '../styles/admin-state-send.css';
-import { amountValue, onAmountInput } from '../utils/amount';
+import { amountValue, onAmountInput, formatAmount } from '../utils/amount';
 
 export default function AdminStateSend() {
   const [states, setStates] = useState([]);
@@ -242,30 +242,30 @@ export default function AdminStateSend() {
               <>
                 <div className="summary-row">
                   <span>You send</span>
-                  <strong>{symbol} {(parseFloat(amount) || 0).toFixed(2)}</strong>
+                  <strong>{symbol} {formatAmount(amount)}</strong>
                 </div>
                 <div className="summary-row">
                   <span>Commission <em>credited to your Admin Cash</em></span>
-                  <strong className="is-credit">+{symbol} {commission.toFixed(2)}</strong>
+                  <strong className="is-credit">+{symbol} {formatAmount(commission)}</strong>
                 </div>
                 <div className="summary-row summary-total">
                   <span>Receiver gets <ArrowRight size={14} /></span>
-                  <strong>{symbol} {receiverAmount.toFixed(2)}</strong>
+                  <strong>{symbol} {formatAmount(receiverAmount)}</strong>
                 </div>
               </>
             ) : (
               <>
                 <div className="summary-row">
                   <span>You send</span>
-                  <strong>{symbol} {(parseFloat(amount) || 0).toFixed(2)}</strong>
+                  <strong>{symbol} {formatAmount(amount)}</strong>
                 </div>
                 <div className="summary-row">
                   <span>Commission <em>credited to your Admin Cash</em></span>
-                  <strong className="is-credit">+{symbol} {commission.toFixed(2)}</strong>
+                  <strong className="is-credit">+{symbol} {formatAmount(commission)}</strong>
                 </div>
                 <div className="summary-row summary-total">
                   <span>Receiver gets <ArrowRight size={14} /></span>
-                  <strong>{symbol} {(parseFloat(amount) || 0).toFixed(2)}</strong>
+                  <strong>{symbol} {formatAmount(amount)}</strong>
                 </div>
               </>
             )}
