@@ -28,3 +28,26 @@
   for = "/*"
   [headers.values]
     Permissions-Policy = "camera=(self), microphone=(), geolocation=(self)"
+
+# Why the "Failed to fetch dynamically imported module" errors happen, and the
+# half of the fix that belongs on the server.
+#
+# Asset filenames carry a hash of their contents, so a given URL under /assets
+# never changes meaning and can be cached for a year. index.html is the
+# opposite: it is the one file that says which hashed chunks make up the
+# current build, and a stale copy of it asks for chunks a deploy has already
+# deleted. Netlify revalidates HTML by default, but nothing said so out loud,
+# and a proxy or a phone browser reusing a cached page would still hold the
+# old references.
+#
+# The other half is in src/utils/lazyWithRetry.js, for the page that was
+# already open when the deploy landed and has no reason to ask again.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

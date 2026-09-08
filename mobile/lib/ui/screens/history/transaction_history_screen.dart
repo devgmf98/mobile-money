@@ -83,16 +83,20 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final body = Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.gutter,
-            4,
-            AppSizes.gutter,
-            10,
-          ),
+          /* No horizontal inset here any more: the filter strip below scrolls,
+             and a scroller that starts and stops inside the gutter looks cut
+             off at both ends. Its own padding puts the chips where the gutter
+             would have, while letting them run to the screen edge as they
+             move. The search field keeps the inset of its own. */
+          padding: const EdgeInsets.fromLTRB(0, 4, 0, 10),
           child: Column(
             children: [
               if (_searching) ...[
-                TextField(
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.gutter,
+                  ),
+                  child: TextField(
                   controller: _search,
                   autofocus: true,
                   onChanged: (_) => setState(() {}),
@@ -106,23 +110,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       }),
                       icon: const Icon(Icons.close_rounded, size: 18),
                       color: AppColors.textMuted,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
               ],
-              Row(
-                children: [
-                  for (final filter in TxFilter.values) ...[
-                    _FilterChip(
-                      label: filter.label,
-                      active: _filter == filter,
-                      onTap: () => setState(() => _filter = filter),
-                    ),
-                    if (filter != TxFilter.values.last)
-                      const SizedBox(width: 8),
-                  ],
-                ],
+              TxFilterBar(
+                value: _filter,
+                onChanged: (filter) => setState(() => _filter = filter),
               ),
             ],
           ),
@@ -274,6 +270,47 @@ class _Body extends StatelessWidget {
   }
 }
 
+/// The row of filters above the list.
+///
+/// Scrollable, and each chip is as wide as its own word. The four used to be
+/// Expanded siblings in a Row, splitting the width evenly whatever they had to
+/// say -- so "Withdrawals", the longest by some way, was ellipsised to
+/// "Withdraw..." in a quarter that "All" left half empty. Sizing each to its
+/// label and letting the strip scroll means a filter is never named only in
+/// part, and more of them can be added later without taking width from the
+/// rest.
+///
+/// Its own horizontal padding rather than the header's: a scroller that starts
+/// and stops inside the gutter looks cut off at both ends, so this puts the
+/// chips where the gutter would while letting them run to the screen edge as
+/// they move.
+class TxFilterBar extends StatelessWidget {
+  const TxFilterBar({super.key, required this.value, required this.onChanged});
+
+  final TxFilter value;
+  final ValueChanged<TxFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.gutter),
+      child: Row(
+        children: [
+          for (final filter in TxFilter.values) ...[
+            _FilterChip(
+              label: filter.label,
+              active: value == filter,
+              onTap: () => onChanged(filter),
+            ),
+            if (filter != TxFilter.values.last) const SizedBox(width: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.label,
@@ -287,25 +324,26 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Material(
-        color: active ? AppColors.primary : AppColors.canvas,
+    return Material(
+      color: active ? AppColors.primary : AppColors.canvas,
+      borderRadius: BorderRadius.circular(AppSizes.radiusPill),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-          child: Container(
-            height: 36,
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: active ? Colors.white : AppColors.textSecondary,
-              ),
+        child: Container(
+          height: 36,
+          alignment: Alignment.center,
+          /* Enough that the shortest label still reads as a pill rather than
+             a badge, and the longest is not pressed against the edge. */
+          constraints: const BoxConstraints(minWidth: 68),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(
+            label,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: active ? Colors.white : AppColors.textSecondary,
             ),
           ),
         ),

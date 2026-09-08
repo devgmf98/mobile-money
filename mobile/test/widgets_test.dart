@@ -1,3 +1,5 @@
+import 'package:flutter/rendering.dart';
+import 'package:moneypay/ui/screens/history/transaction_history_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:moneypay/core/theme/app_colors.dart';
@@ -19,6 +21,7 @@ import 'package:moneypay/ui/widgets/wallet_widgets.dart';
 void _noop() {}
 
 void main() {
+  _filterBarTests();
   Widget host(Widget child) => MaterialApp(
     theme: AppTheme.light,
     home: Scaffold(
@@ -485,5 +488,76 @@ void main() {
 
     await tester.tap(find.text('Try again'));
     expect(pressed, isTrue);
+  });
+}
+
+/* The history filter strip. Pumped at a real phone width, because the bug it
+   fixes only appears when the four labels together are wider than the screen. */
+void _filterBarTests() {
+  Widget bar({double width = 360}) => MaterialApp(
+    theme: AppTheme.light,
+    home: Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: width,
+          child: TxFilterBar(value: TxFilter.all, onChanged: (_) {}),
+        ),
+      ),
+    ),
+  );
+
+  group('TxFilterBar', () {
+    testWidgets('names every filter in full, "Withdrawals" included', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(bar());
+
+      for (final filter in TxFilter.values) {
+        expect(find.text(filter.label), findsOneWidget);
+      }
+
+      /* The real check. A chip whose label did not fit reports it here, which
+         is what "Withdraw..." was. */
+      for (final filter in TxFilter.values) {
+        final painted = tester.renderObject<RenderParagraph>(
+          find.descendant(
+            of: find.text(filter.label),
+            matching: find.byType(RichText),
+          ),
+        );
+        expect(
+          painted.didExceedMaxLines,
+          isFalse,
+          reason: '${filter.label} is being truncated',
+        );
+      }
+    });
+
+    testWidgets('scrolls sideways when the chips outrun the width', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(bar(width: 240));
+
+      final scrollable = tester.widget<SingleChildScrollView>(
+        find.byType(SingleChildScrollView),
+      );
+      expect(scrollable.scrollDirection, Axis.horizontal);
+
+      // Narrow enough that the last chip starts off-screen; dragging brings it in.
+      final before = tester.getTopLeft(find.text('Withdrawals')).dx;
+      await tester.drag(find.byType(TxFilterBar), const Offset(-120, 0));
+      await tester.pumpAndSettle();
+      final after = tester.getTopLeft(find.text('Withdrawals')).dx;
+
+      expect(after, lessThan(before));
+    });
   });
 }

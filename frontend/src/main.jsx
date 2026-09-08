@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react'
+import { lazyWithRetry } from './utils/lazyWithRetry'
 import '@fontsource-variable/inter'
 // Helper to decode JWT
 function decodeJWT(token) {
@@ -124,44 +125,44 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import UserLayout from './components/UserLayout'
-const UserDashboard = React.lazy(() => import('./pages/UserDashboard'))
-const SendMoney = React.lazy(() => import('./pages/SendMoney'))
-const Withdraw = React.lazy(() => import('./pages/Withdraw'))
-const Transactions = React.lazy(() => import('./pages/Transactions'))
-const Notifications = React.lazy(() => import('./pages/Notifications'))
-const Profile = React.lazy(() => import('./pages/Profile'))
+const UserDashboard = lazyWithRetry(() => import('./pages/UserDashboard'))
+const SendMoney = lazyWithRetry(() => import('./pages/SendMoney'))
+const Withdraw = lazyWithRetry(() => import('./pages/Withdraw'))
+const Transactions = lazyWithRetry(() => import('./pages/Transactions'))
+const Notifications = lazyWithRetry(() => import('./pages/Notifications'))
+const Profile = lazyWithRetry(() => import('./pages/Profile'))
 import AdminLayout from './components/AdminLayout'
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'))
-const AdminUsers = React.lazy(() => import('./pages/AdminUsers'))
-const AdminTransactions = React.lazy(() => import('./pages/AdminTransactions'))
-const AdminNotifications = React.lazy(() => import('./pages/AdminNotifications'))
-const AdminTopup = React.lazy(() => import('./pages/AdminTopup'))
-const AdminWithdraw = React.lazy(() => import('./pages/AdminWithdraw'))
-const AdminPushMoney = React.lazy(() => import('./pages/AdminPushMoney'))
-const AdminProfile = React.lazy(() => import('./pages/AdminProfile'))
-const AdminSettings = React.lazy(() => import('./pages/AdminSettings'))
-const AdminTieredCommission = React.lazy(() => import('./pages/AdminTieredCommission'))
-const AdminStateSettings = React.lazy(() => import('./pages/AdminStateSettings'))
-const AdminStateSend = React.lazy(() => import('./pages/AdminStateSend'))
-const AdminReports = React.lazy(() => import('./pages/AdminReports'))
-const Contact = React.lazy(() => import('./pages/Contact'))
-const Help = React.lazy(() => import('./pages/Help'))
-const Privacy = React.lazy(() => import('./pages/Privacy'))
-const Terms = React.lazy(() => import('./pages/Terms'))
-const Security = React.lazy(() => import('./pages/Security'))
-const AdminMessages = React.lazy(() => import('./pages/AdminMessages'))
-const AdminStatePending = React.lazy(() => import('./pages/AdminStatePending'))
-const AdminCurrency = React.lazy(() => import('./pages/AdminCurrency'))
-const AdminCurrencyRates = React.lazy(() => import('./pages/AdminCurrencyRates'))
-const AdminMoneyExchange = React.lazy(() => import('./pages/AdminMoneyExchange'))
-const AdminExchangeTransactions = React.lazy(() => import('./pages/AdminExchangeTransactions'))
-const AgentDashboard = React.lazy(() => import('./pages/AgentDashboard'))
-const AgentWithdraw = React.lazy(() => import('./pages/AgentWithdraw'))
-const PendingWithdrawals = React.lazy(() => import('./pages/PendingWithdrawals'))
-const PendingAdminRequests = React.lazy(() => import('./pages/PendingAdminRequests'))
-const Designing = React.lazy(() => import('./pages/Designing'))
-const QRScan = React.lazy(() => import('./pages/QRScan'))
-const ReceiveQR = React.lazy(() => import('./pages/ReceiveQR'))
+const AdminDashboard = lazyWithRetry(() => import('./pages/AdminDashboard'))
+const AdminUsers = lazyWithRetry(() => import('./pages/AdminUsers'))
+const AdminTransactions = lazyWithRetry(() => import('./pages/AdminTransactions'))
+const AdminNotifications = lazyWithRetry(() => import('./pages/AdminNotifications'))
+const AdminTopup = lazyWithRetry(() => import('./pages/AdminTopup'))
+const AdminWithdraw = lazyWithRetry(() => import('./pages/AdminWithdraw'))
+const AdminPushMoney = lazyWithRetry(() => import('./pages/AdminPushMoney'))
+const AdminProfile = lazyWithRetry(() => import('./pages/AdminProfile'))
+const AdminSettings = lazyWithRetry(() => import('./pages/AdminSettings'))
+const AdminTieredCommission = lazyWithRetry(() => import('./pages/AdminTieredCommission'))
+const AdminStateSettings = lazyWithRetry(() => import('./pages/AdminStateSettings'))
+const AdminStateSend = lazyWithRetry(() => import('./pages/AdminStateSend'))
+const AdminReports = lazyWithRetry(() => import('./pages/AdminReports'))
+const Contact = lazyWithRetry(() => import('./pages/Contact'))
+const Help = lazyWithRetry(() => import('./pages/Help'))
+const Privacy = lazyWithRetry(() => import('./pages/Privacy'))
+const Terms = lazyWithRetry(() => import('./pages/Terms'))
+const Security = lazyWithRetry(() => import('./pages/Security'))
+const AdminMessages = lazyWithRetry(() => import('./pages/AdminMessages'))
+const AdminStatePending = lazyWithRetry(() => import('./pages/AdminStatePending'))
+const AdminCurrency = lazyWithRetry(() => import('./pages/AdminCurrency'))
+const AdminCurrencyRates = lazyWithRetry(() => import('./pages/AdminCurrencyRates'))
+const AdminMoneyExchange = lazyWithRetry(() => import('./pages/AdminMoneyExchange'))
+const AdminExchangeTransactions = lazyWithRetry(() => import('./pages/AdminExchangeTransactions'))
+const AgentDashboard = lazyWithRetry(() => import('./pages/AgentDashboard'))
+const AgentWithdraw = lazyWithRetry(() => import('./pages/AgentWithdraw'))
+const PendingWithdrawals = lazyWithRetry(() => import('./pages/PendingWithdrawals'))
+const PendingAdminRequests = lazyWithRetry(() => import('./pages/PendingAdminRequests'))
+const Designing = lazyWithRetry(() => import('./pages/Designing'))
+const QRScan = lazyWithRetry(() => import('./pages/QRScan'))
+const ReceiveQR = lazyWithRetry(() => import('./pages/ReceiveQR'))
 import RouteError from './pages/RouteError'
 
 /* ---------------------------------------------------------------------------
@@ -402,7 +403,7 @@ const router = createBrowserRouter(
    complete. */
 if (typeof window !== 'undefined') {
   const warmRouteChunks = () => {
-    /* Same specifiers the React.lazy calls use, so Vite maps them to the same
+    /* Same specifiers the lazyWithRetry calls use, so Vite maps them to the same
        chunks rather than emitting a second copy.
 
        MobileDashboard and AdminCurrencyConverter are excluded because no route
