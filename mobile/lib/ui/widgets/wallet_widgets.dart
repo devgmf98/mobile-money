@@ -540,7 +540,7 @@ class TransactionTile extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontSize: 13.5,
+                                    fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.textPrimary,
                                   ),
@@ -558,7 +558,7 @@ class TransactionTile extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: AppColors.textSecondary,
                             ),
                           ),
@@ -568,7 +568,7 @@ class TransactionTile extends StatelessWidget {
                               '${Fmt.date(transaction.createdAt)} · '
                               '${Fmt.time(transaction.createdAt)}',
                               style: const TextStyle(
-                                fontSize: 11,
+                                fontSize: 10,
                                 color: AppColors.textMuted,
                               ),
                             ),
@@ -601,7 +601,7 @@ class TransactionTile extends StatelessWidget {
                               ),
                               maxLines: 1,
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w800,
                                 color: accent,
                                 fontFeatures: const [
@@ -648,7 +648,7 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         status.label,
         style: TextStyle(
-          fontSize: 9.5,
+          fontSize: 9,
           fontWeight: FontWeight.w700,
           color: status.color,
         ),
@@ -683,7 +683,7 @@ class _Footnote extends StatelessWidget {
           label,
           maxLines: 1,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9.5,
             fontWeight: FontWeight.w700,
             color: color,
             fontFeatures: const [FontFeature.tabularFigures()],
