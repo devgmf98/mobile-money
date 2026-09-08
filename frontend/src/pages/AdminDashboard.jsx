@@ -373,7 +373,10 @@ export default function AdminDashboard() {
       {/* Exchanges made by THIS admin, split by currency. Kept out of Total
           Cash Out because a conversion is not a cash-out, and exchanges
           never carry commission. */}
-      <div className="exchange-currency-row">
+      {/* exchange-pairs: these cards carry both sides of a trade on their
+          sub-line, which the summary tiles above do not, so they opt out of
+          the two-up phone layout those use. */}
+      <div className="exchange-currency-row exchange-pairs">
         <div className="exchange-currency-head">
           {/* An admin sees every exchange, so "My" would be wrong for them;
               a sub-admin sees only their own and it is right. */}

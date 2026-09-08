@@ -1092,3 +1092,30 @@
    broke mid-figure — "300" on one row and "USD" on the next — so the wrap now
    falls on the dash between the two sides of the trade. */
 .stat-sub .nb { white-space: nowrap; }
+
+/* ==========================================================================
+   Exchange pair cards: one per row on a phone
+
+   The two-up phone layout above is right for the summary tiles, which carry a
+   label and a number. These carry a third line with both sides of the trade --
+   "12,500.5 USD converted - 100,004,000 SSP" -- and at ~162px a track cannot
+   hold it. It wrapped onto a second line with the dash left dangling at the
+   end of the first, and the card stacked its icon above the text, so each one
+   stood 137px tall against 82px on a desktop.
+
+   Full width puts the icon back beside the text and the sub-line back on one
+   line. Three cards then take less height than two rows of the stacked
+   version did, so nothing is lost by giving up the second column.
+   ========================================================================== */
+@media screen and (max-width: 640px) {
+  .exchange-pairs .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exchange-pairs .dashboard-grid .stat-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 13px;
+    padding: 14px;
+  }
+}
