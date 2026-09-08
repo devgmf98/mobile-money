@@ -97,19 +97,19 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     horizontal: AppSizes.gutter,
                   ),
                   child: TextField(
-                  controller: _search,
-                  autofocus: true,
-                  onChanged: (_) => setState(() {}),
-                  decoration: InputDecoration(
-                    hintText: 'Search by name, number or reference',
-                    prefixIcon: const Icon(Icons.search_rounded, size: 19),
-                    suffixIcon: IconButton(
-                      onPressed: () => setState(() {
-                        _search.clear();
-                        _searching = false;
-                      }),
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      color: AppColors.textMuted,
+                    controller: _search,
+                    autofocus: true,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: 'Search by name, number or reference',
+                      prefixIcon: const Icon(Icons.search_rounded, size: 19),
+                      suffixIcon: IconButton(
+                        onPressed: () => setState(() {
+                          _search.clear();
+                          _searching = false;
+                        }),
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        color: AppColors.textMuted,
                       ),
                     ),
                   ),
@@ -211,7 +211,9 @@ class _Body extends StatelessWidget {
 
     if (visible.isEmpty) {
       return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
         children: [
           const SizedBox(height: 30),
           EmptyState(
@@ -232,7 +234,9 @@ class _Body extends StatelessWidget {
     }
 
     return ListView.builder(
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(
         AppSizes.gutter,
         0,

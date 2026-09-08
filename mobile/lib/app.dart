@@ -106,6 +106,8 @@ class MoneyPayApp extends StatelessWidget {
         navigatorKey: navigatorKey,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
+        // One place, so every list in the app scrolls the same way.
+        scrollBehavior: const AppScrollBehavior(),
         home: const _RootGate(),
         onGenerateRoute: generateRoute,
         // Holds the app to a phone shape in a desktop browser, and pins the

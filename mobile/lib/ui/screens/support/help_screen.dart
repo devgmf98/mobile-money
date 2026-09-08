@@ -102,7 +102,9 @@ class _HelpScreenState extends State<HelpScreen> {
 
     if (_articles.isEmpty) {
       return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
         children: [
           const SizedBox(height: 40),
           EmptyState(
@@ -127,7 +129,9 @@ class _HelpScreenState extends State<HelpScreen> {
 
     if (visible.isEmpty) {
       return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
         children: [
           const SizedBox(height: 40),
           EmptyState(
@@ -144,7 +148,9 @@ class _HelpScreenState extends State<HelpScreen> {
     }
 
     return ListView.separated(
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: const EdgeInsets.fromLTRB(
         AppSizes.gutter,
         0,

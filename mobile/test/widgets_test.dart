@@ -21,6 +21,7 @@ import 'package:moneypay/ui/widgets/wallet_widgets.dart';
 void _noop() {}
 
 void main() {
+  _scrollTests();
   _filterBarTests();
   Widget host(Widget child) => MaterialApp(
     theme: AppTheme.light,
@@ -558,6 +559,90 @@ void _filterBarTests() {
       final after = tester.getTopLeft(find.text('Withdrawals')).dx;
 
       expect(after, lessThan(before));
+    });
+  });
+}
+
+/* Scrolling. The behaviour is set once on MaterialApp, so what matters is that
+   it actually reaches a plain list somewhere under it -- not that the class
+   itself returns the right value in isolation. */
+void _scrollTests() {
+  group('AppScrollBehavior', () {
+    testWidgets('gives every list bouncing physics, with no glow', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          scrollBehavior: const AppScrollBehavior(),
+          home: Scaffold(
+            body: ListView.builder(
+              itemCount: 60,
+              itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
+            ),
+          ),
+        ),
+      );
+
+      /* Walked rather than type-checked. A primary ListView supplies its own
+         AlwaysScrollableScrollPhysics, which Scrollable applies *on top of*
+         the behaviour's -- so the outermost class is that one and the bounce
+         sits in its parent chain. Asserting on the outer type passes on iOS
+         and fails on Android for reasons that have nothing to do with this. */
+      final position = tester
+          .state<ScrollableState>(find.byType(Scrollable))
+          .position;
+      var link = position.physics;
+      var bounces = false;
+      while (true) {
+        if (link is BouncingScrollPhysics) {
+          bounces = true;
+          break;
+        }
+        final next = link.parent;
+        if (next == null) break;
+        link = next;
+      }
+      expect(
+        bounces,
+        isTrue,
+        reason:
+            'no BouncingScrollPhysics in ${position.physics} -- Android would '
+            'clamp, which is the abrupt stop being reported',
+      );
+
+      // The glow is what a clamping list paints when a flick reaches the end.
+      expect(find.byType(GlowingOverscrollIndicator), findsNothing);
+    });
+
+    testWidgets('a list can be dragged past its end and settles back', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          scrollBehavior: const AppScrollBehavior(),
+          home: Scaffold(
+            body: ListView.builder(
+              itemCount: 60,
+              itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
+            ),
+          ),
+        ),
+      );
+
+      final pos = tester.state<ScrollableState>(find.byType(Scrollable)).position;
+      expect(pos.pixels, 0);
+
+      // Clamping physics refuses this outright; bouncing carries it.
+      await tester.drag(find.byType(ListView), const Offset(0, 120));
+      await tester.pump();
+      expect(
+        pos.pixels,
+        lessThan(0),
+        reason: 'the list should follow the finger past its start',
+      );
+
+      await tester.pumpAndSettle();
+      expect(pos.pixels, 0, reason: 'and ease back to rest');
     });
   });
 }

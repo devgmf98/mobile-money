@@ -98,7 +98,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
     if (controller.items.isEmpty) {
       return ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        ),
         children: [
           const SizedBox(height: 60),
           EmptyState(
@@ -121,7 +123,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     return ListView.separated(
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: controller.items.length,
       separatorBuilder: (_, _) =>

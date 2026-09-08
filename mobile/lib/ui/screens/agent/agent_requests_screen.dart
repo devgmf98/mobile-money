@@ -95,7 +95,9 @@ class _AgentRequestsScreenState extends State<AgentRequestsScreen> {
           color: AppColors.primary,
           child: requests.isEmpty
               ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
                   children: const [
                     SizedBox(height: 60),
                     EmptyState(

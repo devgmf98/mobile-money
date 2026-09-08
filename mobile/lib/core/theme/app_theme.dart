@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -244,4 +245,44 @@ class AppTheme {
       errorStyle: const TextStyle(color: AppColors.danger, fontSize: 12.5),
     );
   }
+}
+
+/// How every scrollable in the app behaves.
+///
+/// Set once on [MaterialApp.scrollBehavior] so it reaches all of them, rather
+/// than being remembered at each ListView.
+///
+/// Android's default is [ClampingScrollPhysics]: a list stops dead at its end
+/// and answers a flick past it with a coloured glow. That stop is what reads
+/// as the app not scrolling smoothly -- the motion ends in one frame instead
+/// of easing out. Bouncing physics decelerates instead, and carries the
+/// overscroll in the list itself, so nothing has to be painted over the
+/// content to say the end has been reached.
+///
+/// The drag devices are widened at the same time. A phone only ever sends
+/// touch, but the same build runs in a desktop browser, where by default a
+/// mouse cannot drag a list at all -- only the wheel scrolls it.
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+
+  /// No glow: it exists to announce the end of a list, which the bounce above
+  /// now does with the content itself.
+  @override
+  Widget buildOverscrollIndicator(
+    BuildContext context,
+    Widget child,
+    ScrollableDetails details,
+  ) => child;
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+    PointerDeviceKind.stylus,
+  };
 }
