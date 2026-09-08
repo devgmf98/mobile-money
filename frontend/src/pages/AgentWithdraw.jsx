@@ -153,6 +153,21 @@ export default function AgentWithdraw() {
       return;
     }
 
+    /* Refused here as well as on the server, which is the only place that can
+       be sure -- another agent may have raised a request since this page
+       loaded. Saying it now keeps the customer from being asked to approve
+       money that is already promised. */
+    if (totalCost > spendable) {
+      setToastMessage(
+        pendingDebit > 0
+          ? `Total amount requested is greater than the user's balance. ${money(pendingDebit)} is already awaiting their approval, so only ${money(spendable)} of the ${money(customerBalance)} balance is still free.`
+          : `Total amount requested is greater than the user's balance of ${money(customerBalance)}.`,
+      );
+      setToastType('error');
+      setShowToast(true);
+      return;
+    }
+
     setLoading(true);
     try {
       // Support both user.phone and user.phoneNumber
@@ -189,11 +204,17 @@ export default function AgentWithdraw() {
   const totalFee = priced ? n2(priced.totalFee) : 0;
   const totalCost = entered + totalFee;
   const customerBalance = n2(userInfo?.balance);
-  const overBalance = amount !== '' && totalCost > customerBalance;
+
+  /* Requests this customer has not answered yet are already claims on their
+     wallet -- approving them takes the amount and both commissions -- so what
+     can still be pulled is what is left after them, not the whole balance. */
+  const pendingDebit = n2(userInfo?.pendingDebit);
+  const spendable = Math.max(0, customerBalance - pendingDebit);
+  const overBalance = amount !== '' && totalCost > spendable;
 
   const setPortion = (fraction) => {
-    const ceiling = maxAmount != null ? maxAmount : customerBalance;
-    const wanted = fraction === 1 ? ceiling : Math.min(customerBalance * fraction, ceiling);
+    const ceiling = Math.min(maxAmount != null ? maxAmount : spendable, spendable);
+    const wanted = fraction === 1 ? ceiling : Math.min(spendable * fraction, ceiling);
     setAmount(String(Math.floor(wanted * 100) / 100));
   };
 
@@ -252,8 +273,11 @@ export default function AgentWithdraw() {
                     <span className="pm-user-phone">{customerPhone}</span>
                   </span>
                   <span className="pm-user-balance">
-                    <span>Balance</span>
-                    <strong>{money(userInfo.balance)}</strong>
+                    {/* When some of the balance is already promised, the free
+                        figure is the one that matters here -- the whole
+                        balance on its own reads as available when it is not. */}
+                    <span>{pendingDebit > 0 ? 'Free to pull' : 'Balance'}</span>
+                    <strong>{money(pendingDebit > 0 ? spendable : userInfo.balance)}</strong>
                   </span>
                 </div>
               ) : searched && !searching ? (
@@ -323,7 +347,9 @@ export default function AgentWithdraw() {
 
                   {overBalance ? (
                     <small className="pm-error">
-                      {money(totalCost)} including fees is more than their balance of {money(customerBalance)}.
+                      {pendingDebit > 0
+                        ? <>Total amount requested is greater than the user&rsquo;s balance. {money(pendingDebit)} is already awaiting their approval, so only {money(spendable)} of {money(customerBalance)} is still free.</>
+                        : <>{money(totalCost)} including fees is more than their balance of {money(customerBalance)}.</>}
                     </small>
                   ) : entered > 0 && priced ? (
                     <small className="pm-hint">

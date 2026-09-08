@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { quoteWithdrawal, quoteSendMoney, maxWithdrawable, maxSendable } from '../utils/commission.js';
 import sequelize from '../config/database.js';
+import { pendingDebitTotal } from '../utils/pendingDebits.js';
 import Transaction from '../models/Transaction.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
@@ -518,11 +519,19 @@ export const getUserInfo = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    /* Pull Funds looks the customer up here before asking for an amount, so
+       this is where it learns how much of the balance is already committed to
+       requests they have not answered yet. */
+    const pendingDebit = await pendingDebitTotal(user.id);
+    const balance = parseFloat(user.balance) || 0;
+
     res.json({
       id: user.id,
       name: user.name,
       phone: user.phone,
-      balance: parseFloat(user.balance) || 0,
+      balance,
+      pendingDebit,
+      availableBalance: parseFloat((balance - pendingDebit).toFixed(2)),
       email: user.email,
       role: user.role,
       isVerified: user.isVerified,

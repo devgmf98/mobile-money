@@ -44,14 +44,23 @@ export default function AdminWithdraw() {
 
   const balance = n2(agentInfo?.balance);
   const entered = n2(amount);
-  const remaining = balance - entered;
-  const overBalance = agentInfo && amount !== '' && entered > balance;
-  const canWithdraw = !!agentInfo && entered > 0 && !overBalance && !loading;
 
   const needsApproval = useMemo(() => {
     if (!agentInfo || typeof agentInfo.autoAdminCashout === 'undefined') return null;
     return !agentInfo.autoAdminCashout;
   }, [agentInfo]);
+
+  /* Requests the agent has not answered yet are already claims on this
+     balance, so the amount that can still be asked for is what is left after
+     them -- not the balance itself. An instant cash-out settles on the spot
+     and queues behind nothing, so it is only measured against the balance. */
+  const pending = n2(agentInfo?.pendingCashOut);
+  const spendable = Math.max(0, needsApproval === false ? balance : balance - pending);
+  // What the wallet holds once this one settles -- still measured against the
+  // whole balance, since the pending requests have not left it yet.
+  const remaining = balance - entered;
+  const overBalance = agentInfo && amount !== '' && entered > spendable;
+  const canWithdraw = !!agentInfo && entered > 0 && !overBalance && !loading;
 
   const handleCheckAgent = async (e) => {
     e.preventDefault();
@@ -84,7 +93,8 @@ export default function AdminWithdraw() {
   };
 
   const setPortion = (fraction) => {
-    setAmount(String(Math.floor(balance * fraction * 100) / 100));
+    // Of what is still free to request, so Max cannot itself exceed the limit.
+    setAmount(String(Math.floor(spendable * fraction * 100) / 100));
   };
 
   const handleWithdraw = async (e) => {
@@ -100,8 +110,16 @@ export default function AdminWithdraw() {
       setError('Amount must be greater than 0.');
       return;
     }
-    if (entered > balance) {
-      setError('Amount exceeds the agent’s available balance.');
+    if (entered > spendable) {
+      /* The server refuses this too -- it is the only place that can, since
+         another admin may have raised a request since this page loaded -- but
+         saying so here means the agent is never asked for money that was
+         already promised elsewhere. */
+      setError(
+        pending > 0
+          ? `Total amount requested is greater than the agent’s balance. ${money(pending)} is already awaiting their approval, so only ${money(spendable)} of the ${money(balance)} balance is still free.`
+          : 'Amount exceeds the agent’s available balance.',
+      );
       return;
     }
 
@@ -261,7 +279,11 @@ export default function AdminWithdraw() {
                     </div>
 
                     {overBalance
-                      ? <small className="aw-error">Exceeds the available balance of {money(balance)}.</small>
+                      ? <small className="aw-error">
+                          {pending > 0
+                            ? <>Total amount requested is greater than the agent&rsquo;s balance. Only {money(spendable)} is still free.</>
+                            : <>Exceeds the available balance of {money(balance)}.</>}
+                        </small>
                       : <small className="aw-hint">Removed from the agent&rsquo;s account.</small>}
                   </div>
 
@@ -270,13 +292,27 @@ export default function AdminWithdraw() {
                       <span>Current balance</span>
                       <strong>{money(balance)}</strong>
                     </div>
+                    {/* Only when there is something to say: a nil row of every
+                        figure a page could show is noise on the common case. */}
+                    {pending > 0 && (
+                      <>
+                        <div className="aw-summary-row">
+                          <span>Awaiting their approval</span>
+                          <strong className="is-out">{money(pending)}</strong>
+                        </div>
+                        <div className="aw-summary-row">
+                          <span>Free to request</span>
+                          <strong>{money(spendable)}</strong>
+                        </div>
+                      </>
+                    )}
                     <div className="aw-summary-row">
                       <span>Withdrawing</span>
                       <strong className="is-out">&minus; {money(entered)}</strong>
                     </div>
                     <div className="aw-summary-row is-total">
                       <span>Balance after</span>
-                      <strong>{money(overBalance ? balance : remaining)}</strong>
+                      <strong>{money(Math.max(0, remaining))}</strong>
                     </div>
                   </div>
 

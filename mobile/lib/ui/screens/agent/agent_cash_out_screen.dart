@@ -138,6 +138,32 @@ class _AgentCashOutScreenState extends State<AgentCashOutScreen> {
       return;
     }
 
+    /* What approving actually takes out of the customer's wallet: the cash
+       plus both commissions. Priced by the server, so this is the same figure
+       it will check. */
+    final cost = _quote.totalDebit > 0 ? _quote.totalDebit : _amountValue;
+
+    /* Requests the customer has not answered yet are already claims on the
+       same balance, so they come off what is still available. Without this an
+       agent could raise a second request that fit on its own, and the customer
+       would be left holding two they could only approve one of. The server
+       refuses it too -- it is the only side that can be certain, since another
+       agent may have asked since this lookup -- but catching it here means the
+       customer is never asked in the first place. */
+    if (cost > customer.availableBalance) {
+      final free = Fmt.money(customer.availableBalance);
+      setState(
+        () => _error = customer.pendingDebit > 0
+            ? "Total amount requested is greater than the user's balance. "
+                  '${Fmt.money(customer.pendingDebit)} is already awaiting their '
+                  'approval, so only $free is still free.'
+            : "Total amount requested is greater than the user's balance of "
+                  '${Fmt.money(customer.balance)}.',
+      );
+      AppSnack.error(context, _error!);
+      return;
+    }
+
     _keyboardSink.requestFocus();
     setState(() {
       _submitting = true;

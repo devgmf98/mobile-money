@@ -205,8 +205,19 @@ export default function Withdraw() {
       }
 
       const withdrawAmount = parseFloat(amount);
-      if (userInfo.balance < withdrawAmount) {
-        const errorMsg = `User has insufficient balance. Available: SSP ${(parseFloat(userInfo.balance) || 0).toFixed(2)}`;
+      /* Requests this customer has not answered yet are already claims on the
+         same wallet, so they come off what can still be pulled. Without this
+         two requests that each fit could be raised against one balance, and
+         the second only failed once the customer tried to approve it. */
+      const customerBalance = parseFloat(userInfo.balance) || 0;
+      const pendingDebit = parseFloat(userInfo.pendingDebit) || 0;
+      const spendable = Math.max(0, customerBalance - pendingDebit);
+      const ssp = (v) => `SSP ${(Number(v) || 0).toFixed(2)}`;
+
+      if (withdrawAmount > spendable) {
+        const errorMsg = pendingDebit > 0
+          ? `Total amount requested is greater than the user's balance. ${ssp(pendingDebit)} is already awaiting their approval, so only ${ssp(spendable)} of the ${ssp(customerBalance)} balance is still free.`
+          : `User has insufficient balance. Available: ${ssp(customerBalance)}`;
         setError(errorMsg);
         setToast({ message: errorMsg, type: 'error' });
         setLoading(false);

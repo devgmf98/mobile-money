@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import { phoneVariants } from '../utils/helpers.js';
 import { quoteWithdrawal } from '../utils/commission.js';
+import { pendingDebitTotal, describeShortfall } from '../utils/pendingDebits.js';
 import sequelize from '../config/database.js';
 import User from '../models/User.js';
 import WithdrawalRequest from '../models/WithdrawalRequest.js';
@@ -51,6 +52,23 @@ export const requestWithdrawalFromUser = async (req, res) => {
         message: 'User has insufficient balance',
         required: q.totalDebit,
         available: parseFloat(user.balance),
+      });
+    }
+
+    /* And it has to clear the requests already waiting on them. Without this
+       an agent could raise several pulls that were each affordable alone,
+       leaving the user a queue they could only approve part of -- the rest
+       failing at approval, long after everyone had been told otherwise. */
+    const pending = await pendingDebitTotal(user.id);
+    if (pending + q.totalDebit > parseFloat(user.balance)) {
+      const detail = describeShortfall({
+        balance: user.balance, pending, amount: q.totalDebit, party: "user",
+      });
+      return res.status(400).json({
+        message: detail.message,
+        pending,
+        required: q.totalDebit,
+        available: detail.available,
       });
     }
     const agentCommissionPercent = q.agentPercent;

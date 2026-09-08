@@ -58,6 +58,7 @@ import User from '../models/User.js';
 import Transaction from '../models/Transaction.js';
 import Notification from '../models/Notification.js';
 import WithdrawalRequest from '../models/WithdrawalRequest.js';
+import { pendingDebitTotal, describeShortfall } from '../utils/pendingDebits.js';
 import { generateTransactionId, isStaffRole } from '../utils/helpers.js';
 import { sendSMS } from '../utils/sms.js';
 import { getIO } from '../utils/socket.js';
@@ -599,6 +600,21 @@ export const withdrawFromAgent = async (req, res) => {
       return res.status(400).json({ message: 'Insufficient agent balance' });
     }
 
+    /* Requests already waiting on this agent count against the same balance.
+       Checked here rather than only at approval so the admin is told now, not
+       after the agent has been asked for money that was never there. An
+       instant cash-out below settles immediately and is covered by the plain
+       balance check above; only a request has to queue behind the others. */
+    if (!agent.autoAdminCashout) {
+      const pending = await pendingDebitTotal(agent.id);
+      if (pending + amount > parseFloat(agent.balance)) {
+        const detail = describeShortfall({
+          balance: agent.balance, pending, amount, party: "agent",
+        });
+        return res.status(400).json({ message: detail.message, pending, available: detail.available });
+      }
+    }
+
     // If agent does NOT allow instant admin cashouts (autoAdminCashout = false), approval IS needed
     // Send request to agent for approval
     if (!agent.autoAdminCashout) {
@@ -734,9 +750,16 @@ export const findAgentByAgentId = async (req, res) => {
       return res.status(400).json({ message: 'Specified user is not an agent' });
     }
 
+    /* Sent with the balance because the balance alone is misleading: some of
+       it may already be committed to requests the agent has not answered yet,
+       and the form needs to say so before anything is submitted. */
+    const pendingCashOut = await pendingDebitTotal(agent.id);
+
     res.json({
       ...agent.toJSON(),
-      balance: parseFloat(agent.balance) || 0
+      balance: parseFloat(agent.balance) || 0,
+      pendingCashOut,
+      availableBalance: parseFloat(((parseFloat(agent.balance) || 0) - pendingCashOut).toFixed(2)),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -1112,6 +1135,18 @@ export const requestAgentWithdrawal = async (req, res) => {
 
     if (agent.balance < parsedAmount) {
       return res.status(400).json({ message: 'Insufficient agent balance' });
+    }
+
+    /* Same rule as withdrawFromAgent: a queued request is money already spoken
+       for, so it has to be added to this one before comparing to the balance. */
+    if (!agent.autoAdminCashout) {
+      const pending = await pendingDebitTotal(agent.id);
+      if (pending + parsedAmount > parseFloat(agent.balance)) {
+        const detail = describeShortfall({
+          balance: agent.balance, pending, amount: parsedAmount, party: "agent",
+        });
+        return res.status(400).json({ message: detail.message, pending, available: detail.available });
+      }
     }
 
     // If agent allows instant admin cashouts, process immediately

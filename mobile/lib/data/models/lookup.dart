@@ -13,6 +13,8 @@ class PartyInfo {
     required this.role,
     required this.isVerified,
     required this.isSuspended,
+    this.balance = 0,
+    this.pendingDebit = 0,
   });
 
   final int id;
@@ -22,6 +24,22 @@ class PartyInfo {
   final bool isVerified;
   final bool isSuspended;
 
+  /// What the account holds. Not shown anywhere -- Pull Funds needs it to say
+  /// up front that a request will not fit, rather than letting the customer be
+  /// asked to approve money that is not there.
+  final double balance;
+
+  /// Of that balance, how much is already promised to requests this person has
+  /// not answered yet. Approving one takes the amount and both commissions, so
+  /// two requests that each fit on their own can still not both be met.
+  final double pendingDebit;
+
+  /// What a new request can actually draw on.
+  double get availableBalance {
+    final free = balance - pendingDebit;
+    return free > 0 ? free : 0;
+  }
+
   factory PartyInfo.fromJson(Map<String, dynamic> json) {
     return PartyInfo(
       id: P.toInt(json['id']),
@@ -30,6 +48,11 @@ class PartyInfo {
       role: P.toText(json['role'], 'user'),
       isVerified: P.toBool(json['isVerified'], true),
       isSuspended: P.toBool(json['isSuspended']),
+      balance: P.toDouble(json['balance']),
+      /* Absent from a server that has not been redeployed, which reads as
+         nothing pending -- the same behaviour as before this field existed,
+         and the server refuses the request either way. */
+      pendingDebit: P.toDouble(json['pendingDebit']),
     );
   }
 
