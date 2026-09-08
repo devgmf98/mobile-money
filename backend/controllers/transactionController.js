@@ -107,16 +107,18 @@ export const sendMoney = async (req, res) => {
       agentCommissionPercent: agentPercent
     });
 
-    // Create notifications
-    const senderNotif = await Notification.create({
-      recipientId: req.userId,
-      title: 'Money Sent',
-      message: `You sent SSP ${amount} to ${recipient.phone}`,
-      type: 'transaction',
-      relatedTransactionId: transaction.id
-    });
+    /* Only the recipient is notified.
 
-    const receiverNotif = await Notification.create({
+       Creating a row for the sender too meant the person who had just pressed
+       Send watched their own phone buzz to tell them they had sent it -- the
+       afterCreate hook pushes every notification to its recipient's device,
+       and the sender was one. A notification is for something that happened
+       while you were not looking; you are looking when you send money.
+
+       The transfer is still on their statement, their balance still updates
+       over the socket, and the response still confirms it on screen. What is
+       gone is the push telling them what they just did. */
+    await Notification.create({
       recipientId: recipient.id,
       title: 'Money Received',
       message: `You received SSP ${amount} from ${sender.phone}`,
@@ -238,16 +240,9 @@ export const withdrawMoney = async (req, res) => {
       receiverLocation: agent.currentLocation || null
     });
 
-    // Notifications
-    const userNotif = await Notification.create({
-      recipientId: req.userId,
-      title: 'Withdrawal Initiated',
-      message: `Withdrawal of SSP ${amount} initiated. Meet agent ${agent.name}`,
-      type: 'transaction',
-      relatedTransactionId: transaction.id
-    });
-
-    const agentNotif = await Notification.create({
+    /* The agent only, for the same reason as sendMoney above: the person who
+       started the withdrawal is on the screen that started it. */
+    await Notification.create({
       recipientId: agent.id,
       title: 'Withdrawal Request',
       message: `${user.name} requested withdrawal of SSP ${amount}`,
