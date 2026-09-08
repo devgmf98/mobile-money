@@ -130,11 +130,20 @@ class ProfileScreen extends StatelessWidget {
                     icon: Icons.inbox_rounded,
                     label: 'Requests',
                     subtitle: 'Admin cash-outs waiting on you',
-                    onTap: () => Navigator.of(
-                      context,
-                    ).pushNamed(Routes.agentRequests),
+                    onTap: () =>
+                        Navigator.of(context).pushNamed(Routes.agentRequests),
                   ),
-                  const _AutoAdminCashOutRow(),
+                  AutoAdminCashOutRow(
+                    value:
+                        context
+                            .watch<AuthController>()
+                            .user
+                            ?.autoAdminCashout ??
+                        false,
+                    onSave: (value) => context
+                        .read<AuthController>()
+                        .updateProfile(autoAdminCashout: value),
+                  ),
                 ],
               ],
             ),
@@ -482,21 +491,43 @@ class _Badge extends StatelessWidget {
 /// request this agent approves. Turning it on lets an admin take cash from the
 /// float without asking, which is faster for a trusted branch and is exactly
 /// the thing an agent would want to be sure they meant.
-class _AutoAdminCashOutRow extends StatefulWidget {
-  const _AutoAdminCashOutRow();
+/// The agent's "Admin Cash-Out Approval" switch.
+///
+/// Takes the saved value and a way to save a new one rather than reading the
+/// [AuthController] itself, so what happens between the tap and the reply can
+/// be exercised on its own.
+class AutoAdminCashOutRow extends StatefulWidget {
+  const AutoAdminCashOutRow({
+    super.key,
+    required this.value,
+    required this.onSave,
+  });
+
+  /// What the server last told us.
+  final bool value;
+
+  /// Persist a new value. Throwing means it did not take.
+  final Future<void> Function(bool value) onSave;
 
   @override
-  State<_AutoAdminCashOutRow> createState() => _AutoAdminCashOutRowState();
+  State<AutoAdminCashOutRow> createState() => _AutoAdminCashOutRowState();
 }
 
-class _AutoAdminCashOutRowState extends State<_AutoAdminCashOutRow> {
+class _AutoAdminCashOutRowState extends State<AutoAdminCashOutRow> {
   bool _busy = false;
 
+  /* Where the switch is while the server is being told about it.
+     Null means it is showing the saved setting. */
+  bool? _pending;
+
   Future<void> _set(bool value) async {
-    final auth = context.read<AuthController>();
-    setState(() => _busy = true);
+    // Moves under the finger. The request happens behind it.
+    setState(() {
+      _busy = true;
+      _pending = value;
+    });
     try {
-      await auth.updateProfile(autoAdminCashout: value);
+      await widget.onSave(value);
       if (!mounted) return;
       AppSnack.success(
         context,
@@ -507,13 +538,21 @@ class _AutoAdminCashOutRowState extends State<_AutoAdminCashOutRow> {
     } on ApiException catch (error) {
       if (mounted) AppSnack.error(context, error.message);
     } finally {
-      if (mounted) setState(() => _busy = false);
+      /* Either way the switch goes back to reporting the saved setting: on
+         success that is the value just written, and on failure it snaps back
+         to where it was, next to the error saying why. */
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _pending = null;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final on = context.watch<AuthController>().user?.autoAdminCashout ?? false;
+    final on = _pending ?? widget.value;
 
     return SettingsRow(
       icon: Icons.verified_user_outlined,
@@ -523,12 +562,20 @@ class _AutoAdminCashOutRowState extends State<_AutoAdminCashOutRow> {
           : 'Every admin cash-out waits for you to approve it',
       // The whole row is not tappable: this one is a switch, and a row that
       // both navigates and toggles is a row that gets toggled by accident.
-      trailing: _busy
-          ? const SizedBox.square(
-              dimension: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Switch(value: on, onChanged: _set),
+      /* The switch itself, always -- it used to be swapped for a spinner
+         while saving, so a tap made it disappear and come back in the other
+         position rather than move. Moving is the feedback; the snack that
+         follows confirms it, and a failure snaps it back.
+
+         Taps during the round trip are dropped rather than disabling the
+         control, which would grey it out for the moment it is in flight. */
+      trailing: Switch(
+        value: on,
+        onChanged: (value) {
+          if (_busy) return;
+          _set(value);
+        },
+      ),
     );
   }
 }
@@ -586,7 +633,8 @@ class _NotificationStatusRowState extends State<_NotificationStatusRow> {
       live ? 'Live' : 'Not live',
     ];
 
-    final problem = local.lastError ?? push.lastError ?? realtime.lastSocketError;
+    final problem =
+        local.lastError ?? push.lastError ?? realtime.lastSocketError;
     final healthy = local.isReady && push.registered && live;
 
     return SettingsRow(

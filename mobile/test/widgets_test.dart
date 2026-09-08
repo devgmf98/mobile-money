@@ -1,3 +1,6 @@
+import 'package:moneypay/data/api/api_client.dart';
+import 'package:moneypay/ui/screens/profile/profile_screen.dart';
+import 'dart:async';
 import 'package:flutter/rendering.dart';
 import 'package:moneypay/ui/screens/history/transaction_history_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +24,7 @@ import 'package:moneypay/ui/widgets/wallet_widgets.dart';
 void _noop() {}
 
 void main() {
+  _cashOutSwitchTests();
   _scrollTests();
   _filterBarTests();
   Widget host(Widget child) => MaterialApp(
@@ -643,6 +647,83 @@ void _scrollTests() {
 
       await tester.pumpAndSettle();
       expect(pos.pixels, 0, reason: 'and ease back to rest');
+    });
+  });
+}
+
+/* The reported bug: tapping the switch showed a spinner and only then moved.
+   These check it moves first and that the request happens behind it. */
+void _cashOutSwitchTests() {
+  Widget host(bool value, Future<void> Function(bool) onSave) => MaterialApp(
+    theme: AppTheme.light,
+    home: Scaffold(
+      body: AutoAdminCashOutRow(value: value, onSave: onSave),
+    ),
+  );
+
+  group('AutoAdminCashOutRow', () {
+    testWidgets('moves on tap, before the save has answered', (tester) async {
+      final gate = Completer<void>();
+      await tester.pumpWidget(host(false, (_) => gate.future));
+
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isFalse);
+
+      await tester.tap(find.byType(Switch));
+      await tester.pump(); // one frame, request still outstanding
+
+      expect(
+        tester.widget<Switch>(find.byType(Switch)).value,
+        isTrue,
+        reason: 'the switch should be over before the server replies',
+      );
+      // The spinner that used to replace it.
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(Switch), findsOneWidget);
+
+      gate.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('snaps back when the save fails', (tester) async {
+      await tester.pumpWidget(
+        host(false, (_) async {
+          await Future<void>.delayed(const Duration(milliseconds: 10));
+          throw ApiException('Network unreachable');
+        }),
+      );
+
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<Switch>(find.byType(Switch)).value,
+        isFalse,
+        reason: 'a save that did not take must not leave the switch claiming it did',
+      );
+    });
+
+    testWidgets('ignores a second tap while the first is in flight', (
+      tester,
+    ) async {
+      final gate = Completer<void>();
+      var saves = 0;
+      await tester.pumpWidget(
+        host(false, (_) {
+          saves += 1;
+          return gate.future;
+        }),
+      );
+
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+      await tester.tap(find.byType(Switch));
+      await tester.pump();
+
+      expect(saves, 1);
+      gate.complete();
+      await tester.pumpAndSettle();
     });
   });
 }
