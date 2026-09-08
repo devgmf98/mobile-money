@@ -263,30 +263,37 @@ class _Header extends StatelessWidget {
         46,
       ),
       decoration: const BoxDecoration(gradient: AppColors.headerGradient),
+      /* The greeting. The two buttons that used to sit on the right of this
+         row are in the app bar now -- they were the ones scrolling out of
+         reach, which was the original complaint -- so the name has the width
+         to itself.
+
+         A Row rather than one string: the wave sits outside the Flexible, so a
+         long name ellipsises and the emoji stays put. Written as one Text it
+         would be the first thing cut. */
       child: Row(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                /* "Welcome back" is gone and the logo is in the bar above.
-                   The two buttons that used to sit on the right of this row
-                   went with it -- they were the ones scrolling out of reach,
-                   which was the whole complaint. The name stays: it is the
-                   one thing here the bar cannot carry. */
-                Text(
-                  user.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.19,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
+          Flexible(
+            child: Text(
+              'Welcome, ${user.name}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 19,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.19,
+                color: Colors.white,
+              ),
             ),
+          ),
+          const SizedBox(width: 7),
+          /* Escaped rather than pasted: a bare emoji in source survives most
+             toolchains and then meets one that rewrites the file in a
+             different encoding. */
+          // Decoration. A screen reader announcing "waving hand" after the
+          // name adds nothing to a greeting.
+          const ExcludeSemantics(
+            child: Text('\u{1F44B}', style: TextStyle(fontSize: 18)),
           ),
         ],
       ),
