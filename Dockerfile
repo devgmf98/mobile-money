@@ -1,7 +1,7 @@
 # Multi-stage build for the complete application
 
 # Stage 1: Build frontend
-FROM node:20-alpine as frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 # --include=dev is required: vite and @vitejs/plugin-react are devDependencies,
@@ -16,7 +16,7 @@ RUN chmod +x node_modules/.bin/vite || true
 RUN npm run build
 
 # Stage 2: Setup backend
-FROM node:20-alpine as backend-builder
+FROM node:20-alpine AS backend-builder
 WORKDIR /app/backend
 COPY backend/package*.json ./
 # --omit=dev keeps the runtime image lean; the backend needs no build step.
