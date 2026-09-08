@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { phoneVariants } from '../utils/helpers.js';
+import { phoneVariants, formatCurrency, agentName } from '../utils/helpers.js';
 import { quoteWithdrawal } from '../utils/commission.js';
 import { pendingDebitTotal, describeShortfall } from '../utils/pendingDebits.js';
 import sequelize from '../config/database.js';
@@ -88,17 +88,25 @@ export const requestWithdrawalFromUser = async (req, res) => {
       status: 'pending'
     });
 
-    // 6. Notify user of withdrawal request
+    /* 6. Notify the customer -- one figure, not a breakdown.
+
+       This read "requested SSP 200 withdrawal. Total cost: SSP 200.00
+       (includes SSP 0.00 agent fee + SSP 0.00 service fee)": the amount twice,
+       then a split of a fee that is frequently zero, in a line meant to be
+       read at a glance on a lock screen. The commission is folded into the
+       one number, the same way the send and withdraw screens now show it. */
     const totalCost = parsedAmount + agentCommissionAmount + companyCommissionAmount;
+    const asked = `${agentName(agent.name)} requested ${formatCurrency(totalCost)} from your wallet.`;
+
     await Notification.create({
       recipientId: user.id,
       title: 'Withdrawal Request',
-      message: `Agent ${agent.name} requested SSP ${parsedAmount} withdrawal. Total cost: SSP ${totalCost.toFixed(2)} (includes SSP ${agentCommissionAmount.toFixed(2)} agent fee + SSP ${companyCommissionAmount.toFixed(2)} service fee)`,
+      message: `${asked} Please approve or reject.`,
       type: 'withdrawal_request',
       relatedTransactionId: request.id
     });
     try {
-      await sendSMS(user.phone, `MoneyPay: Agent ${agent.name} requested SSP ${parsedAmount} withdrawal. Total cost: SSP ${totalCost.toFixed(2)}. Please approve or reject.`);
+      await sendSMS(user.phone, `MoneyPay: ${asked} Please approve or reject.`);
     } catch (err) {}
 
     // 7. Respond with request info

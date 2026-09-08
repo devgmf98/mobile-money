@@ -28,8 +28,25 @@ export const generateTransactionId = () => {
   return `${prefix}${timestamp}${random}`;
 };
 
-export const formatCurrency = (amount) => {
-  return `SSP ${amount.toFixed(2)}`;
+/* SSP with its thousands separated, for anything a person reads.
+   toFixed alone gave "SSP 1007150.00", which has to be counted a digit at a
+   time -- the same reason the web and the app group their figures. */
+export const formatCurrency = (amount) =>
+  `SSP ${(Number(amount) || 0).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+/* How to name an agent in a sentence that already says "Agent".
+
+   Accounts are routinely named after their role -- an agent literally called
+   "Agent" -- and the notification read "Agent Agent requested...". Falls back
+   to a bare "An agent" when there is no name on file, rather than leaving a
+   gap where one should be. */
+export const agentName = (name) => {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return 'An agent';
+  return trimmed.toLowerCase().startsWith('agent') ? trimmed : `Agent ${trimmed}`;
 };
 
 export const reverseGeocode = async (latitude, longitude) => {
