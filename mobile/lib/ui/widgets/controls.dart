@@ -533,6 +533,7 @@ class UserAvatar extends StatelessWidget {
     this.size = 44,
     this.background = AppColors.primaryTint,
     this.foreground = AppColors.primary,
+    this.initialsScale = 0.36,
   });
 
   final String initials;
@@ -540,6 +541,11 @@ class UserAvatar extends StatelessWidget {
   final double size;
   final Color background;
   final Color foreground;
+
+  /// Initials height as a fraction of the circle. The default suits the large
+  /// avatars on a profile; a small one in a toolbar needs proportionally more
+  /// or the letters are unreadable at arm's length.
+  final double initialsScale;
 
   @override
   Widget build(BuildContext context) {
@@ -559,7 +565,7 @@ class UserAvatar extends StatelessWidget {
           : Text(
               initials,
               style: TextStyle(
-                fontSize: size * 0.36,
+                fontSize: size * initialsScale,
                 fontWeight: FontWeight.w700,
                 color: foreground,
               ),

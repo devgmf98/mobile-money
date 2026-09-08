@@ -275,7 +275,7 @@ class _Header extends StatelessWidget {
         children: [
           Flexible(
             child: Text(
-              'Welcome, ${user.name}',
+              'Your welcome, ${user.name}',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
@@ -287,13 +287,19 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 7),
-          /* Escaped rather than pasted: a bare emoji in source survives most
-             toolchains and then meets one that rewrites the file in a
-             different encoding. */
-          // Decoration. A screen reader announcing "waving hand" after the
-          // name adds nothing to a greeting.
+          /* An icon, not an emoji. An emoji is drawn by whichever font the
+             device happens to ship, so it arrived in a different style on
+             every phone and as an empty box on the ones missing it. This is
+             the same vector everywhere and takes a colour of its own.
+
+             Excluded from semantics: a screen reader announcing "waving hand"
+             after someone's name adds nothing to a greeting. */
           const ExcludeSemantics(
-            child: Text('\u{1F44B}', style: TextStyle(fontSize: 18)),
+            child: Icon(
+              Icons.waving_hand_rounded,
+              size: 19,
+              color: Color(0xFFFFD166),
+            ),
           ),
         ],
       ),

@@ -49,7 +49,8 @@ class BrandAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final back = leading;
-    final canPop = back != null || (showBack ?? (ModalRoute.of(context)?.canPop ?? false));
+    final canPop =
+        back != null || (showBack ?? (ModalRoute.of(context)?.canPop ?? false));
 
     return AppBar(
       backgroundColor: AppColors.background,
@@ -154,7 +155,11 @@ class _AccountButton extends StatelessWidget {
             UserAvatar(
               initials: Fmt.initials(user.name),
               imageProvider: ProfileImage.decode(user.image),
-              size: 32,
+              size: 36,
+              // Proportionally larger than elsewhere: two letters in a 36px
+              // circle at the default ratio come out at 13px, smaller than
+              // any other type in the bar.
+              initialsScale: 0.44,
             ),
             // The same standing warning the dashboard used to carry: admins
             // can currently take cash without asking.
@@ -168,10 +173,7 @@ class _AccountButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.warning,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.background,
-                      width: 1.5,
-                    ),
+                    border: Border.all(color: AppColors.background, width: 1.5),
                   ),
                 ),
               ),
