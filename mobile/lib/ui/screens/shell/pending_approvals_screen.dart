@@ -32,7 +32,11 @@ class PendingApprovalsScreen extends StatefulWidget {
 
 class _PendingApprovalsScreenState extends State<PendingApprovalsScreen>
     with AfterRouteSettles {
-  int? _working;
+  /* Which row is working, and which of its two buttons started it. Only the
+     id was kept before, so the card knew something was in flight but not
+     what -- and the spinner was hardcoded onto Approve, so declining a
+     request span the button next to the one that had been tapped. */
+  ({int id, bool approving})? _working;
 
   @override
   void initState() {
@@ -56,7 +60,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen>
     );
     if (confirmed != true || !mounted) return;
 
-    setState(() => _working = request.id);
+    setState(() => _working = (id: request.id, approving: true));
     try {
       await context.read<WalletController>().approveWithdrawal(request.id);
       if (mounted) AppSnack.success(context, 'Withdrawal approved.');
@@ -68,7 +72,7 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen>
   }
 
   Future<void> _reject(WithdrawalRequestItem request) async {
-    setState(() => _working = request.id);
+    setState(() => _working = (id: request.id, approving: false));
     try {
       await context.read<WalletController>().rejectWithdrawal(
         request.id,
@@ -121,9 +125,12 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen>
                   separatorBuilder: (_, _) => const SizedBox(height: 14),
                   itemBuilder: (context, index) {
                     final request = requests[index];
-                    return _RequestCard(
+                    return PendingWithdrawalCard(
                       request: request,
-                      busy: _working == request.id,
+                      approving:
+                          _working?.id == request.id && _working!.approving,
+                      rejecting:
+                          _working?.id == request.id && !_working!.approving,
                       onApprove: () => _approve(request),
                       onReject: () => _reject(request),
                     );
@@ -135,16 +142,27 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen>
   }
 }
 
-class _RequestCard extends StatelessWidget {
-  const _RequestCard({
+/// One request, with the two buttons that answer it.
+///
+/// Public so a test can pump it: the spinner used to be hardcoded onto
+/// Approve, so declining span the wrong button.
+class PendingWithdrawalCard extends StatelessWidget {
+  const PendingWithdrawalCard({
+    super.key,
     required this.request,
-    required this.busy,
+    required this.approving,
+    required this.rejecting,
     required this.onApprove,
     required this.onReject,
   });
 
   final WithdrawalRequestItem request;
-  final bool busy;
+  final bool approving;
+  final bool rejecting;
+
+  /// Either one disables both buttons: two requests against the same row at
+  /// once is not something to allow.
+  bool get busy => approving || rejecting;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
@@ -267,7 +285,15 @@ class _RequestCard extends StatelessWidget {
                     foregroundColor: AppColors.danger,
                     minimumSize: const Size.fromHeight(46),
                   ),
-                  child: const Text('Decline'),
+                  child: rejecting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.danger,
+                          ),
+                        )
+                      : const Text('Decline'),
                 ),
               ),
               const SizedBox(width: 12),
@@ -277,7 +303,7 @@ class _RequestCard extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     minimumSize: const Size.fromHeight(46),
                   ),
-                  child: busy
+                  child: approving
                       ? const SizedBox.square(
                           dimension: 18,
                           child: CircularProgressIndicator(

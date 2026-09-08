@@ -1,3 +1,6 @@
+import 'package:moneypay/data/models/lookup.dart';
+import 'package:moneypay/ui/screens/shell/pending_approvals_screen.dart';
+import 'package:moneypay/ui/screens/agent/agent_requests_screen.dart';
 import 'package:moneypay/data/models/app_user.dart';
 import 'package:moneypay/state/notification_controller.dart';
 import 'package:moneypay/state/auth_controller.dart';
@@ -30,6 +33,7 @@ import 'package:moneypay/ui/widgets/wallet_widgets.dart';
 void _noop() {}
 
 void main() {
+  _requestCardTests();
   _brandAppBarTests();
   _afterRouteSettlesTests();
   _cashOutSwitchTests();
@@ -589,7 +593,8 @@ void _scrollTests() {
           home: Scaffold(
             body: ListView.builder(
               itemCount: 60,
-              itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
+              itemBuilder: (_, i) =>
+                  SizedBox(height: 40, child: Text('row $i')),
             ),
           ),
         ),
@@ -635,13 +640,16 @@ void _scrollTests() {
           home: Scaffold(
             body: ListView.builder(
               itemCount: 60,
-              itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
+              itemBuilder: (_, i) =>
+                  SizedBox(height: 40, child: Text('row $i')),
             ),
           ),
         ),
       );
 
-      final pos = tester.state<ScrollableState>(find.byType(Scrollable)).position;
+      final pos = tester
+          .state<ScrollableState>(find.byType(Scrollable))
+          .position;
 
       /* Dragged in small steps, as a finger does. A single tester.drag would
          prove nothing here: BouncingScrollPhysics applies no friction until
@@ -681,13 +689,16 @@ void _scrollTests() {
           home: Scaffold(
             body: ListView.builder(
               itemCount: 60,
-              itemBuilder: (_, i) => SizedBox(height: 40, child: Text('row $i')),
+              itemBuilder: (_, i) =>
+                  SizedBox(height: 40, child: Text('row $i')),
             ),
           ),
         ),
       );
 
-      final pos = tester.state<ScrollableState>(find.byType(Scrollable)).position;
+      final pos = tester
+          .state<ScrollableState>(find.byType(Scrollable))
+          .position;
       expect(pos.pixels, 0);
 
       // Clamping physics refuses this outright; bouncing carries it.
@@ -754,7 +765,8 @@ void _cashOutSwitchTests() {
       expect(
         tester.widget<Switch>(find.byType(Switch)).value,
         isFalse,
-        reason: 'a save that did not take must not leave the switch claiming it did',
+        reason:
+            'a save that did not take must not leave the switch claiming it did',
       );
     });
 
@@ -824,7 +836,10 @@ void _afterRouteSettlesTests() {
     ) async {
       var ran = 0;
       await tester.pumpWidget(
-        MaterialApp(theme: AppTheme.light, home: _Probe(onSettled: () => ran++)),
+        MaterialApp(
+          theme: AppTheme.light,
+          home: _Probe(onSettled: () => ran++),
+        ),
       );
       await tester.pumpAndSettle();
       expect(ran, 1);
@@ -972,4 +987,113 @@ class _FakeAuth extends ChangeNotifier implements AuthController {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+/* The reported bug: declining a cash-out span the Approve button. One flag
+   said "this row is working" and the spinner was hardcoded onto Approve, so
+   whichever button you pressed, the other one span. */
+void _requestCardTests() {
+  Widget host(Widget card) => MaterialApp(
+    theme: AppTheme.light,
+    home: Scaffold(body: card),
+  );
+
+  AdminCashOutRequest adminRequest() => AdminCashOutRequest(
+    id: 1,
+    amount: 200,
+    createdAt: DateTime.now(),
+    adminName: 'Gcash Admin',
+    adminRole: 'admin',
+  );
+
+  WithdrawalRequestItem pullRequest() => WithdrawalRequestItem(
+    id: 2,
+    amount: 200,
+    agentCommission: 10,
+    companyCommission: 5,
+    createdAt: DateTime.now(),
+    agentName: 'Konyo Agent',
+    requesterRole: 'agent',
+  );
+
+  /// Which button the spinner is inside, if any.
+  String? spinningButton(WidgetTester tester) {
+    // Approve is the filled button, Decline the outlined one.
+    for (final type in [FilledButton, OutlinedButton]) {
+      final spinner = find.descendant(
+        of: find.byType(type),
+        matching: find.byType(CircularProgressIndicator),
+      );
+      if (spinner.evaluate().isNotEmpty) {
+        return type == FilledButton ? 'Approve' : 'Decline';
+      }
+    }
+    return null;
+  }
+
+  group('request cards spin the button that was pressed', () {
+    testWidgets('admin cash-out: declining spins Decline', (tester) async {
+      await tester.pumpWidget(
+        host(
+          AdminCashOutRequestCard(
+            request: adminRequest(),
+            approving: false,
+            rejecting: true,
+            onApprove: () {},
+            onReject: () {},
+          ),
+        ),
+      );
+      expect(spinningButton(tester), 'Decline');
+      expect(find.text('Approve'), findsOneWidget);
+    });
+
+    testWidgets('admin cash-out: approving spins Approve', (tester) async {
+      await tester.pumpWidget(
+        host(
+          AdminCashOutRequestCard(
+            request: adminRequest(),
+            approving: true,
+            rejecting: false,
+            onApprove: () {},
+            onReject: () {},
+          ),
+        ),
+      );
+      expect(spinningButton(tester), 'Approve');
+      expect(find.text('Decline'), findsOneWidget);
+    });
+
+    testWidgets('pull request: declining spins Decline', (tester) async {
+      await tester.pumpWidget(
+        host(
+          PendingWithdrawalCard(
+            request: pullRequest(),
+            approving: false,
+            rejecting: true,
+            onApprove: () {},
+            onReject: () {},
+          ),
+        ),
+      );
+      expect(spinningButton(tester), 'Decline');
+    });
+
+    testWidgets('idle shows both labels and neither spinner', (tester) async {
+      await tester.pumpWidget(
+        host(
+          AdminCashOutRequestCard(
+            request: adminRequest(),
+            approving: false,
+            rejecting: false,
+            onApprove: () {},
+            onReject: () {},
+          ),
+        ),
+      );
+      expect(spinningButton(tester), isNull);
+      expect(find.text('Approve'), findsOneWidget);
+      expect(find.text('Decline'), findsOneWidget);
+    });
+  });
 }
