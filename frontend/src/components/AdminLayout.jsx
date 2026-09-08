@@ -6,6 +6,7 @@ import mpLogo from '../assets/mp-logo.png';
 import mpIcon from '../assets/mp-icon.png';
 import { useAuthStore } from '../context/store';
 import { adminAPI, contactAPI } from '../utils/api';
+import { useRealtimeSession } from '../hooks/useRealtimeSession';
 import '../styles/layout.css';
 
 /* Title and icon shown in the navbar for the current route.
@@ -43,6 +44,12 @@ const titleFromPath = (pathname) => {
 };
 
 export default function AdminLayout() {
+  /* The admin area had no socket at all, so an admin received no live
+     notification of anything -- an agent approving or declining the cash-out
+     they had just asked for included. The row was always written; it simply
+     never reached them until a reload happened to refetch it. */
+  useRealtimeSession();
+
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   /* A sub-admin sees a subset of the menu. Guarding each link by its own path
