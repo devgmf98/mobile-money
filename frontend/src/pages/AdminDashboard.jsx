@@ -11,7 +11,7 @@ import Footer from '../components/Footer';
 import CompositionChart from '../components/CompositionChart';
 import '../styles/admin-dashboard.css';
 import { useAuthStore } from '../context/store';
-import { ArrowRightLeft, ArrowUpRight, Banknote, Bell, CircleCheck, Clock, Coins, CreditCard, Files, Landmark, MapPin, TrendingUp, Users, Wallet, X, Filter } from 'lucide-react';
+import { ArrowRightLeft, ArrowUpRight, Banknote, CircleCheck, Clock, Coins, CreditCard, Files, Landmark, MapPin, SendHorizontal, TrendingUp, Users, Wallet, X, Filter } from 'lucide-react';
 import { typeLabel } from '../data/transactionTypes';
 
 // Exchange cards are built from the currencies that actually exist, so adding
@@ -675,8 +675,11 @@ export default function AdminDashboard() {
                 <p>Monitor all transactions</p>
               </span>
             </a>
-            <a href="/admin/notifications" className="action-card">
-              <div className="action-icon tone-warning"><Bell size={28} /></div>
+            {/* The composer, which now lives on its own route -- this tile
+                still pointed at /admin/notifications, which since the split is
+                the inbox, so "Send Notifications" opened a list to read. */}
+            <a href="/admin/send-notification" className="action-card">
+              <div className="action-icon tone-warning"><SendHorizontal size={28} /></div>
               <span className="action-copy">
                 <h4>Send Notifications</h4>
                 <p>Notify users</p>

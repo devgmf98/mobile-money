@@ -1723,6 +1723,10 @@ textarea:focus-visible {
   justify-content: flex-start;
   gap: 12px;
   height: 100%;
+  /* A grid item's automatic minimum size is its min-content width, so without
+     this the card refuses to be narrower than its icon plus its longest word
+     and pushes the track wider than the screen. */
+  min-width: 0;
   padding: 13px 30px 13px 14px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -1800,9 +1804,15 @@ textarea:focus-visible {
 .actions-grid .action-card:hover::after { opacity: 1; right: 11px; }
 
 
+/* minmax(0, 1fr), not 1fr. `1fr` is shorthand for `minmax(auto, 1fr)`, and
+   that `auto` floor is the item's min-content width -- here a 48px plate, 24px
+   of padding and the longest unbreakable word in the copy. Two such tracks did
+   not fit a phone, so the grid grew wider than the viewport and the right-hand
+   column was clipped mid-word: "View Transa", "Tiered Commi". A zero floor lets
+   the tracks divide the width they actually have. */
 @media (max-width: 600px) {
   .actions-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
 
@@ -1815,5 +1825,30 @@ textarea:focus-visible {
     height: 48px;
     min-height: 48px;
     border-radius: 14px;
+  }
+}
+
+/* Below this two columns fit without overflowing but have nothing left to say
+   it with: a 48px plate and the padding leave roughly 80px of text column, so
+   "Tiered Commission" and its caption wrap into a ragged stack four lines
+   deep. These cards are rows, so one per line is their natural shape -- and
+   the stat cards above them already go single-column on a phone. */
+@media (max-width: 440px) {
+  .actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Back to the desktop proportions: full width restores the room the smaller
+     plate was buying, and the right padding keeps the hover arrow clear of
+     the text. */
+  .actions-grid .action-card {
+    padding: 12px 30px 12px 12px;
+  }
+
+  .actions-grid .action-card .action-icon {
+    width: 40px;
+    height: 40px;
+    min-height: 40px;
+    border-radius: 11px;
   }
 }
