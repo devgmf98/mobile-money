@@ -17,6 +17,7 @@ import api from '../utils/api';
 import { amountValue, onAmountInput } from '../utils/amount';
 import Toast from '../components/Toast';
 import useResultToast from '../hooks/useResultToast';
+import useLiveData from '../hooks/useLiveData';
 
 const n2 = (v) => {
   const n = parseFloat(v);
@@ -40,6 +41,7 @@ export default function AdminWithdraw() {
   const [agentId, setAgentId] = useState('');
   const [amount, setAmount] = useState('');
   const [agentInfo, setAgentInfo] = useState(null);
+  const [loadedAgentId, setLoadedAgentId] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   // Same result, said where the eye already is.
@@ -77,6 +79,12 @@ export default function AdminWithdraw() {
     try {
       const response = await api.get('/admin/find-agent', { params: { agentId } });
       setAgentInfo(response.data);
+      /* Held separately from the input. The field stays editable after a
+         search, so by the time a refresh runs it may hold half of the next ID
+         someone is typing; this is the one actually on screen. The response
+         cannot supply it either -- find-agent returns the account, and agentId
+         is not among the columns it selects. */
+      setLoadedAgentId(agentId);
     } catch (err) {
       if (err.response && err.response.status === 404) {
         setError('No agent found with that Agent ID.');
@@ -84,13 +92,32 @@ export default function AdminWithdraw() {
         setError(err?.response?.data?.message || 'Failed to search for agent.');
       }
       setAgentInfo(null);
+      setLoadedAgentId('');
     } finally {
       setChecking(false);
     }
   };
 
+  /* The agent answering a request changes both figures on this card -- the
+     balance if they approved, the pending total either way -- and the admin is
+     told over the socket, since both paths notify request.userId. The page was
+     not listening, so it went on showing the balance as it stood when the
+     search ran until someone searched again.
+
+     Silent: no spinner, and a failure leaves what is on screen alone rather
+     than replacing a good card with an error. This is a background refresh
+     nobody asked for, so it should never take anything away. */
+  useLiveData(() => {
+    if (!loadedAgentId) return;
+    api
+      .get('/admin/find-agent', { params: { agentId: loadedAgentId } })
+      .then((response) => setAgentInfo(response.data))
+      .catch(() => {});
+  });
+
   const clearAgent = () => {
     setAgentInfo(null);
+    setLoadedAgentId('');
     setAgentId('');
     setAmount('');
     setError('');
