@@ -347,7 +347,11 @@ export default function AdminWithdraw() {
                     </div>
                   </div>
 
-                  <button type="submit" className="btn btn-danger btn-block" disabled={!canWithdraw}>
+                  {/* Primary, not danger. Red was reading as a warning on a
+                      button that, for an agent who has not turned instant
+                      cash-outs on, only sends a request -- the note directly
+                      under it says so. */}
+                  <button type="submit" className="btn btn-primary btn-block" disabled={!canWithdraw}>
                     <ArrowDownToLine size={16} /> {loading ? 'Processing…' : 'Complete withdrawal'}
                   </button>
 
